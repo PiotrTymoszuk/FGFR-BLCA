@@ -3,7 +3,7 @@ Genetic alterations and expression of genes coding for FGF ligands and FGF resep
 
 ## Results
 
-
+Provisional figures with the analysis results are available [here](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/figures).
 
 ## Usage
 
