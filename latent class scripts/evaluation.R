@@ -258,6 +258,29 @@
                 subtitle = paste(z, collapse = ', '),
                 x = 'sample'))
 
+# Result table -------
+
+  insert_msg('Result table')
+
+  lca_eval$result_tbl <-
+    map2(lca_eval$stats,
+         lca_eval$test,
+         merge_stat_test) %>%
+    compress(names_to = 'cohort') %>%
+    mutate(cohort = globals$cohort_labs[cohort],
+           percent = signif(percent, 3),
+           variable = stri_replace(variable,
+                                   fixed = '_',
+                                   replacement = ' ')) %>%
+    select(cohort, variable, clust_id,
+           percent, n, n_total,
+           significance, eff_size) %>%
+    set_names(c('Cohort', 'Variable', 'Genetic subset',
+                'Samples with alterations, percentage',
+                'Samples with alterations, N',
+                'Tota samples, N',
+                'Significance', 'Effect size'))
+
 # END ------
 
   rm(i)

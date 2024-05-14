@@ -35,6 +35,7 @@
 
   library(ggrepel)
   library(ggtext)
+  library(figur)
 
   library(furrr)
 

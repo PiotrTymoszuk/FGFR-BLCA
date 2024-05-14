@@ -37,7 +37,16 @@
     source_all(message = TRUE, crash = TRUE) %>%
     print
 
-  c('./report scripts/figures.R') %>%
+  c('./report scripts/figures.R',
+    './report scripts/tables.R') %>%
+    source_all(message = TRUE, crash = TRUE) %>%
+    print
+
+# Analysis report -------
+
+  insert_msg('Analysis report')
+
+  c('./report scripts/render.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
 # END ------

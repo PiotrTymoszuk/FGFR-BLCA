@@ -32,12 +32,16 @@
          lca_clinic$data,
          inner_join, by = 'sample_id')
 
-  ## data set-specific variable vectors
+  ## data set-specific variable vectors. No point at testing
+  ## the tissue variable for the TCGA BLCA data set (bladder only!)
 
   lca_clinic$variables <- lca_clinic$data %>%
     map(names) %>%
     map(~filter(lca_clinic$lexicon, variable %in% .x)) %>%
     map(~.x$variable)
+
+  lca_clinic$variables$tcga <-
+    lca_clinic$variables$tcga[lca_clinic$variables$tcga != 'tissue']
 
 # Descriptive stats -------
 

@@ -71,7 +71,7 @@
     as_figure(label = 'fgfr_fgf_alteration_frequency',
               ref_name = 'fgfr_freq',
               caption = paste('Frequency of somatic mutations and copy number',
-                              'aletrations of FGF- and FGFR-coding genes.'),
+                              'alterations of FGF- and FGFR-coding genes.'),
               w = 180,
               h = 180)
 
@@ -212,9 +212,12 @@
 
   rep_figs$genetic_overlap <-
     plot_grid(rep_figs$genetic_overlap$top,
+              ggdraw(),
               rep_figs$genetic_overlap$bottom,
-              nrow = 2,
-              rel_heights = c(1.1, 1)) %>%
+              nrow = 3,
+              rel_heights = c(1.1, 0.1, 1),
+              labels = c('A', 'B', ''),
+              label_size = 10) %>%
     as_figure(label = 'overlap_most_common_gene_alterations',
               ref_name = 'genetic_overlap',
               caption = paste('Co-occurrence of the most common genetic',
@@ -267,9 +270,12 @@
 
   rep_figs$fgfr_overlap <-
     plot_grid(rep_figs$fgfr_overlap$top,
+              ggdraw(),
               rep_figs$fgfr_overlap$bottom,
-              nrow = 2,
-              rel_heights = c(1.1, 1)) %>%
+              nrow = 3,
+              rel_heights = c(1.1, 0.1, 1),
+              labels = c('A', 'B', ''),
+              label_size = 10) %>%
     as_figure(label = 'overlap_fgfr_fgf_gene_alterations',
               ref_name = 'fgfr_overlap',
               caption = paste('Co-occurrence of genetic alterations of',
@@ -334,7 +340,7 @@
     as_figure(label = 'fgfr3_mutation_gene_expression',
               ref_name = 'fgfr_dge',
               caption = paste('Expression of FGF- and FGFR-coding genes',
-                              'in utothelial cancers stratified by presence',
+                              'in urothelial cancers stratified by presence',
                               'of FGFR3 mutations.'),
               w = 180,
               h = 230)
@@ -448,7 +454,8 @@
   rep_figs$fgfr_subtypes$top <-
     plot_grid(expl_sub$plot +
                 coord_flip() +
-                theme(legend.position = 'none'),
+                theme(legend.position = 'none',
+                      axis.title.y = element_blank()),
               get_legend(expl_sub$plot +
                            theme(legend.position = 'bottom')),
               ncol = 2)
@@ -606,7 +613,8 @@
   rep_figs$lca_devel$bottom <- lca_pred$posterior_plots %>%
     map(~.x +
           scale_y_continuous(limits = c(0, 1)) +
-          theme(legend.position = 'none')) %>%
+          theme(legend.position = 'none',
+                strip.text.x = element_text(size = 7))) %>%
     plot_grid(plotlist = .,
               nrow = 2,
               align = 'hv',
@@ -748,7 +756,9 @@
     map2(., c('identity', rep('sqrt', 7)),
          ~.x +
            scale_y_continuous(trans = .y) +
-           theme(legend.position = 'none')) %>%
+           guides(x = guide_axis(angle = 45)) +
+           theme(legend.position = 'none',
+                 axis.text.x = element_text(size = 7))) %>%
     plot_grid(plotlist = .,
               ncol = 2,
               align = 'hv',
@@ -762,6 +772,65 @@
                               'genetic subsets of urothelial cancers.'),
               w = 180,
               h = 230)
+
+# Genetic subsets: differential gene expression -------
+
+  insert_msg('Genetic subsets: differential gene expression')
+
+  rep_figs[c('lca_dge_fgfr', 'lca_dge_fgf')] <-
+    list(lca_dge$plots[c("FGFR1", "FGFR2", "FGFR3")],
+         lca_dge$plots[c('FGF2', 'FGF5', 'FGF7', 'FGF17')]) %>%
+    map(map,
+        ~.x +
+          guides(x = guide_axis(angle = 45)) +
+          theme(axis.title.x = element_blank(),
+                axis.text.x = element_text(size = 7),
+                legend.position = 'none')) %>%
+    map(~plot_grid(plotlist = .,
+                   ncol = 2,
+                   align = 'hv',
+                   axis = 'tblr'))
+
+  rep_figs[c('lca_dge_fgfr', 'lca_dge_fgf')] <-
+    rep_figs[c('lca_dge_fgfr', 'lca_dge_fgf')] %>%
+    list(x = .,
+         label = c('genetic_subsets_fgfr_receptor_expression',
+                   'genetic_subsets_fgf_ligand_expression'),
+         ref_name = names(.),
+         caption = paste('Differential expression of',
+                         c('FGFR-coding', 'FGF-coding'),
+                         'genes in the genetic subsets of',
+                         'urothelial cancers.')) %>%
+    pmap(as_figure,
+         w = 180,
+         h = 140)
+
+# Genetic subsets: clinical features --------
+
+  insert_msg('Genetic subsets: clinical features')
+
+  rep_figs$lca_clinic <- lca_clinic$plots %>%
+    map(~.x[c('age', 'sex')]) %>%
+    transpose %>%
+    unlist(recursive = FALSE) %>%
+    map(~.x +
+          guides(x = guide_axis(angle = 45)) +
+          theme(legend.position = 'none',
+                axis.title.x = element_blank(),
+                axis.text.x = element_text(size = 7))) %>%
+    plot_grid(plotlist = .,
+              ncol = 2,
+              align = 'hv') %>%
+    plot_grid(plot_grid(ggdraw(),
+                        get_legend(lca_clinic$plots[[1]]$sex),
+                        nrow = 2),
+              ncol = 2,
+              rel_widths = c(0.85, 0.15)) %>%
+    as_figure(label = 'genetic_subsets_age_gender',
+              ref_name = 'lca_clinic',
+              caption = 'Age and gender in the genetic subsets.',
+              w = 180,
+              h = 140)
 
 # Genetic subsets: overall survival ---------
 
