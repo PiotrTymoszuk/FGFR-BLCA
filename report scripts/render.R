@@ -6,7 +6,7 @@
 
   insert_msg('Reading the bibliography')
 
-  ct_bib <- read_bib('./report/markdown/blca.bib') %>%
+  blca_bib <- read_bib('./report/markdown/blca.bib') %>%
     as_mdbib
 
 # Rendering the paper ------

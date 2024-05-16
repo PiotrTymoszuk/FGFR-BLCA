@@ -140,7 +140,7 @@
   tcga$mutation <- tcga$mutation_detail %>%
     extract_mutations
 
-  ## restricting of the detailed mutation frame wot FGFR1 - 4
+  ## restricting of the detailed mutation frame with FGFR1 - 4
 
   tcga$mutation_detail <- tcga$mutation_detail %>%
     filter(Hugo_Symbol %in% paste0('FGFR', 1:4)) %>%

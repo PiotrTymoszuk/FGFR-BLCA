@@ -2,9 +2,11 @@
 #
 # 1) GENIE, the subset with bladder and urothelial cancers
 #
-# 2) TCGA BLCA, the Pan Cancer version deposited at cBioportal
+# 2) MSK 2022 bladder cancer cohort from cBioportal
 #
-# 3) Imvigor obtained via package IMvigor210CoreBiologies
+# 3) TCGA BLCA, the Pan Cancer version deposited at cBioportal
+#
+# 4) Imvigor obtained via package IMvigor210CoreBiologies
 #
 # Assignment of the TCGA and IMvigor data to the molecular consensus clusters
 # is done with consensusMIBC package based on ComBat-adjusted whole genome
@@ -43,13 +45,16 @@
   insert_msg('Import scripts')
 
   list(cache_path = c('./data/genie.RData',
+                      './data/msk.RData',
                       './data/tcga.RData',
                       './data/imvigor.RData'),
        script_path = c('./import scripts/genie.R',
+                       './import scripts/msk.R',
                        './import scripts/tcga.R',
                        './import scripts/imvigor.R'),
        message = paste('Loading cached',
                        c('GENIE BLCA study',
+                         'MSK 2022 study',
                          'TCGA BLCA study',
                          'IMvigor study'))) %>%
     pwalk(access_cache)

@@ -93,10 +93,12 @@
   ## and selected pairs of interest
 
   lca_occur$plot_pairs <- lca_occur$common_significant %>%
-    c('FGFR3_mutation|CCND1_amplification') %>%
+    c('FGFR3_mutation|CCND1_amplification',
+      'FGFR3_mutation|RB1_mutation') %>%
     stri_split_fixed(pattern = '|', simplify = FALSE) %>%
     set_names(c(lca_occur$common_significant,
-                'FGFR3_mutation|CCND1_amplification'))
+                'FGFR3_mutation|CCND1_amplification',
+                'FGFR3_mutation|RB1_mutation'))
 
   ## plots
 

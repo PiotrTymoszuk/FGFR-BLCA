@@ -15,7 +15,9 @@
          'trafo' = 'https://github.com/PiotrTymoszuk/trafo',
          'figur' = 'https://github.com/PiotrTymoszuk/figur',
          'clustTools' = 'https://github.com/PiotrTymoszuk/clustTools',
-         'microViz' = 'https://github.com/PiotrTymoszuk/microViz') %>%
+         'microViz' = 'https://github.com/PiotrTymoszuk/microViz',
+         'polcaExtra' = 'https://github.com/PiotrTymoszuk/polcaExtra',
+         'coxExtensions' = 'https://github.com/PiotrTymoszuk/coxExtensions') %>%
     compress(names_to = 'obj_name',
              values_to = 'x') %>%
     mutate(ref_name = paste0('_', obj_name, '_'))

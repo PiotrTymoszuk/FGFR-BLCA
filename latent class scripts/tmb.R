@@ -12,8 +12,11 @@
 
   ## TMB determined by the study authors
 
-  lca_tmb$data$tmb <- list(genie = genie, tcga = tcga) %>%
-    map(~.x$clinic[c('sample_id', 'tmb_per_mb')])
+  lca_tmb$data$tmb <- list(genie = genie,
+                           msk = msk,
+                           tcga = tcga) %>%
+    map(~.x$clinic) %>%
+    map(select, sample_id, tmb_per_mb, any_of('msi_score'))
 
   lca_tmb$data$tmb <-
     map2(lca_pred$assignment[names(lca_tmb$data$tmb)],
@@ -23,7 +26,9 @@
 
   ## counts of all investigated mutations, amplifications and deletions
 
-  lca_tmb$data$counts <- list(genie = genie, tcga = tcga) %>%
+  lca_tmb$data$counts <- list(genie = genie,
+                              msk = msk,
+                              tcga = tcga) %>%
     map(~.x[c('mutation', 'deletion', 'amplification')]) %>%
     map(map, column_to_rownames, 'sample_id') %>%
     map(map, rowSums) %>%
@@ -44,40 +49,54 @@
     tibble(variable = c('tmb_per_mb',
                         'mutations',
                         'deletions',
-                        'amplifications'),
+                        'amplifications',
+                        'msi_score'),
            label = c('TMB',
                      'Mutation count',
                      'Deletion count',
-                     'Amplification count'),
+                     'Amplification count',
+                     'MSI score'),
            ax_label = c('mutations/MB',
-                        rep('count', 3)))
+                        rep('count', 3),
+                        'score'))
+
+  ## variable vectors specific for particular data sets
+
+  lca_tmb$variables <- lca_tmb$data %>%
+    map(names) %>%
+    map(~filter(lca_tmb$lexicon, variable %in% .x)) %>%
+    map(~.x$variable)
 
 # Descriptive stats ------
 
   insert_msg('Descriptive stats')
 
-  lca_tmb$stats <- lca_tmb$data %>%
-    map(explore,
-        variables = lca_tmb$lexicon$variable,
-        split = 'clust_id',
-        what = 'table',
-        pub_styled = TRUE) %>%
+  lca_tmb$stats <-
+    map2(lca_tmb$data,
+         lca_tmb$variables,
+         ~explore(.x,
+                  variables = .y,
+                  split_factor = 'clust_id',
+                  what = 'table',
+                  pub_styled = TRUE)) %>%
     map(format_desc)
 
 # Testing for differences between the genetic strata -------
 
   insert_msg('Testing for differences between the genetic strata')
 
-  lca_tmb$test <- lca_tmb$data %>%
-    map(compare_variables,
-        variables = lca_tmb$lexicon$variable,
-        split_factor = 'clust_id',
-        what = 'eff_size',
-        types = 'kruskal_etasq',
-        ci = FALSE,
-        exact = FALSE,
-        pub_styled = TRUE) %>%
-    map(re_adjust, method = 'BH') %>%
+  lca_tmb$test <-
+    map2(lca_tmb$data,
+         lca_tmb$variables,
+         ~compare_variables(.x,
+                            variables = .y,
+                            split_factor = 'clust_id',
+                            what = 'eff_size',
+                            types = 'kruskal_etasq',
+                            ci = FALSE,
+                            exact = FALSE,
+                            pub_styled = TRUE,
+                            adj_method = 'BH')) %>%
     map(mutate,
         plot_cap = paste(eff_size, significance, sep = ', '))
 

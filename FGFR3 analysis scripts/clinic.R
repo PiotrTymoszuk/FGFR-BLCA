@@ -54,9 +54,9 @@
                   pub_styled = TRUE)) %>%
     map(format_desc)
 
-# Testing for differences between the genetic clusters ------
+# Testing for differences between the mutation strata ------
 
-  insert_msg('Testing for differences between the genetic clusters')
+  insert_msg('Testing for differences between the mutation strata')
 
   fgfr_clinic$test <-
     map2(fgfr_clinic$data,

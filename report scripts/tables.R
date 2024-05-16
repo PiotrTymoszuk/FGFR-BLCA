@@ -12,7 +12,7 @@
 
   rep_tabs$cohorts <- expl_cohorts$result_tbl %>%
     set_names(c('Variable',
-                globals$cohort_labs[c("genie", "tcga", "imvigor")],
+                globals$cohort_labs[c("genie", "msk", "tcga", "imvigor")],
                 'Significance',
                 'Effect size')) %>%
     mdtable(label = 'cohort_characteristic',
@@ -94,6 +94,26 @@
                             'Excel file.'))
 
 
+# Differential gene expression, FGFR3 WT and FGFR3 mutated -------
+
+  insert_msg('Differential gene expresssion, FGFR3 WT and mutated')
+
+  rep_tabs$fgfr3_dge <- expl_dge$result_tbl$FGFR3_mut %>%
+    mdtable(label = 'fgfr3_differential_gene_expression',
+            ref_name = 'fgfr3_dge',
+            caption = paste('Differential expression of FGF- and FGFR-coding',
+                            'genes in urothelial cancers with and without',
+                            'FGFR3 mutations.',
+                            'log2-transformed expression levels are presented',
+                            'as medians with interquartile ranges and ranges.',
+                            'Statistical significance was determined by',
+                            'two-tailed T test with',
+                            "Cohen's d effect size statistic.",
+                            'P values were corrected for multiple testing with',
+                            'the false discovery rate method.',
+                            'The table is available as a supplementary Excel',
+                            'file.'))
+
 # Clinical characteristic of samples with and without FGFR3 mutations ------
 
   insert_msg('Clinical characteristic, FGFR3 WT and FGFR3 mutated samples')
@@ -114,25 +134,6 @@
                             'Qualitative variables are shown as percentages',
                             'and observation counts of the categories.'))
 
-# Differential gene expression, FGFR3 WT and FGFR3 mutated -------
-
-  insert_msg('Differential gene expresssion, FGFR3 WT and mutated')
-
-  rep_tabs$fgfr3_dge <- expl_dge$result_tbl$FGFR3_mut %>%
-    mdtable(label = 'fgfr3_differential_gene_expression',
-            ref_name = 'fgfr3_dge',
-            caption = paste('Differential expression of FGF- and FGFR-coding',
-                            'genes in urothelial cancers with and without',
-                            'FGFR3 mutations.',
-                            'log2-transformed expression levels are presented',
-                            'as medians with interquartile ranges and ranges.',
-                            'Statistical significance was determined by',
-                            'two-tailed T test with',
-                            "Cohen's d effect size statistic.",
-                            'P values were corrected for multiple testing with',
-                            'the false discovery rate method.',
-                            'The table is available as a supplementary Excel',
-                            'file.'))
 
 # Genetic alterations in the consensus molecular subtypes ----------
 

@@ -18,7 +18,7 @@
 
   lca_pred$modeling_variables <- lca_globals$modeling_variables
 
-  ## the whole data sets of gentic features
+  ## the whole data sets of genetic features
 
   lca_pred$data <- lca_globals$data %>%
     map(column_to_rownames, 'sample_id')
@@ -33,7 +33,7 @@
 
   lca_pred$model$class_names <-
     c('mutRB1', 'oligoMut',
-      'mutERBB', 'del9p21',
+      'hyperMut', 'del9p21',
       'mutFGFR3', 'ampMDM2')
 
   ## predictions
@@ -41,8 +41,10 @@
   lca_pred$posteriors$genie <- lca_pred$model %>%
     predict
 
-  lca_pred$posteriors$tcga <- lca_pred$model %>%
-    predict(newdata = lca_pred$factor_data$tcga)
+  lca_pred$posteriors[c('msk', 'tcga')] <-
+    lca_pred$factor_data[c("msk", "tcga")] %>%
+    map(predict,
+        object = lca_pred$model)
 
 # Diagnostic plots: class-assignment posterior p -------
 

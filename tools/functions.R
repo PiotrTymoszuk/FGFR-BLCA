@@ -983,4 +983,30 @@
 
   }
 
+# Markdown helpers --------
+
+  collapse_and <- function(x) {
+
+    n <- length(x)
+
+    if (n == 1) {
+
+      result <- x
+
+    } else if (n == 2) {
+
+      result <- paste(x[1], "and", x[2])
+
+    } else {
+
+      result <- paste(x[-n], collapse = ', ')
+
+      result <- paste(result, x[n], sep = ", and ")
+
+    }
+
+    return(result)
+
+  }
+
 # END -------

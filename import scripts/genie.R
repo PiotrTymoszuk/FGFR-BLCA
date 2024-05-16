@@ -1,6 +1,6 @@
 # Import of the GENIE BLA and urothelial cohort data.
 #
-# In case of multiple samples per patient, the firast one is included in the
+# In case of multiple samples per patient, the first one is included in the
 # analysis.
 # Approximate survival is calculated based on age at sequencing and time to the
 # last contact or death

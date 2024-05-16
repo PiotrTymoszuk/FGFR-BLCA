@@ -20,7 +20,9 @@
 
   insert_msg('Analysis data')
 
-  expl_occur$data <- list(genie = genie, tcga = tcga) %>%
+  expl_occur$data <- list(genie = genie,
+                          msk = msk,
+                          tcga = tcga) %>%
     map(~.x[c('mutation', 'deletion', 'amplification')]) %>%
     map(map,
         select,

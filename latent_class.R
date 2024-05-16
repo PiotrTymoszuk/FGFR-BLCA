@@ -23,6 +23,7 @@
 
   library(survival)
   library(survminer)
+  library(coxExtensions)
 
   library(microViz)
 
@@ -89,12 +90,13 @@
 
   insert_msg('Clinical and pathological characteristic of the clusters')
 
-  ## survival analysis: the 11q13amp and 11q13amp + 9p21del groups are merged
+  ## clinical characteristic, TMB, and survival analysis
 
   c('./latent class scripts/clinic.R',
     './latent class scripts/tmb.R',
     './latent class scripts/overall_survival.R',
-    './latent class scripts/disease_relapse_free_survival.R') %>%
+    './latent class scripts/disease_relapse_free_survival.R',
+    '/latent class scripts/overall_survival_cox.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
   ## analysis of consensus molecular classes and differential gene expression,

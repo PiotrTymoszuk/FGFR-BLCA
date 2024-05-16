@@ -47,8 +47,8 @@
   insert_msg('Stack plot')
 
   lca_cons$plot <- lca_cons$data %>%
-    plot_variable(variable = 'clust_id',
-                  split_factor = 'consensusClass',
+    plot_variable(variable = 'consensusClass',
+                  split_factor = 'clust_id',
                   type = 'stack',
                   scale = 'percent',
                   cust_theme = globals$common_theme,
@@ -56,9 +56,9 @@
                                      globals$cohort_labs["tcga"]),
                   plot_subtitle = lca_cons$test$plot_cap,
                   x_lab = 'MIBC consensus class',
-                  y_lab = '% of consensus class',
+                  y_lab = '% of subset',
                   x_n_labs = TRUE) +
-    scale_fill_manual(values = globals$genet_colors)
+    scale_fill_manual(values = globals$sub_colors)
 
 # Result table --------
 

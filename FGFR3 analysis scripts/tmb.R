@@ -15,7 +15,8 @@
 
   fgfr_tmb$data$tmb <- globals$cohort_expr %>%
     eval %>%
-    map(~.x$clinic[c('sample_id', 'tmb_per_mb')])
+    map(~.x$clinic) %>%
+    map(select, sample_id, tmb_per_mb, any_of('msi_score'))
 
   fgfr_tmb$data$tmb <-
     map2(fgfr_globals$genetic_groups[names(fgfr_tmb$data$tmb)],
@@ -51,40 +52,55 @@
     tibble(variable = c('tmb_per_mb',
                         'mutations',
                         'deletions',
-                        'amplifications'),
+                        'amplifications',
+                        'msi_score'),
            label = c('TMB',
                      'Mutations',
                      'Deletions',
-                     'Amplifications'),
+                     'Amplifications',
+                     'MSI score'),
            ax_label = c('mutations/MB',
-                        rep('count', 3)))
+                        rep('count', 3),
+                        'score'))
+
+  ## data set-specific variable vectors
+
+  fgfr_tmb$variables <- fgfr_tmb$data %>%
+    map(names) %>%
+    map(~filter(fgfr_tmb$lexicon,
+                variable %in% .x)) %>%
+    map(~.x$variable)
 
 # Descriptive stats ------
 
   insert_msg('Descriptive stats')
 
-  fgfr_tmb$stats <- fgfr_tmb$data %>%
-    map(explore,
-        variables = fgfr_tmb$lexicon$variable,
-        split = 'FGFR3_mutation',
-        what = 'table',
-        pub_styled = TRUE) %>%
+  fgfr_tmb$stats <-
+    map2(fgfr_tmb$data,
+         fgfr_tmb$variables,
+         ~explore(.x,
+                  variables = .y,
+                  split_factor = 'FGFR3_mutation',
+                  what = 'table',
+                  pub_styled = TRUE)) %>%
     map(format_desc)
 
 # Testing for differences between the genetic strata -------
 
   insert_msg('Testing for differences between the genetic strata')
 
-  fgfr_tmb$test <- fgfr_tmb$data %>%
-    map(compare_variables,
-        variables = fgfr_tmb$lexicon$variable,
-        split_factor = 'FGFR3_mutation',
-        what = 'eff_size',
-        types = 'wilcoxon_r',
-        ci = FALSE,
-        exact = FALSE,
-        pub_styled = TRUE) %>%
-    map(re_adjust, method = 'BH') %>%
+  fgfr_tmb$test <-
+    map2(fgfr_tmb$data,
+         fgfr_tmb$variables,
+         ~compare_variables(.x,
+                            variables = .y,
+                            split_factor = 'FGFR3_mutation',
+                            what = 'eff_size',
+                            types = 'wilcoxon_r',
+                            ci = FALSE,
+                            exact = FALSE,
+                            pub_styled = TRUE,
+                            adj_method = 'BH')) %>%
     map(mutate,
         plot_cap = paste(eff_size, significance, sep = ', '))
 

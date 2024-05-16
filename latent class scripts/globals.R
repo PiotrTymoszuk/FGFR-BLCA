@@ -18,12 +18,17 @@
   insert_msg('Data frames')
 
   ## variables: the most frequent genetic features
+  ## and MTAP deletion as a hallmark of more general 9p21 chromosome
+  ## region deletion
 
   lca_globals$variables <- expl_genet$top_alterations
 
+  lca_globals$variables$deletion <-
+    c(lca_globals$variables$deletion, 'MTAP')
+
   ## data
 
-  lca_globals$data <- list(genie = genie, tcga = tcga) %>%
+  lca_globals$data <- list(genie = genie, msk = msk, tcga = tcga) %>%
     eval %>%
     map(~.x[c('mutation', 'deletion', 'amplification')])
 

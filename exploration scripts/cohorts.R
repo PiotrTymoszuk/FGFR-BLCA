@@ -130,7 +130,9 @@
   ## styling
 
   expl_cohorts$plots$age <- expl_cohorts$plots$age +
-    scale_fill_manual(values = unname(globals$cohort_colors[c("genie", "tcga")]))
+    scale_fill_manual(values = unname(globals$cohort_colors[c("genie",
+                                                              "msk",
+                                                              "tcga")]))
 
   expl_cohorts$plots[names(expl_cohorts$plots) != 'age'] <-
     expl_cohorts$plots[names(expl_cohorts$plots) != 'age'] %>%

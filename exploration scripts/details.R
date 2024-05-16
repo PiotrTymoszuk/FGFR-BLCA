@@ -13,10 +13,14 @@
 
   ## detailed data and numbers of complete cases
 
-  expl_fgfr$data <- list(genie = genie, tcga = tcga) %>%
+  expl_fgfr$data <- list(genie = genie,
+                         msk = msk,
+                         tcga = tcga) %>%
     map(~.x$mutation_detail)
 
-  expl_fgfr$n_totals <- list(genie = genie, tcga = tcga) %>%
+  expl_fgfr$n_totals <- list(genie = genie,
+                             msk = msk,
+                             tcga = tcga) %>%
     map(~.x$mutation) %>%
     map_dbl(nrow)
 
@@ -47,25 +51,30 @@
                                          "'DEL' = 'deletion';
                                          'INS' = 'insertion'"))
 
-  expl_fgfr$data$tcga <- expl_fgfr$data$tcga %>%
-    transmute(sample_id = Tumor_Sample_Barcode,
-              gene_symbol = Hugo_Symbol,
-              dna_start_position = Start_Position,
-              dna_end_position = End_Position,
-              dna_reference = Reference_Allele,
-              dna_variant = Tumor_Seq_Allele2,
-              protein_change = stri_replace(HGVSp_Short,
-                                            regex = '^p\\.',
-                                            replacement = ''),
-              protein_start_position = Protein_position,
-              mutation_type = car::recode(Variant_Classification ,
-                                          "'Frame_Shift_Del' = 'frame shift insertion';
-                                          'Intron' = 'intron';
-                                          'Missense_Mutation' = 'missense';
-                                          'Nonsense_Mutation' = 'nonsense';
-                                          'Silent' = 'silent';
-                                          'Splice_Region' = 'splice region'"),
-              variant_type = car::recode(Variant_Type, "'DEL' = 'deletion'"))
+  expl_fgfr$data[c('msk', 'tcga')] <- expl_fgfr$data[c('msk', 'tcga')] %>%
+    map(transmute,
+        sample_id = Tumor_Sample_Barcode,
+        gene_symbol = Hugo_Symbol,
+        dna_start_position = Start_Position,
+        dna_end_position = End_Position,
+        dna_reference = Reference_Allele,
+        dna_variant = Tumor_Seq_Allele2,
+        protein_change = stri_replace(HGVSp_Short,
+                                      regex = '^p\\.',
+                                      replacement = ''),
+        protein_start_position = Protein_position,
+        mutation_type = car::recode(Variant_Classification ,
+                                    "'Frame_Shift_Del' = 'frame shift deletion';
+                                    'Frame_Shift_Ins' = 'frame shift insertion';
+                                    'In_Frame_Ins' = 'in-frame insertion';
+                                    'Intron' = 'intron';
+                                    'Missense_Mutation' = 'missense';
+                                    'Nonsense_Mutation' = 'nonsense';
+                                    'Silent' = 'silent';
+                                    'Splice_Region' = 'splice region';
+                                    'Splice_Site' = 'splice site'"),
+        variant_type = car::recode(Variant_Type,
+                                   "'DEL' = 'deletion'; 'INS' = 'insertion'"))
 
   ## common factor levels
 
@@ -145,22 +154,22 @@
 
   expl_fgfr$stack_plots <-
     list(data = unlist(expl_fgfr$stats, recursive = FALSE),
-         fill_var = c(rep('mutation_type', 2),
-                      rep('variant_type', 2),
-                      rep('protein_domain', 2)),
+         fill_var = c(rep('mutation_type', 3),
+                      rep('variant_type', 3),
+                      rep('protein_domain', 3)),
          plot_title = c(paste('Mutation type,',
-                              globals$cohort_labs[c("genie", "tcga")]),
+                              globals$cohort_labs[c("genie", "msk", "tcga")]),
                         paste('Variant type,',
-                              globals$cohort_labs[c("genie", "tcga")]),
+                              globals$cohort_labs[c("genie", "msk", "tcga")]),
                         paste('Protein domain,',
-                              globals$cohort_labs[c("genie", "tcga")])),
+                              globals$cohort_labs[c("genie", "msk", "tcga")])),
          plot_subtitle = paste('total samples: n =',
                                rep(expl_fgfr$n_totals, 3)),
          fill_title = '',
-         palette = globals[c("mutation_colors", "mutation_colors",
-                             "variant_colors", "variant_colors",
-                             "domain_colors", "domain_colors")],
-         reverse_fill = c(rep(TRUE, 4), rep(FALSE, 2))) %>%
+         palette = globals[c(rep("mutation_colors", 3),
+                             rep("variant_colors", 3),
+                             rep("domain_colors", 3))],
+         reverse_fill = c(rep(TRUE, 6), rep(FALSE, 3))) %>%
     pmap(plot_stack,
          x_var = 'percent',
          y_var = 'gene_symbol',
@@ -216,6 +225,20 @@
                             c(2, 3 + 0.5))) %>%
     pmap(append_domain_scheme,
          align = 'v',
+         rm_position_legend = TRUE,
+         rm_domain_legend = TRUE)
+
+  expl_fgfr$position_plots$msk <-
+    list(position_plot = expl_fgfr$position_plots$msk,
+         domain_tbl = expl_fgfr$domain_lst,
+         protein_name = names(expl_fgfr$domain_lst),
+         protein_length = globals$receptor_lengths,
+         rel_heights = list(c(2, 3 + 0.5),
+                            c(2, 2 + 0.5),
+                            c(2, 6 + 0.5),
+                            c(2, 1 + 0.5))) %>%
+    pmap(append_domain_scheme,
+         alig = 'v',
          rm_position_legend = TRUE,
          rm_domain_legend = TRUE)
 

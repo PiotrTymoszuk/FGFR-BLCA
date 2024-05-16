@@ -19,10 +19,11 @@
                        fgfr_os$data,
                        inner_join, by = 'sample_id')
 
-  ## TCGA: variant of the data set without pT4 cancers
+  ## TCGA and MSK: variants of the data sets without pT4 cancers
 
-  fgfr_os$data$tcga_wo_t4 <- fgfr_os$data$tcga %>%
-    filter(pt_stage != 'T4')
+  fgfr_os$data[c('msk_wo_t4', 'tcga_wo_t4')] <-
+    fgfr_os$data[c('msk', 'tcga')] %>%
+    map(filter, pt_stage != 'T4')
 
   fgfr_os$data <- fgfr_os$data %>%
     map(~.x[names(.x) != 'pt_stage']) %>%
@@ -103,10 +104,9 @@
 
   fgfr_os$km_plots <-
     list(x = fgfr_os$km_plots,
-         y = globals$cohort_labs[names(fgfr_os$km_plots)] %>%
-           ifelse(is.na(.),
-                  paste(globals$cohort_labs["tcga"], 'without pT4 cancers'),
-                  .),
+         y = c(globals$cohort_labs,
+               paste(globals$cohort_labs[c("msk", "tcga")],
+                     'without pT4 cancers')),
          w = fgfr_os$n_captions,
          z = fgfr_os$legend_labs) %>%
     pmap(function(x, y, w, z) x$plot +

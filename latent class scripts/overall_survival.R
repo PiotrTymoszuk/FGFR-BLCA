@@ -12,7 +12,9 @@
 
   ## analysis data: GENIE and TCGA
 
-  lca_os$data <- list(genie = genie, tcga = tcga) %>%
+  lca_os$data <- list(genie = genie,
+                      msk = msk,
+                      tcga = tcga) %>%
     map(~.x$clinic) %>%
     map(select, sample_id, os_days, death, any_of('pt_stage'))
 
@@ -20,10 +22,11 @@
                       lca_os$data,
                       inner_join, by = 'sample_id')
 
-  ## TCGA: variant without T4 tumors
+  ## MSK and TCGA: variants without T4 tumors
 
-  lca_os$data$tcga_wo_t4 <- lca_os$data$tcga %>%
-    filter(pt_stage != 'T4')
+  lca_os$data[c('msk_wo_t4', 'tcga_wo_t4')] <-
+    lca_os$data[c('msk', 'tcga')] %>%
+    map(filter, pt_stage != 'T4')
 
   lca_os$data <- lca_os$data %>%
     map(~.x[names(.x) != 'pt_stage']) %>%
@@ -104,11 +107,9 @@
 
   lca_os$km_plots <-
     list(x = lca_os$km_plots,
-         y = globals$cohort_labs[names(lca_os$km_plots)] %>%
-           ifelse(is.na(.),
-                  paste(globals$cohort_labs["tcga"],
-                        'without pT4 cancers'),
-                  .),
+         y = c(globals$cohort_labs[c("genie", "msk", "tcga")],
+               paste(globals$cohort_labs[c("msk", "tcga")],
+                     ' without pT4 cancers')),
          w = lca_os$n_captions,
          z = lca_os$legend_labs) %>%
     pmap(function(x, y, w, z) x$plot +

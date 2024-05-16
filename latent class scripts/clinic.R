@@ -19,11 +19,13 @@
            plot_type = ifelse(format == 'numeric',
                               'box', 'stack'),
            ax_label = ifelse(is.na(unit),
-                             '% of cluster', unit))
+                             '% of subset', unit))
 
   ## analysis data
 
-  lca_clinic$data <- list(genie = genie, tcga = tcga) %>%
+  lca_clinic$data <- list(genie = genie,
+                          msk = msk,
+                          tcga = tcga) %>%
     map(~.x$clinic) %>%
     map(select, sample_id, any_of(lca_clinic$lexicon$variable))
 

@@ -66,7 +66,7 @@
     ggsurvplot(pval = expl_os$test$significance,
                pval.size = 2.75)
 
-  expl_os$plot$plot +
+  expl_os$plot$plot <- expl_os$plot$plot +
     scale_color_manual(values = unname(globals$cohort_colors),
                        labels = expl_os$n_numbers$legend_lab,
                        name = '') +

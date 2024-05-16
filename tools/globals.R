@@ -42,10 +42,12 @@
   insert_msg('Color labs and colors')
 
   globals$cohort_labs <- c(genie = 'GENIE BLCA',
+                           msk = 'MSK IMPACT',
                            tcga = 'TCGA BLCA',
                            imvigor = 'IMvigor')
 
   globals$cohort_colors <- c(genie = 'indianred3',
+                             msk = 'darkolivegreen4',
                              tcga = 'steelblue',
                              imvigor = 'gray60')
 
@@ -171,7 +173,7 @@
   globals$genet_colors <-
     c('mutRB1' = 'bisque3',
       'oligoMut' = 'orangered3',
-      'mutERBB' = 'plum4',
+      'hyperMut' = 'plum4',
       'del9p21' = 'steelblue',
       'mutFGFR3' = 'aquamarine3',
       'ampMDM2' = 'firebrick')
