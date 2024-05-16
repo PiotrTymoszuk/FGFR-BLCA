@@ -17,6 +17,7 @@ devtools::install_github('PiotrTymoszuk/clustTools')
 devtools::install_github('PiotrTymoszuk/soucer')
 devtools::install_github('PiotrTymoszuk/figur')
 devtools::install_github('PiotrTymoszuk/microViz')
+devtools::install_github('PiotrTymoszuk/coxExtensions')
 
 ```
 To launch the entire pipeline, source the `exec.R` file:
