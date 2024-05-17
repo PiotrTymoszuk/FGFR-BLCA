@@ -32,9 +32,12 @@
   lca_pred$model <- lca_dev$tune_object$models$class_6
 
   lca_pred$model$class_names <-
-    c('mutRB1', 'oligoMut',
-      'hyperMut', 'del9p21',
-      'mutFGFR3', 'ampMDM2')
+    c('mutRB1',
+      'hyperMut',
+      'mutFGFR3',
+      'oligoMut',
+      'ampMDM2',
+      'del9p21')
 
   ## predictions
 

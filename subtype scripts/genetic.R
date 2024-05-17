@@ -70,8 +70,8 @@
   insert_msg('Descriptive stats')
 
   sub_genet$stats <- sub_genet$data %>%
-    map(bin2stats,
-        split_factor = 'consensusClass')
+    map(count_binary,
+        split_fct = 'consensusClass')
 
 # Testing for differences between the cohorts ----
 

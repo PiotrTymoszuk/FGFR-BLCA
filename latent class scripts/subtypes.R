@@ -42,8 +42,9 @@
 
   insert_msg('Descriptive stats')
 
-  lca_sub$stats <- bin2stats(lca_sub$data,
-                             split_factor = 'consensusClass')
+  lca_sub$stats <- lca_sub$data %>%
+    select(-sample_id) %>%
+    count_binary(split_fct = 'consensusClass')
 
 # Testing for differences between the consensus classes -------
 

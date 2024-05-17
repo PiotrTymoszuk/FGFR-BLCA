@@ -60,8 +60,8 @@
   for(i in names(lca_occur$data)) {
 
     lca_occur$stats[[i]] <- lca_occur$variables %>%
-      map(~bin2stats(lca_occur$data[[i]],
-                     split_factor = .x)) %>%
+      map(~count_binary(lca_occur$data[[i]],
+                        split_fct = .x)) %>%
       set_names(lca_occur$variables)
 
   }

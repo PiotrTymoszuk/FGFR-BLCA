@@ -99,7 +99,7 @@
   ## a simplified data frame with 0/1 coded non-silent mutations
 
   genie$mutation <- genie$mutation_detail %>%
-    extract_mutations(id_variable = 'sampleId',
+    extract_mutations(sample_id = 'sampleId',
                       gene_id = 'hugoGeneSymbol')
 
   ## detailed mutations for FGFR1 - 4

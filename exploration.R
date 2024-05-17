@@ -51,7 +51,7 @@
     './tools/functions.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
-# Scripts for th exploratory data analysis --------
+# Scripts for the exploratory data analysis --------
 
   insert_msg('Analysis scripts')
 

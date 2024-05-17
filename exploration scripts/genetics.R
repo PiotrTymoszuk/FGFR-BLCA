@@ -30,7 +30,8 @@
     expl_genet$data[[i]] <- expl_genet$data[[i]] %>%
       map(select, all_of(expl_genet$variables[[i]])) %>%
       compress(names_to = 'cohort') %>%
-      mutate(cohort = factor(cohort, globals$analysis_cohorts)) %>%
+      mutate(cohort = factor(cohort, globals$analysis_cohorts),
+             cohort = droplevels(cohort)) %>%
       relocate(cohort)
 
   }
@@ -72,8 +73,8 @@
   insert_msg('Frequency of alterations')
 
   expl_genet$stats <- expl_genet$data %>%
-    map(bin2stats,
-        split_factor = 'cohort') %>%
+    map(count_binary,
+        split_fct = 'cohort') %>%
     map(mutate,
         cohort = factor(cohort, globals$analysis_cohorts),
         cohort = droplevels(cohort))

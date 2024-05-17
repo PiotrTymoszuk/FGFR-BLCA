@@ -172,11 +172,11 @@
 
   globals$genet_colors <-
     c('mutRB1' = 'bisque3',
-      'oligoMut' = 'orangered3',
       'hyperMut' = 'plum4',
-      'del9p21' = 'steelblue',
       'mutFGFR3' = 'aquamarine3',
-      'ampMDM2' = 'firebrick')
+      'oligoMut' = 'orangered3',
+      'ampMDM2' = 'firebrick',
+      'del9p21' = 'steelblue')
 
 # END -------
 

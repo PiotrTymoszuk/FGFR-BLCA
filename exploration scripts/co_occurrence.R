@@ -81,8 +81,8 @@
   for(i in names(expl_occur$data)) {
 
     expl_occur$stats[[i]] <- expl_occur$variables %>%
-      map(~bin2stats(expl_occur$data[[i]],
-                     split_factor = .x)) %>%
+      map(~count_binary(expl_occur$data[[i]],
+                        split_fct = .x)) %>%
       set_names(expl_occur$variables )
 
   }

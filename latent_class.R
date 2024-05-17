@@ -72,12 +72,11 @@
 
   insert_msg('Definition and evaluation of the latant classes')
 
-  ## development of the clusters by hierarchical clustering
-  ## of spectralization results in the training GENIE cohort
+  ## development of the clusters by latent class modeling
 
   access_cache(cache_path = './cache/lca_dev.RData',
                script_path = './latent class scripts/development.R',
-               message = 'Loading cached spectral clustering results')
+               message = 'Loading cached latent class analysis')
 
   ## prediction of the clusters in the TCAG cohort,
   ## characteristic of the clusters
@@ -96,7 +95,7 @@
     './latent class scripts/tmb.R',
     './latent class scripts/overall_survival.R',
     './latent class scripts/disease_relapse_free_survival.R',
-    '/latent class scripts/overall_survival_cox.R') %>%
+    './latent class scripts/overall_survival_cox.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
   ## analysis of consensus molecular classes and differential gene expression,

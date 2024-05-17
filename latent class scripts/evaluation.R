@@ -91,8 +91,8 @@
 
   lca_eval$stats <- lca_eval$data %>%
     map(select, -sample_id) %>%
-    map(bin2stats,
-        split_factor = 'clust_id') %>%
+    map(count_binary,
+        split_fct = 'clust_id') %>%
     map(mutate,
         gene_symbol = stri_split_fixed(variable,
                                        pattern = '_',
@@ -278,7 +278,7 @@
     set_names(c('Cohort', 'Variable', 'Genetic subset',
                 'Samples with alterations, percentage',
                 'Samples with alterations, N',
-                'Tota samples, N',
+                'Total samples, N',
                 'Significance', 'Effect size'))
 
 # END ------
