@@ -19,6 +19,7 @@ devtools::install_github('PiotrTymoszuk/figur')
 devtools::install_github('PiotrTymoszuk/microViz')
 devtools::install_github('PiotrTymoszuk/coxExtensions')
 devtools::install_github('PiotrTymoszuk/htGLMNET')
+devtools::install_github('PiotrTymoszuk/ExDA')
 
 ```
 To launch the entire pipeline, source the `exec.R` file:
