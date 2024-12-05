@@ -1,0 +1,876 @@
+---
+title: "FGF- and FGFR-coding gene alterations in urothelial cancers"
+subtitle: "Short analysis report"
+author: "Piotr Tymoszuk for the Department of Urology, Medical University of Innsbruck"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+
+output: 
+  bookdown::html_document2:
+    css: "style.css"
+    
+bibliography: blca.bib
+
+csl: frontiers_medical.csl
+
+header-includes:
+  \usepackage{longtable}
+  \usepackage{tabu}
+  \usepackage{caption}
+  \usepackage{makecell}
+  \usepackage{pdflscape}
+  \usepackage{array}
+  \usepackage{booktabs}
+  \usepackage{threeparttable}
+  \usepackage{threeparttablex}
+  \usepackage{wrapfig}
+  \usepackage{multirow}
+  \usepackage[normalem]{ulem}
+  \usepackage{colortbl}
+  \usepackage{xcolor}
+  \usepackage{float} \floatplacement{figure}{H} \floatplacement{table}{H}
+
+---
+
+```{r, setup, include = FALSE}
+
+library(Cairo)
+
+opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      dev = "cairo_pdf", 
+                      dpi = 600)
+
+set_flextable_defaults(font.family = "Cambria", 
+                       font.size = 10)
+
+
+```
+
+\newpage
+
+# Analysis summary
+
+* Fibroblast growth factor receptor (FGFR) signaling has emerged as a promising therapy target in urothelial cancers with approval of the pan-FGFR inhibitor erdafitinib. However, effects of genetic alterations and modulation of expression of FGF- and FGFR-coding genes in urothelial carcinoma on tumor biology, therapy response, and clinical outcome are still not fully understood.
+
+* The primary goal of the current project was to characterize frequency, co-occurrence, and clinical implications of genetic alterations in FGF- and FGFR-coding genes in large publicly available cohorts of urothelial cancers. The secondary goal was an attempt to establish subsets of urothelial cancer specimens based on differences in their profiles of somatic mutations and gene copy number variants.
+
+* Four collectives of urothelial cancer patients were evaluated: the GENIE BLCA cohort, an urothelial carcinoma subset of the large GENIE project (n = `r nrow(genie$clinic)`) [@Sweeney2017], the predominantly muscle-invasive MSK IMPACT cohort (`r nrow(msk$clinic)`) [@Clinton2022], the muscle-invasive TCGA BLCA collective (n = `r nrow(tcga$clinic)`) [@Liu2018; @Robertson2017], and the IMvigor cohort of late stage, platinum-refractory cancers subjected to an anti-PD-L1 treatment (`r nrow(imvigor$clinic)`) [@Balar2017]. Detailed information on somatic mutations and their effects on protein sequence was provided for the GENIE BLCA, MSK IMPACT, and TCGA BLCA cohorts. Binarized indexes of presence/absence of somatic mutations in selected genes were available for the IMvigor cohort. Binarized data on gene amplifications and deletions were obtained for the GENIE BLCA, MSK IMPACT, and TCGA BLCA collectives. Gene expression quantification by RNA sequencing and assignment to consensus molecular classes [@Kamoun2020] were retrieved for the TCGA BLCA and IMvigor cohorts. Overall survival information was available for the MSK IMPACT, TCGA BLCA, and IMvigor cohorts; data on disease-specific and relapse-free survival was provided for the TCGA BLCA collective. Approximate overall survival was calculated for the GENIE BLCA project participants based on age at enrollment in years and follow-up time in days. Characteristic of the investigated collectives is presented in __Table \@ref(tab:tab-cohorts)__.
+
+* Somatic mutations of _FGFR3_ belonged to the most common genetic features of urothelial cancers and were found in `r expl_genet$stats$mutation %>% filter(variable == 'FGFR3') %>% .$percent %>% range %>% signif(2) %>% paste(collapse = ' to ')`% of cancer samples. Somatic mutations of the remaining _FGFR1_, _FGFR2_, and _FGFR4_ receptor genes were less frequent (`r expl_genet$stats$mutation %>% filter(variable %in% c('FGFR1', 'FGFR2', 'FGFR4')) %>% .$percent %>% range %>% signif(2) %>% paste(collapse = ' to ')`% of cancer samples). Amplifications of the _FGF3_, _FGF4_, and _FGF19_ genes in urothelial cancers result from multiplication of the 11q13 chromosome region, which codes also for an essential oncogene _CCDN1_. Amplifications of _FGF3_, _FGF4_, and _FGF19_ were detected in `r expl_genet$stats$amplification %>% filter(variable %in% c('FGF3', 'FGF4', 'FGF19')) %>% .$percent %>% range %>% signif(2) %>% paste(collapse = ' to ')`% of specimens (__Figures \@ref(fig:fig-general-freq)__ and __\@ref(fig:fig-fgfr-freq)__, __Tables \@ref(tab:tab-genetics)__ and __\@ref(tab:tab-fgf-genetics)__).
+
+* A great majority of somatic mutations of _FGFR1_, _FGFR2_, _FGFR3_, and _FGFR4_ was classified as missense mutations caused by single nucleotide polymorphisms. Particularly for _FGFR3_, they affected protein residues were frequently located apart from the Ig-like domains responsible for ligand biding and besides the kinase domains vital for activation of downstream signaling (__Figures \@ref(fig:fig-mutation-type)__ - __\@ref(fig:fig-protein-domain-split)__, __Table \@ref(tab:tab-fgfr-class)__). A more detailed analysis revealed the Ig-like domain 1 and kinase domain as the mutation hot-spots of _FGFR1_. The kinase domain was the prime target of mutations of _FGFR2_. Hinge regions between the Ig-like domains 1 and 2, as well as residues around the membrane-spanning region between the Ig-like domain 3 and the kinase domain were identified as mutational hot-spots of _FGFR3_. In case of _FGFR4_, the Ig-like domain 1, the hinge region between the Ig-like domain 3 and kinase domain, as well as the kinase domain were prime targets of mutations of _FGFR4_ (__Figures \@ref(fig:fig-fgfr1-position)__ - __\@ref(fig:fig-fgfr4-position)__). It can be hence speculated, that somatic mutations of FGF receptors may affect both the kinase activity and the conformation of the protein resulting in a higher affinity towards ligands or ligand-independent signaling. 
+
+* Co-occurrence and exclusivity of genetic features was investigated by analysis of pairwise Jacquard similarity coefficients for pairs of genetic alterations in urothelial cancer samples. Such analysis revealed little overlap between somatic mutations of _FGFR3_ and other common alterations such as _TP53_ and _RB1_ mutations, amplification of the 11q13 chromosome region hallmarked by copy number variants of _FGF3/4/19_ and _CCND1_, as well as deletion of the 9p21 chromosome region with the _MTAP_, _CDKN2A_, and _CDKN2A_ genes (__Figures \@ref(fig:fig-genetic-mds)__ - __Figure \@ref(fig:fig-fgfr-cont-hm)__). 
+
+* Concerning co-regulation of expression of FGF- and FGFR-coding genes, _FGFR1_ and _FGFR3_ mRNA levels were found to be weakly but significantly negatively associated. Increased expression of _FGFR1_ in the cancer tissue correlated significantly with upregulation of genes coding for multiple FGF ligands (_FGF1_, _FGF2_, _FGF5_, _FGF7_, _FGF9_, _FGF10_, and _FGF18_). This phenomenon was absent for _FGFR3_ (__Figure \@ref(fig:fig-fgfr-correlation)__). In a differential gene expression analysis of cancers with and without _FGFR3_ mutations, we observed that presence of _FGFR3_ mutations translated in significantly and strongly increased _FGFR3_ mRNA levels. By contrast, cancers with _FGFR3_ mutations had significantly lower expression of _FGF2_, _FGF5_, and _FGF7_ (__Figure \@ref(fig:fig-fgfr-dge)__, __Table \@ref(tab:tab-fgfr3-dge)__). This suggests two mechanisms leading to activation of pro-oncogenic FGFR signaling in urothelial carcinoma. In _FGFR3_ mutant tumors, FGFR signaling may be triggered by over-expression of FGFR3 protein, improved FGF-affinity, or even in an ligand-independent manner. Alternatively, concomitant over-expression of _FGFR1_ with its ligands may activated FGFR signaling in auto- or paracrine manner. 
+
+* No consistent differences in total mutation burdens (TMB), counts of protein-affecting somatic mutations, or counts of gene deletions were found for urothelial cancers with and without _FGFR3_ mutations. Gene amplification numbers were in turn significantly lower in _FGFR3_ mutated neoplasms as compared with _FGF3_ wild-type tumors. Effect size of this difference was small (__Figure \@ref(fig:fig-fgfr-tmb)__).
+
+* There were no significant differences in age and gender distribution between patients with wild-type and _FGFR3_-mutated cancers. _FGFR3_ mutant cancers tended towards lower pathological stages, this effect was significant in the MSK IMPACT cohort but not in the TCGA BLCA collective (__Table \@ref(tab:tab-fgfr3-clinic)__). In the GENIE BLCA and MSK IMPACT cohorts, patients with _FGFR3_ mutated tumors demonstrated improved overall survival as compared with bearers of WT neoplasms. This phenomenon was also evident in the TCGA BLCA collective, it was only statistically significant upon exclusion of pT4 cancer patients (entire cohort: p = `r signif(fgfr_os$test$tcga$p_adjusted, 2)`, without pT4 cancers: p = `r signif(fgfr_os$test$tcga_wo_t4$p_adjusted, 2)`). There were no significant differences in disease-specific or relapse-free survival between the _FGFR3_ mutation strata in the TCGA BLCA cohort, which may however result from insufficient number of events of interest (tumor-related deaths and relapses, __Figures \@ref(fig:fig-fgfr-os)__ and __Figure \@ref(fig:fig-fgfr-rfs)__). 
+
+* Analysis of effects of amplification of the 11q13 chromosome region on expression of FGF- and FGFR-coding genes was possible solely for the TCGA BLCA collective. Presence of this genetic aberration resulting in amplification of the _FGF3_, _FGF4_, _FGF19_, and _CCND1_ genes translated into lower expression of _FGFR1_ and significantly higher levels of _FGF3_, _FGF4_, and _FGF19_ mRNA (__Figure \@ref(fig:fig-amp11q13)__). However, effects of those differences was weak and, in case of _FGF3_ and _FGF4_, the expression levels were extremely low as compared with other FGF ligand-coding genes. Hence, biological relevance of the 11q13 amplification for FGFR signaling remains unclear. 
+
+* Basal/squamous-like cancers followed by luminal papillary tumors constituted the largest consensus molecular classes [@Kamoun2020] of urothelial cancers in the TCGA BLCA and IMvigor cohorts (__Figure \@ref(fig:fig-fgfr-subtypes)A__). in both cohorts, _FGFR3_ mutated cancers were found to be significantly enriched in the papillary luminal class (TCGA: `r sub_genet$stats$tcga %>% filter(variable == 'FGFR3_mutation', consensusClass == 'LumP') %>% .$percent %>% signif(2)`%, IMvigor: `r sub_genet$stats$imvigor %>% filter(variable == 'FGFR3_mutation', consensusClass == 'LumP') %>% .$percent %>% signif(2)`% of specimens). In the TCGA BLCA cohort, amplifications of _FGF3_, _FGF4_, and _FGF19_ genes resulting from multiplication of the 11q13 chromosome region were found in luminal papillary (`r sub_genet$stats$tcga %>% filter(variable %in% c('FGF3_amplification', 'FGF4_amplification', 'FGF19_amplification'), consensusClass == 'LumP') %>% .$percent %>% range %>% signif(2) %>% paste(collapse = ' to ')`%), stroma-rich (`r sub_genet$stats$tcga %>% filter(variable %in% c('FGF3_amplification', 'FGF4_amplification', 'FGF19_amplification'), consensusClass == 'Stroma-rich') %>% .$percent %>% range %>% signif(2) %>% paste(collapse = ' to ')`%), and basal/squamous-like cancers (`r sub_genet$stats$tcga %>% filter(variable %in% c('FGF3_amplification', 'FGF4_amplification', 'FGF19_amplification'), consensusClass == 'Ba/Sq') %>% .$percent %>% .[1] %>% signif(2)`% of specimens, __Figures \@ref(fig:fig-fgfr-subtypes)__ and __\@ref(fig:fig-fgfr-subdetails)__, __Table \@ref(tab:tab-cons-genetics)__). 
+
+* mRNA levels of `r sub_dge$anova_significant %>% reduce(intersect) %>% map_chr(~paste0('_', .x, '_')) %>% collapse_and` were found to vary significant between the consensus molecular classes of urothelial carcinomas in both the TCGA BLCA and IMvigor data set (__Table \@ref(tab:tab-cons-dge)__). Expression of _FGFR1_ was the highest in stroma-rich and luminal non-specified tumors and the lowest in luminal papillary cancers. In turn, maximal mRNA levels of _FGFR3_ were detected in luminal papillary cancers and the lowest expression was observed in basal/squamous- and neuroendocrine-like tumors. Effect size of those differences was large (__Figure \@ref(fig:fig-sub-fgfr-expression)__). Expression of all significantly regulated _FGF_ ligands was the lowest in luminal papillary cancers. _FGF2_, _FGF7_, _FGF10_, and _FGF18_ transcript amounts followed the expression pattern of _FGFR1_ and were detected at the highest levels in stroma-rich and non-specified luminal cancers. _FGF5_ was expressed at the highest levels by basal/squamous-like, neuroendocrine-like and stroma-rich neoplasms. Effect sizes of differential regulation of these FGF-coding genes was large (__Figure \@ref(fig:fig-sub-fgf-expression1)__ and __\@ref(fig:fig-sub-fgf-expression2)__). Collectively, the differential gene expression analysis results support the model of activation of FGFR signaling propose above. While luminal papillary cancers may be driven by _FGFR3_ mutations and over-expression resulting in FGFR signaling with little dependence on the ligands, stroma-rich and non-specified luminal cancers may exploit auto- and paracrine signaling fueled by over-expression of _FGFR1_ and its ligands.
+
+* By latent class analysis (LCA, called also latent class modeling), we could establish a classification scheme of urothelial cancers based on presence/absence of the most frequent genetic alterations detected in at least 5% of cancer specimens. This classification scheme with six 'genetic subsets' was developed in the GENIE BLCA training cohort and technically validated in the MSK IMPACT and TCGA BLCA cohort (__Figures \@ref(fig:fig-lca-devel)__ and __\@ref(fig:fig-lca-size)__). The 'mutRB1' subset (`r lca_eval$n_numbers %>% map(filter, clust_id == 'mutRB1') %>% map_dbl(~.x$percent) %>% range %>% signif(2) %>% paste(collapse = ' to ')`% of specimens) was characterized by highly frequent _TP53_, _RB1_ and _ARID1A_ mutations, _E2F3_ amplifications, and nearly absent _FGFR3_ mutations, 11q13 amplification, and 9p21 deletions. The 'oligoMut' subset was hallmarked by frequent mutations of _TP53_ and the lowest overall mutation count. The key features of 'hyperMut' subset were the highest total mutation count, as well as frequent somatic mutations of _ARID1A_, _FGFR3_, _CREBBP_, _ERBB2_, _FBXW7_, and lacking copy number variants of 11q13 and 9p21. The 'del9p21' subset was characterized by relatively common deletions of the chromosome region 9p21, amplification of the 11q13 chromosome region, and highly frequent mutations of _TP53_ and _KDM6A_. In the 'mutFGFR3' subset, mutations of _FGFR3_ and _KDM6A_, and deletions of 9p21 were common, while mutations in _TP53_, _RB1_, and _ERBB2_, and gene amplifications were virtually absent. Finally, the 'ampMDM2' subset was characterized by the highest percentage of _MDM2_, highly common copy number variants of the 11p13 and 9p21 chromosome regions and essentially lacking mutations of _TP53_ and _RB1_ (__Figures \@ref(fig:fig-lca-genet1)__ - __\@ref(fig:fig-lca-details-cna2)__, __Table \@ref(tab:tab-lca-genetics)__). 
+
+* Numbers of mutations differed significantly between the genetic subsets with large effect size and were the highest in hyperMut cancers and the lowest in oligoMut and mutFGFR3 tumors. Gene deletion numbers were significantly higher in del9p21 and ampMDM2 than in the remaining genetic subsets in the GENIE BLCA and MSK IMPACT collectives (large effect size). Amplification counts were the highest in del9p21, ampMDM2, and mutRB1 subsets and the lowest in mutFGFR3 cancers; those differences were large and significant in all collectives (__Figures \@ref(fig:fig-lca-tmb)__ and __\@ref(fig:fig-lca-cna-count)__).
+
+* We could observe significant differences in expression of _FGFR1_, _FGFR3_, and _FGFR3_, as well as _FGF2_, _FGF5_, FGF7_, and _FGF17_ genes between the genetic subsets of the TCGA BLCA cohort (__Table \@ref(tab:tab-lca-dge)__). Interestingly, mutFGFR3 cancers were found to over-express _FGFR3_ and, at the same time, to suppress _FGF2_, _FGF5_, and _FGF7_. The highest expression levels of _FGFR1_ were observed in mutRB1 and ampMDM2 genetic subsets; _FGFR2_ was found to be expressed in oligoMut, del9p21, and ampMDM2 at the highest levels (__Figures \@ref(fig:fig-lca-dge-fgfr)__ and __\@ref(fig:fig-lca-dge-fgf)__). 
+
+* There were no significant differences in age and gender of cancer patients between the genetic clusters that were shared by the GENIE BLCA, MSK IMPACT, and TCGA BLCA collectives (__Figure \@ref(fig:fig-lca-clinic)__). Significantly lower pathological staging was observed in mutFGFR3 subset in the MSK IMPACT cohort, but this difference could not be corroborated in the TCGA BLCA collective. In the TCGA BLCA data set, mutFGFR3 and ampMDM2 genetic subsets comprised predominantly cancers assigned to the luminal papillary consensus class. Basal/squamous-like consensus class cancers predominated in mutRB1, oligoMut, hyperMut, and del9p21 genetic subsets (__Figure \@ref(fig:fig-lca-stage-class)__). Notably, consensus molecular classes of muscle-invasive urothelial carcinomas were established with bulk cancer transcriptome [@Kamoun2020; @Robertson2017]. The disparity between the molecular consensus classes and the genetic subsets proposed by us suggests that phenotypically similar cancers may exploit highly dissimilar sets of driver genetic alterations and arise from unrelated evolutionary processes. 
+
+* Significant differences in overall survival were observed between the genetic subsets in the GENIE BLCA and MSK IMPACT cohorts with the worst survival in mutRB1 subset and favorable prognosis inferred for mutFGFR3 and hyperMut cancers. No significant differences in overall survival were found in the TCGA cohort, which may, however, attributed to insufficient number of deaths in the genetic subsets (__Figure \@ref(fig:fig-lca-os)__). As investigated by univariable Cox regression, patients assigned to hyperMut subset were at roughly 50 - 75% significantly lower death risk, and patients in mutFGFR3 were at approximately 43 - 45% significantly lower death risk as compared with mutRB1 subset in both the GENIE BLCA and MSK IMPACT cohort. The general effect of genetic cluster assignment was found to be independent from age, sex, and pathological tumor stage (likelihood ratio test GENIE BLCA: `r lca_cox$lrt$plot_lab[[1]]`, MSK IMPACT: `r lca_cox$lrt$plot_lab[[2]]`). At the levels of single genetic subsets, hyperMut subset as favorable survival marker remained significant upon adjustment for age, sex, and pathological tumor stage. mutFGFR3 subset assignment was found independent from age and gender in the GENIE BLCA cohort but was confounded by age, sex, and pathological cancer stage in the MSK IMPACT collective (__Figure \@ref(fig:fig-lca-cox)__). We could not discern significant differences in disease-specific and relapse-free survival between the genetic subsets of the TCGA BLCA cohort (not shown).
+
+* Collectively, our analysis results suggest at least two mechanisms of FGFR signaling activation in urothelial cancers: the one exploiting FGFR3 mutations and largely independent on FGF ligands and operative predominantly in papillary cancers, and the other relying on over-expression of FGFR1 and FGF ligands predominantly by stroma-rich and non-specified luminal tumors. Furthermore, we put forward a relatively simple classification scheme of urothelial cancers based on the most common somatic mutations, gene and chromosome region deletions and amplifications established in the large GENIE BLCA collective. The key genetic features of those six genetic clusters such as subset-defining mutations and copy number variants, mutation and variant numbers could be reproduced in the MSK IMAPST and TCGA BLCA, i.e. two independent validation cohorts. Of clinical importance, the genetic subset classification bears consequences for overall survival in an age-, gender-, and stage-independent manner.
+
+* Our analysis bears limitations. Incompleteness of clinical information in the GENIE BLCA cohort precluded an in-depth characteristic of the FGFR3 mutation strata and genetic subsets. Unavailability of exact overall survival in this collective may have interfered with results of significant analyses. Detailed mutation data as well as copy number information were not provided for the IMvigor collective, which made validation of the genetic subsets impossible in this cohort of immunotherapy patients. Finally, gene expression data were not available for the largest GENIE BLCA and MSK IMPACT cohorts, which precluded detailed analyses of differential gene expression, biological phenotype, and consensus molecular classification based on transcriptome.
+
+\newpage
+
+# Results
+
+## Characteristic of investigated cohorts and frequency of genetic alterations
+
+```{r fig-general-freq, fig.width = figur::convert(rep_figs$general_freq, to = 'in')$w, fig.height = figur::convert(rep_figs$general_freq, to = 'in')$h, fig.cap = 'The most frequent somatic mutations and gene copy alterations in urothelial cancer.'}
+
+rep_figs$general_freq$plot
+
+```
+
+__Figure \@ref(fig:fig-general-freq). The most frequent somatic mutations and gene copy alterations in urothelial cancer.__ 
+
+_Percentages of somatic mutations, gene deletions and amplification present in at least 5% of cancers samples in all investigated cohorts (`r globals$cohort_labs %>% collapse_and`, note: gene amplification and deletion data were not available for the `r globals$cohort_labs["imvigor"]` cohort) are presented in bar plots. Alterations affecting FGF- and FGFR-coding genes are highlighted with bold font. Numbers of analyzed cancer samples are indicated in the plot legend._
+
+\newpage
+
+```{r fig-fgfr-freq, fig.width = figur::convert(rep_figs$fgfr_freq, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_freq, to = 'in')$h, fig.cap = 'Frequency of somatic mutations and copy number alterations of FGF- and FGFR-coding genes.'}
+
+rep_figs$fgfr_freq$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr-freq). Frequency of somatic mutations and copy number alterations of FGF- and FGFR-coding genes.__ 
+
+_Percentages of somatic mutations, deletions and amplifications of FGF- and FGFR-coding genes in the investigated cohort are presented in bar plots. Note that amplification and deletion data were not available for the `r globals$cohort_labs["imvigor"]` cohort. Numbers of analyzed cancer samples are indicated in the plot legend._
+
+\newpage
+
+```{r tab-cohorts, tab.cap = 'Characteristic of the investigated cohorts. Numeric features are presented as medians with interquartile ranges and ranges. Qualitative variables are shown as percentages and observation counts of the categories.'}
+
+flextable::flextable(rep_tabs$cohorts) %>% 
+  set_widths(c(3, rep(3, 4), 2.6, 2.6)) %>% 
+  footnote(1, 6:7, 
+           value = as_paragraph('Numeric variables: Kruskal-Wallis test with \u03B7\u00B2 effect size statistic. Categorical variables: \u03C7\u00B2 test with Cramer V effect size statistic.'), 
+           part = 'header', 
+           ref_symbols = 'a') %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-genetics, tab.cap = "Frequency of the most common somatic mutations and copy number variants in the investigated cohorts. Frequencies of alterations present in at least 5% of cancer samples are displayed. Statistical significance for differences between the cohorts was assessed by chi-squared test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. The table is available as a supplementary Excel file."}
+
+rep_tabs$genetics[1, 1] %>% 
+  mutate(`Alteration type` = '') %>% 
+  set_names(' ') %>% 
+  flextable %>% 
+  set_widths(16)
+
+```
+
+```{r tab-fgf-genetics, tab.cap = "Frequency of somatic mutations and copy number variants of FGF- and FGFR-coding genes in the investigated cohorts. Statistical significance for differences between the cohorts was assessed by chi-squared test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. The table is available as a supplementary Excel file."}
+
+rep_tabs$fgf_genetics[1, 1] %>% 
+  mutate(`Alteration type` = '') %>% 
+  set_names(' ') %>% 
+  flextable %>% 
+  set_widths(16)
+
+```
+
+\newpage
+
+## Classification of mutations in FGFR-coding genes, and their possible effects on protein structure and function
+
+```{r fig-mutation-type, fig.width = figur::convert(rep_figs$mutation_type, to = 'in')$w, fig.height = figur::convert(rep_figs$mutation_type, to = 'in')$h, fig.cap = 'Frequency of somatic mutations in FGFR1/2/3/4 genes split by mutation type.'}
+
+rep_figs$mutation_type$plot
+
+```
+
+__Figure \@ref(fig:fig-mutation-type). Frequency of somatic mutations in FGFR1/2/3/4 genes split by mutation type.__ 
+
+_Mutations in FGFR1, FGFR2, FGFR3, and FGFR4 genes in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and()` cohorts were classified by their effects on the coding sequence. Their frequency was expressed as percentage of cancer samples and presented in stack plots. Numbers of analyzed cancer samples are displayed in the plot captions. _
+
+\newpage
+
+```{r fig-variant-type, fig.width = figur::convert(rep_figs$variant_type, to = 'in')$w, fig.height = figur::convert(rep_figs$variant_type, to = 'in')$h, fig.cap = 'Frequency of somatic mutations in FGFR1/2/3/4 genes split by variant type.'}
+
+rep_figs$variant_type$plot
+
+```
+
+__Figure \@ref(fig:fig-variant-type). Frequency of somatic mutations in FGFR1/2/3/4 genes split by variant type.__ 
+
+_Mutations in FGFR1, FGFR2, FGFR3, and FGFR4 genes in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` cohorts were classified by variant type. Their frequency was expressed as percentage of cancer samples and presented in stack plots. Numbers of analyzed cancer samples are displayed in the plot captions. SNP: single nucleotide polymorphism, DNP: di-nucleotide polymorphism;  ONP: oligo-nucleotide polymorphism._
+
+\newpage
+
+```{r fig-protein-domain-split, fig.width = figur::convert(rep_figs$protein_domain_split, to = 'in')$w, fig.height = figur::convert(rep_figs$protein_domain_split, to = 'in')$h, fig.cap = 'Frequency of somatic mutations in FGFR1/2/3/4 genes split by protein domain.'}
+
+rep_figs$protein_domain_split$plot
+
+```
+
+__Figure \@ref(fig:fig-protein-domain-split). Frequency of somatic mutations in FGFR1/2/3/4 genes split by protein domain.__ 
+
+_Mutations in FGFR1, FGFR2, FGFR3, and FGFR4 genes in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` cohorts were classified by protein domain. Their frequency was expressed as percentage of cancer samples and presented in stack plots. Numbers of analyzed cancer samples are displayed in the plot captions._
+
+\newpage
+
+```{r tab-fgfr-class, tab.cap = 'Frequency of mutations in the FGFR1/2/3/4 genes in the GENIE BLCA and TCGA BLCA cohorts classified by mutation type, variant type, and protein domain. The table is available as a supplementary Excel file.'}
+
+rep_tabs$fgfr_class[1, 1] %>% 
+  mutate(`Classification scheme` = '') %>% 
+  set_names(' ') %>% 
+  flextable %>% 
+  set_widths(16)
+
+```
+
+\newpage
+
+```{r fig-fgfr1-position, fig.width = figur::convert(rep_figs$fgfr1_position, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr1_position, to = 'in')$h, fig.cap = 'Residues of FGFR1 protein affected by somatic mutations.'}
+
+rep_figs$fgfr1_position$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr1-position). Residues of FGFR1 protein affected by somatic mutations.__ 
+
+_Somatic mutations in the FGFR1 gene in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` were classified by their effects on nucleotide sequence and mapped to amino acids of the FGFR1 protein. Mutation localization and type are visualized in scatter plots below the FGFR1 protein domain schemes. Each point represents a single somatic mutation. Point color codes for protein domain. Total mutation numbers are displayed in the plot captions._
+
+\newpage
+
+```{r fig-fgfr2-position, fig.width = figur::convert(rep_figs$fgfr2_position, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr2_position, to = 'in')$h, fig.cap = 'Residues of FGFR2 protein affected by somatic mutations.'}
+
+rep_figs$fgfr2_position$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr2-position). Residues of FGFR2 protein affected by somatic mutations.__ 
+
+_Somatic mutations in the FGFR2 gene in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` were classified by their effects on nucleotide sequence and mapped to amino acids of the FGFR2 protein. Mutation localization and type are visualized in scatter plots below the FGFR2 protein domain schemes. Each point represents a single somatic mutation. Point color codes for protein domain. Total mutation numbers are displayed in the plot captions._
+
+\newpage
+
+```{r fig-fgfr3-position, fig.width = figur::convert(rep_figs$fgfr3_position, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr3_position, to = 'in')$h, fig.cap = 'Residues of FGFR3 protein affected by somatic mutations.'}
+
+rep_figs$fgfr3_position$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr3-position). Residues of FGFR3 protein affected by somatic mutations.__ 
+
+_Somatic mutations in the FGFR3 gene in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` were classified by their effects on nucleotide sequence and mapped to amino acids of the FGFR3 protein. Mutation localization and type are visualized in scatter plots below the FGFR3 protein domain schemes. Each point represents a single somatic mutation. Point color codes for protein domain. Total mutation numbers are displayed in the plot captions._
+
+\newpage
+
+```{r fig-fgfr4-position, fig.width = figur::convert(rep_figs$fgfr4_position, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr4_position, to = 'in')$h, fig.cap = 'Residues of FGFR4 protein affected by somatic mutations.'}
+
+rep_figs$fgfr4_position$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr4-position). Residues of FGFR4 protein affected by somatic mutations.__ 
+
+_Somatic mutations in the FGFR4 gene in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` were classified by their effects on nucleotide sequence and mapped to amino acids of the FGFR4 protein. Mutation localization and type are visualized in scatter plots below the FGFR4 protein domain schemes. Each point represents a single somatic mutation. Point color codes for protein domain. Total mutation numbers are displayed in the plot captions._
+
+\newpage
+
+## Co-occurrence of genetic alterations in FGF- and FGFR-coding genes with the most frequent genetic features of urothelial cancers
+
+```{r fig-genetic-mds, fig.width = figur::convert(rep_figs$genetic_mds, to = 'in')$w, fig.height = figur::convert(rep_figs$genetic_mds, to = 'in')$h, fig.cap = 'Co-occurrence of the most common genetic alterations in urothelial cancer.'}
+
+rep_figs$genetic_mds$plot
+
+```
+
+__Figure \@ref(fig:fig-genetic-mds). Co-occurrence of the most common genetic alterations in urothelial cancer.__ 
+
+_Co-occurrence of the most common genetic alterations in urothelial cancers (at least 5% of cancer samples) was investigated in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` cohorts by two-dimensional MDS (multi-dimensional scaling) of pairwise Jaccard's distances._ 
+_MDS results are visualized in scatter plots with single genetic alterations depicted as points. Point color codes for alteration type (somatic mutation, deletion, amplification), point size represents frequency of the alteration in the data set. Note that genetic features displayed in the plots close to each other are expected to co-occur in a high fraction of cancer samples. Total numbers of samples are indicated in the plot captions._
+
+\newpage
+
+```{r fig-genetic-cont-hm, fig.width = figur::convert(rep_figs$genetic_cont_hm, to = 'in')$w, fig.height = figur::convert(rep_figs$genetic_cont_hm, to = 'in')$h, fig.cap = 'Co-occurrence of selected genetic alterations in urothelial cancer.'}
+
+rep_figs$genetic_cont_hm$plot
+
+```
+
+__Figure \@ref(fig:fig-genetic-cont-hm). Co-occurrence of selected genetic alterations in urothelial cancer.__ 
+
+_Co-occurrence of the most common genetic alterations in urothelial cancers (at least 5% of cancer samples) was investigated in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` cohorts by pairwise Jaccard's similarity coefficients J. Statistical significance of co-occurrence, i.e. $J > 0$, was assessed by false discovery rate-adjusted bootstrap tests._ 
+_Frequencies of samples with and without genetic alterations are visualized as heat maps of contingency tables for selected pairs of genetic features. Sample percentages and counts within the total sample sets are indicated in the heat map tiles. J and p values are presented in the plot captions._
+
+\newpage
+
+```{r fig-fgfr-mds, fig.width = figur::convert(rep_figs$fgfr_mds, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_mds, to = 'in')$h, fig.cap = 'Co-occurrence of genetic alterations of FGF- and FGFR-coding genes in urothelial cancer.'}
+
+rep_figs$fgfr_mds$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr-mds). Co-occurrence of genetic alterations of FGF- and FGFR-coding genes in urothelial cancer.__ 
+
+_Co-occurrence of somatic mutations, deletions, and amplifications of FGF- and FGFR-coding genes was investigated in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` cohorts by two-dimensional MDS (multi-dimensional scaling) of pairwise Jaccard's distances._ 
+_MDS results are visualized in scatter plots with single genetic alterations depicted as points. Point color codes for alteration type (somatic mutation, deletion, amplification), point size represents frequency of the alteration in the data set. Note that genetic features displayed in the plots close to each other are expected to co-occur in a high fraction of cancer samples. Total numbers of samples are indicated in the plot captions._
+
+\newpage
+
+```{r fig-fgfr-cont-hm, fig.width = figur::convert(rep_figs$fgfr_cont_hm, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_cont_hm, to = 'in')$h, fig.cap = 'Co-occurrence of genetic alterations selected FGF- and FGFR-coding genes in urothelial cancer.'}
+
+rep_figs$fgfr_cont_hm$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr-cont-hm). Co-occurrence of genetic alterations selected FGF- and FGFR-coding genes in urothelial cancer.__ 
+
+_Co-occurrence of somatic mutations, deletions, and amplifications in FGF- and FGFR-coding genes was investigated in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` cohorts by pairwise Jaccard's similarity coefficients J. Statistical significance of co-occurrence, i.e. $J > 0$, was assessed by false discovery rate-adjusted bootstrap tests._ 
+_Frequencies of samples with and without genetic alterations are visualized as heat maps of contingency tables for selected pairs of genetic features. Sample percentages and counts within the total sample sets are indicated in the heat map tiles. J and p values are presented in the plot captions._
+
+\newpage
+
+## Clinical and biological significance of genetic alterations of FGF- and FGFR-coding genes
+
+```{r fig-fgfr-correlation, fig.width = figur::convert(rep_figs$fgfr_correlation, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_correlation, to = 'in')$h, fig.cap = 'Correlation of mRNA levels of FGF- and FGFR-coding genes.'}
+
+rep_figs$fgfr_correlation$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr-correlation). Correlation of mRNA levels of FGF- and FGFR-coding genes.__ 
+
+_Pairwise correlation of log2-transformed mRNA levels of FGF- and FGFR-coding genes was investigated in the `r globals$cohort_labs[c("tcga", "imvigor")] %>%  collapse_and` cohorts by false discovery rate-adjusted Pearson's test. Correlation coefficients r for significant gene pairs are depicted in bubble plots. Color of the points codes for correlation sign. Point size represents absolute values of r. Numbers of analyzed cancer samples are displayed in the plot captions._
+
+\newpage
+
+```{r fig-fgfr-dge, fig.width = figur::convert(rep_figs$fgfr_dge, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_dge, to = 'in')$h, fig.cap = 'Expression of FGF- and FGFR-coding genes in urothelial cancers stratified by presence of FGFR3 mutations.'}
+
+rep_figs$fgfr_dge$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr-dge). Expression of FGF- and FGFR-coding genes in urothelial cancers stratified by presence of FGFR3 mutations.__ 
+
+_Differences in expression of FGF- and FGFR-coding genes between cancers with and without somatic mutations in the FGFR3 gene were assessed by two-tailed T test with Cohen's d effect size metric in the `r globals$cohort_labs[c("tcga", "imvigor")] %>% collapse_and`. P values were corrected with the false discovery rate (FDR) method. Differentially regulated genes were identified by pFDR < 0.05 and at least 1.5 fold-regulation of gene expression in mutated samples as compared with WT specimens._
+
+_(A) pFDR values and log2 fold-regulation estimates of gene expression in mutated vs WT samples are presented in Volcano plots. Each point represents a single gene. Point color codes for significance and regulation sign, differentially regulated genes are labeled with their symbols. The significance and fold-regulation cutoffs of differential gene expression are depicted as dashed lines. Numbers of analyzed cancer samples are indicated in the plot caption._
+
+_(B) log2-transformed mRNA levels for genes found to be differentially regulated in both cohorts are presented in box plots. Median expression values with interquartile ranges are depicted as boxes with whiskers spanning over 150% of the interquartile ranges. Single observations are visualized as points. Effect sizes and p values are displayed in the plot captions. Numbers of analyzed cancer samples are indicated in the X axes._
+
+\newpage
+
+```{r tab-fgfr3-dge, tab.cap = "Differential expression of FGF- and FGFR-coding genes in urothelial cancers with and without FGFR3 mutations. log2-transformed expression levels are presented as medians with interquartile ranges and ranges. Statistical significance was determined by two-tailed T test with Cohen's d effect size statistic. P values were corrected for multiple testing with the false discovery rate method. The table is available as a supplementary Excel file."}
+
+rep_tabs$fgfr3_dge[1, 1] %>% 
+  mutate(Cohort = '') %>% 
+  set_names(' ') %>% 
+  flextable %>% 
+  set_widths(16)
+
+```
+
+\newpage
+
+```{r fig-fgfr-tmb, fig.width = figur::convert(rep_figs$fgfr_tmb, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_tmb, to = 'in')$h, fig.cap = 'Total mutation burden and counts of copy number alterations in FGFR3 WT and FGFR3-mutated cancers.'}
+
+rep_figs$fgfr_tmb$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr-tmb). Total mutation burden and counts of copy number alterations in FGFR3 WT and FGFR3-mutated cancers.__ 
+
+_Total mutation burdens (TMB) were provided for the cohorts by the study authors. Counts of mutations, deletions and amplifications were computed for each cancer sample based on the published information. Note, that information on deletions and amplification was not available for the `r globals$cohort_labs["imvigor"]` cohort. TMB (A), and counts of mutations (B), deletions and amplifications (C, D) were compared between cancers with and without FGFR3 mutations by Mann-Whitney test with r effect size statistic. P values were adjusted for multiple testing with the false discovery rate method. Median values with interquartile ranges are shown as boxes with whiskers spanning over 150% of the interquartile ranges. Single cancer samples are visualized as points. Effect sizes and p values are displayed in the plot captions. Numbers of analyzed cancer samples are indicated in the X axes._
+
+\newpage
+
+```{r tab-fgfr3-clinic, tab.cap = 'Demographic, clinical, and pathological characteristic of cancers with WT and mutated FGFR3. Numeric features are presented as medians with interquartile ranges and ranges. Qualitative variables are shown as percentages and observation counts of the categories.'}
+
+flextable::flextable(rep_tabs$fgfr3_clinic) %>% 
+  set_widths(c(2.2, 3, rep(3.5, 2), 2.8, 2.8)) %>% 
+  merge_v(1) %>% 
+  footnote(1, 5:6, 
+           value = as_paragraph('Numeric variables: Kruskal-Wallis test with \u03B7\u00B2 effect size statistic. Categorical variables: \u03C7\u00B2 test with Cramer V effect size statistic.'), 
+           part = 'header', 
+           ref_symbols = 'a') %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r fig-fgfr-os, fig.width = figur::convert(rep_figs$fgfr_os, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_os, to = 'in')$h, fig.cap = 'Overall survival of patients with FGFR3 WT and FGFR3-mutated cancers.'}
+
+rep_figs$fgfr_os$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr-os). Overall survival of patients with FGFR3 WT and FGFR3-mutated cancers.__ 
+
+_Overall survival information was provided for the `r globals$cohort_labs[c("msk", "tcga", "imvigor")] %>% collapse_and` study participants. Approximate overall survival was calculated for the `r globals$cohort_labs["genie"]` cohort based on age at enrollment in years and age at the last follow-up or death in days. Overall survival was subsequently compared between patients with cancers with and without FGFR3 mutations. Statistical significance was determined by false discovery rate-adjusted Peto-Peto test. Fractions of surviving patients are presented in Kaplan-Meier plots. P values are indicated in the plots, numbers of observations and deaths are displayed in the plot captions. Numbers of observations and deaths in the FGFR3 mutation strata are presented in the plot legends._
+
+\newpage
+
+```{r fig-fgfr-rfs, fig.width = figur::convert(rep_figs$fgfr_rfs, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_rfs, to = 'in')$h, fig.cap = 'Disease-specific and relapse-free survival of patients with FGFR3 WT and FGFR3 mutated cancers.'}
+
+rep_figs$fgfr_rfs$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr-rfs). Disease-specific and relapse-free survival of patients with FGFR3 WT and FGFR3 mutated cancers.__ 
+
+_Disease-specific and relapse-free survival information was provided for the `r globals$cohort_labs["tcga"]` cohort. Differences in survival between patients with cancers with and without FGFR3 mutations were investigated by false discovery rate-adjusted Peto-Peto test. Fractions of surviving patients are presented in Kaplan-Meier plots. P values are indicated in the plots, numbers of observations and deaths are displayed in the plot captions. Numbers of observations and deaths in the FGFR3 mutation strata are presented in the plot legends._ 
+
+\newpage
+
+```{r fig-amp11q13, fig.width = figur::convert(rep_figs$amp11q13, to = 'in')$w, fig.height = figur::convert(rep_figs$amp11q13, to = 'in')$h, fig.cap = 'Expression of FGF- and FGFR-coding genes in cancers with and without amplification of the 11q13 chromosome region.'}
+
+rep_figs$amp11q13$plot
+
+```
+
+__Figure \@ref(fig:fig-amp11q13). Expression of FGF- and FGFR-coding genes in cancers with and without amplification of the 11q13 chromosome region.__ 
+
+_Amplification of the 11q13 chromosome region with FGF3, FGF4, FGF19 and CCND genes was identified as frequent genetic alteration in urothelial carcinoma. Differences in expression of FGF- and FGFR-coding genes between cancers with and without 11q13 amplification were assessed in the `r globals$cohort_labs["tcga"]` cohort by Mann-Whitney test with r effect size metric. P values were corrected for multiple testing with the false discovery rate method. Median log2-transformed mRNA levels with interquartile ranges are represented by boxes with whiskers spanning over 150% of the interquartile ranges for the significantly regulated genes. Single cancer samples are visualized as points. Effect sizes and p values are displayed in the plot captions. Numbers of analyzed cancer samples are indicated in the X axes._
+
+\newpage
+
+## Consensus molecular subtypes of urothelial cancers
+
+```{r tab-cons-genetics, tab.cap = "Frequency of somatic mutations and copy number variants of FGF- and FGFR-coding genes in the consensus molecular classes of urothelial cancers. The frequencies are presented as percentages of the consensus class. Statistical significance of differences between the consensus classes was determined by chi-squared test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. The table is available as a supplementary Excel file."}
+
+rep_tabs$cons_genetics[1, 1] %>% 
+  mutate(Cohort = '') %>% 
+  set_names(' ') %>% 
+  flextable %>% 
+  set_widths(16)
+
+```
+
+\newpage
+
+```{r fig-fgfr-subtypes, fig.width = figur::convert(rep_figs$fgfr_subtypes, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_subtypes, to = 'in')$h, fig.cap = 'Alterations of FGF- and FGFR-coding genes in consensus molecular classes of urothelial cancers.'}
+
+rep_figs$fgfr_subtypes$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr-subtypes). Alterations of FGF- and FGFR-coding genes in consensus molecular classes of urothelial cancers.__ 
+
+_Cancer samples from the `r globals$cohort_labs[c("genie", "tcga")] %>% collapse_and` data sets were assigned to the MIBC consensus molecular subtypes based on ComBat-adjusted whole-genome mRNA levels by the nearest centroid algorithm (R package consensusMIBC)._ 
+_Differences in frequency of somatic mutations and copy number variants of FGF- and FGFR-coding genes between the consensus molecular classes were assessed by $\chi^2$ test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. Note that copy number variant information was not available for the `r globals$cohort_labs["imvigor"]` cohort._
+
+_(A) Percentages of cancer samples in the consensus molecular classes were visualized in a stack plot. Statistical significance of difference in class distribution between the cohorts was assessed by $\chi^2$ test with Cramer's V effect size statistic. The effect size and p value are shown in the plot caption. Total numbers of cancer samples are indicated in the Y axis._
+
+_(B) Presence/absence of selected genetic alterations in the consensus molecular classes visualized in heat maps. Alteration names with effect sizes and p values of differences between the consensus classes are indicated in the Y axis. Significant effects are highlighted with bold font. Numbers of cancer samples in the consensus classes are displayed in the plot captions._
+
+_LumP: luminal papillary; LumU: luminal genetically unstable; LumNS: luminal non-specified; Stroma-rich: luminal stroma-rich; Ba/Sq: basal/squamous-like; NE-like: neuroendocrine-like._
+
+\newpage
+
+```{r fig-fgfr-subdetails, fig.width = figur::convert(rep_figs$fgfr_subdetails, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_subdetails, to = 'in')$h, fig.cap = 'Frequency of somatic mutations of FGFFR3 and amplification of FGF3/4/19 in consensus molecular classes of urothelial cancer.'}
+
+rep_figs$fgfr_subdetails$plot
+
+```
+
+__Figure \@ref(fig:fig-fgfr-subdetails). Frequency of somatic mutations of FGFFR3 and amplification of FGF3/4/19 in consensus molecular classes of urothelial cancer.__ 
+
+_Assignment of cancer samples to consensus molecular classes and testing for differences in genetic alterations between the consensus classes were presented in Figure \@ref(fig:fig-fgfr-subtypes). Percentages of FGFR3 mutations, and amplifications of the FGF3, FGF4 and FGF19 genes in the consensus molecular classes are presented in stack plots. Effect sizes and p values are displayed in the plot captions. Numbers of observations in the consensus classes are indicated in the X axes._
+_LumP: luminal papillary; LumU: luminal genetically unstable; LumNS: luminal non-specified; Stroma-rich: luminal stroma-rich; Ba/Sq: basal/squamous-like; NE-like: neuroendocrine-like._
+
+\newpage
+
+```{r tab-cons-dge, tab.cap = "Expression of FGF- and FGFR-coding genes in the consensus molecular classes of urothelial cancers. log2-transformed expression levels are presented as medians with interquartile ranges and ranges. Statistical significance of differences between the molecular classes was determined by one-way ANOVA with eta-square effect size statistic. P values were corrected for multiple testing with the false discovery rate method. The table is available as a supplementary Excel file."}
+
+rep_tabs$cons_dge[1, 1] %>% 
+  mutate(Cohort = '') %>% 
+  set_names(' ') %>% 
+  flextable %>% 
+  set_widths(16)
+
+```
+
+\newpage
+
+```{r fig-sub-fgfr-expression, fig.width = figur::convert(rep_figs$sub_fgfr_expression, to = 'in')$w, fig.height = figur::convert(rep_figs$sub_fgfr_expression, to = 'in')$h, fig.cap = 'Differential expression of FGFR-coding genes in the consensus molecular classes of urothelial cancers.'}
+
+rep_figs$sub_fgfr_expression$plot
+
+```
+
+__Figure \@ref(fig:fig-sub-fgfr-expression). Differential expression of FGFR-coding genes in the consensus molecular classes of urothelial cancers.__ 
+
+_Assignment of cancer samples from the `r globals$cohort_labs[c("tcga", "imvigor")] %>% collapse_and` to the consensus molecular classes was presented in Figure \@ref(fig:fig-fgfr-subtypes). Differences in log2-transformed mRNA levels of FGF- and FGFR-coding genes between the consensus molecular classes were assessed by one-way ANOVA with $\eta^2$ effect size statistic. P values were corrected for multiple testing with the false discovery rate method._
+_Expression of FGFR1 and FGFR3 was found to differ significantly between the consensus classes in both cohorts. Median log2-transformed mRNA levels with interquartile ranges are depicted as boxes with whiskers spanning over 150% of the interquartile ranges. Single cancer samples are visualized as points. Effect sizes and p values are displayed in the plot captions. Numbers of cancer samples in the consensus classes are indicated in the X axes._ 
+_LumP: luminal papillary; LumU: luminal genetically unstable; LumNS: luminal non-specified; Stroma-rich: luminal stroma-rich; Ba/Sq: basal/squamous-like; NE-like: neuroendocrine-like._
+
+\newpage
+
+```{r fig-sub-fgf-expression1, fig.width = figur::convert(rep_figs$sub_fgf_expression1, to = 'in')$w, fig.height = figur::convert(rep_figs$sub_fgf_expression1, to = 'in')$h, fig.cap = 'Differential expression of FGF-coding genes in the consensus molecular classes of urothelial cancers.'}
+
+rep_figs$sub_fgf_expression1$plot
+
+```
+
+__Figure \@ref(fig:fig-sub-fgf-expression1). Differential expression of FGF-coding genes in the consensus molecular classes of urothelial cancers.__ 
+
+_Assignment of cancer samples from the `r globals$cohort_labs[c("tcga", "imvigor")] %>% collapse_and` to the consensus molecular classes was presented in Figure \@ref(fig:fig-fgfr-subtypes). Differences in log2-transformed mRNA levels of FGF- and FGFR-coding genes between the consensus molecular classes were assessed by one-way ANOVA with $\eta^2$ effect size statistic. P values were corrected for multiple testing with the false discovery rate method._
+_Expression of FGF2, FGF5, and FGF7 was found to differ significantly between the consensus classes in both cohorts. Median log2-transformed mRNA levels with interquartile ranges are depicted as boxes with whiskers spanning over 150% of the interquartile ranges. Single cancer samples are visualized as points. Effect sizes and p values are displayed in the plot captions. Numbers of cancer samples in the consensus classes are indicated in the X axes._ 
+_LumP: luminal papillary; LumU: luminal genetically unstable; LumNS: luminal non-specified; Stroma-rich: luminal stroma-rich; Ba/Sq: basal/squamous-like; NE-like: neuroendocrine-like._
+
+\newpage
+
+```{r fig-sub-fgf-expression2, fig.width = figur::convert(rep_figs$sub_fgf_expression2, to = 'in')$w, fig.height = figur::convert(rep_figs$sub_fgf_expression2, to = 'in')$h, fig.cap = 'Differential expression of FGF-coding genes in the consensus molecular classes of urothelial cancers.'}
+
+rep_figs$sub_fgf_expression2$plot
+
+```
+
+__Figure \@ref(fig:fig-sub-fgf-expression2). Differential expression of FGF-coding genes in the consensus molecular classes of urothelial cancers.__ 
+
+_Assignment of cancer samples from the `r globals$cohort_labs[c("tcga", "imvigor")] %>% collapse_and` to the consensus molecular classes was presented in Figure \@ref(fig:fig-fgfr-subtypes). Differences in log2-transformed mRNA levels of FGF- and FGFR-coding genes between the consensus molecular classes were assessed by one-way ANOVA with $\eta^2$ effect size statistic. P values were corrected for multiple testing with the false discovery rate method._
+_Expression of FGF10 and FGF18 was found to differ significantly between the consensus classes in both cohorts. Median log2-transformed mRNA levels with interquartile ranges are depicted as boxes with whiskers spanning over 150% of the interquartile ranges. Single cancer samples are visualized as points. Effect sizes and p values are displayed in the plot captions. Numbers of cancer samples in the consensus classes are indicated in the X axes._ 
+_LumP: luminal papillary; LumU: luminal genetically unstable; LumNS: luminal non-specified; Stroma-rich: luminal stroma-rich; Ba/Sq: basal/squamous-like; NE-like: neuroendocrine-like._
+
+\newpage
+
+## Genetic subsets of urothelial carcinoma
+
+```{r fig-lca-devel, fig.width = figur::convert(rep_figs$lca_devel, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_devel, to = 'in')$h, fig.cap = 'Development of genetic subsets of urothelial carcinoma in the GENIE BLCA training cohort. Prediction of the genetic subset assignment for the MSK and TCGA BLCA samples.'}
+
+rep_figs$lca_devel$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-devel). Development of genetic subsets of urothelial carcinoma in the GENIE BLCA training cohort. Prediction of the genetic subset assignment for the MSK and TCGA BLCA cohort samples.__ 
+
+_The genetic subsets of urothelial cancers were developed in the `r globals$cohort_labs["genie"]` training cohort by latent class modeling with binary indexes (presence/absence) of genetic alterations present in at least 5% of samples as modeling factors. Presence of FGF3, FGF4, FGF19, or CCND1 amplification was subsumed under 11q13 amplification prior to the modeling. Presence of CDKN2A, CDKN2B, or MTAP deletions was subsumed under 9p21 deletion prior to the modeling._
+
+_(A) Selection of the genetic subset number in the `r globals$cohort_labs["genie"]` training cohort based on log-likelihood and Bayesian Information Criterion (BIC). Note the minimal BIC for the 6-class model, which is subsequently used for definition of the genetic subsets._
+
+_(B) The 6-class model was trained in the `r globals$cohort_labs['genie']` cohort and used for assignment of cancer samples from the `r globals$cohort_labs[c("msk", "tcga")] %>% collapse_and` test collectives to the genetic subsets. Class assignment probabilities (posterior p) of single cancer samples are visualized in scatter plots. Note that high posterior p indicate high confidence at class assignment and stability of the modeling solution. Total observation numbers are displayed in the plot captions. Numbers of samples in the genetic subsets are indicated in the plot facets._ 
+
+\newpage
+
+```{r fig-lca-size, fig.width = figur::convert(rep_figs$lca_size, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_size, to = 'in')$h, fig.cap = 'Distribution of sizes of the genetic subsets in the training GENIE BLCA cohort, and the MSK and TCGA BLCA test collectives.'}
+
+rep_figs$lca_size$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-size). Distribution of sizes of the genetic subsets in the training GENIE BLCA cohort, and the MSK and TCGA BLCA test collectives.__ 
+
+_Genetic subsets were developed in the `r globals$cohort_labs["genie"]` cohort and predicted for cancers samples in the `r globals$cohort_labs[c("msk", "tcga")] %>% collapse_and` collectives as presented in Figure \@ref(fig:fig-lca-devel). Sizes of the genetic subsets expressed as percentages of cancer samples in the cohort are presented in a stack plot._
+
+\newpage
+
+```{r tab-lca-genetics, tab.cap = "Frequency of the most frequent somatic mutations and copy number alterations in the genetic subsets of urothelial cancers. The frequencies are presented as percentages of samples with genetic alterations in the genetic subsets. Differences between the genetic subsets were assessed by chi-squared test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. The table is available as a supplementary Excel file."}
+
+rep_tabs$lca_genetics[1, 1] %>% 
+  mutate(Cohort = '') %>% 
+  set_names(' ') %>% 
+  flextable %>% 
+  set_widths(16)
+
+```
+
+\newpage
+
+```{r fig-lca-genet1, fig.width = figur::convert(rep_figs$lca_genet1, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_genet1, to = 'in')$h, fig.cap = 'Distribution of the most frequent somatic mutations and copy number alterations in the genetic subsets of urothelial cancers in the GENIE BLCA and MSK cohorts.'}
+
+rep_figs$lca_genet1$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-genet1). Distribution of the most frequent somatic mutations and copy number alterations in the genetic subsets of urothelial cancers in the GENIE BLCA and MSK cohorts.__ 
+
+_Differences in frequency of the most common somatic mutations and copy number variants ($\geq$ 5% of samples) between the genetic subsets of urothelial cancers were assessed by $\chi^2$ test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. Presence of the genetic features in the genetic subsets was presented in a heat map. Significant alterations are highlighted in the Y axis with bold font. Numbers of analyzed cancer samples in the subsets are displayed in the plot captions._
+
+\newpage
+
+```{r fig-lca-genet2, fig.width = figur::convert(rep_figs$lca_genet2, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_genet2, to = 'in')$h, fig.cap = 'Distribution of the most frequent somatic mutations and copy number alterations in the genetic subsets of urothelial cancers in the TCGA BLCA cohort.'}
+
+rep_figs$lca_genet2$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-genet2). Distribution of the most frequent somatic mutations and copy number alterations in the genetic subsets of urothelial cancers in the TCGA BLCA cohort.__ 
+
+_Differences in frequency of the most common somatic mutations and copy number variants ($\geq$ 5% of samples) between the genetic subsets of urothelial cancers were assessed by $\chi^2$ test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. Presence of the genetic features in the genetic subsets was presented in a heat map. Significant alterations are highlighted in the Y axis with bold font. Numbers of analyzed cancer samples in the subsets are displayed in the plot captions._
+
+\newpage
+
+```{r fig-lca-details-mutations1, fig.width = figur::convert(rep_figs$lca_details_mutations1, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_details_mutations1, to = 'in')$h, fig.cap = 'Frequency of somatic mutations of TP53 and RB1 in the genetic subsets of urothelial cancers.'}
+
+rep_figs$lca_details_mutations1$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-details-mutations1). Frequency of somatic mutations of TP53 and RB1 in the genetic subsets of urothelial cancers.__ 
+
+_Differences in frequency of TP53 and RB1 mutations between the genetic subsets of urothelial cancers were assessed by $\chi^2$ test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. Percentages of the mutations in the genetic subsets are presented in stack plots. Effect sizes and p values are displayed in the plot captions. Numbers of cancer samples in the subsets are indicated in the X axes._
+
+\newpage
+
+```{r fig-lca-details-mutations2, fig.width = figur::convert(rep_figs$lca_details_mutations2, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_details_mutations2, to = 'in')$h, fig.cap = 'Frequency of somatic mutations of FGFR3 and ERBB2 in the genetic subsets of urothelial cancers.'}
+
+rep_figs$lca_details_mutations2$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-details-mutations2). Frequency of somatic mutations of FGFR3 and ERBB2 in the genetic subsets of urothelial cancers.__ 
+
+_Differences in frequency of FGFR3 and ERBB2 mutations between the genetic subsets of urothelial cancers were assessed by $\chi^2$ test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. Percentages of the mutations in the genetic subsets are presented in stack plots. Effect sizes and p values are displayed in the plot captions. Numbers of cancer samples in the subsets are indicated in the X axes._
+
+\newpage
+
+```{r fig-lca-details-cna1, fig.width = figur::convert(rep_figs$lca_details_cna1, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_details_cna1, to = 'in')$h, fig.cap = 'Frequency of amplifications of CCND1 and E3F3 in the genetic subsets of urothelial cancers.'}
+
+rep_figs$lca_details_cna1$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-details-cna1). Frequency of amplifications of CCND1 and E3F3 in the genetic subsets of urothelial cancers.__ 
+
+_Differences in frequency of CCND1 (hallmark alteration for 11q13 chromosome region amplification) and E2F3 amplifications between the genetic subsets of urothelial cancers were assessed by $\chi^2$ test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. Percentages of the copy number variants in the genetic subsets are presented in stack plots. Effect sizes and p values are displayed in the plot captions. Numbers of cancer samples in the subsets are indicated in the X axes._
+
+\newpage
+
+```{r fig-lca-details-cna2, fig.width = figur::convert(rep_figs$lca_details_cna2, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_details_cna2, to = 'in')$h, fig.cap = 'Frequency of amplifications of MDM2 and deletions of CDKN2A in the genetic subsets of urothelial cancers.'}
+
+rep_figs$lca_details_cna2$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-details-cna2). Frequency of amplifications of MDM2 and deletions of CDKN2A in the genetic subsets of urothelial cancers.__ 
+
+_Differences in frequency of MDM2 amplifications and CDKN2A deletions (characteristic for 9p21 chromosome region deletion) between the genetic subsets of urothelial cancers were assessed by $\chi^2$ test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate method. Percentages of the copy number variants in the genetic subsets are presented in stack plots. Effect sizes and p values are displayed in the plot captions. Numbers of cancer samples in the subsets are indicated in the X axes._
+
+\newpage
+
+```{r fig-lca-tmb, fig.width = figur::convert(rep_figs$lca_tmb, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_tmb, to = 'in')$h, fig.cap = 'Total mutation burden and counts of mutations in protein-coding genes in the genetic subsets of urothelial cancers.'}
+
+rep_figs$lca_tmb$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-tmb). Total mutation burden and counts of mutations in protein-coding genes in the genetic subsets of urothelial cancers.__ 
+
+_Total mutation burdens (TMB) were provided for the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` cohorts by the study authors. Counts of mutations were computed for each cancer sample based on the published information. TMB and counts of mutations were compared between the genetic subsets of urothelial cancers by Kruskal-Wallis test with $\eta^2$ effect size statistic. P values were adjusted for multiple testing with the false discovery rate method. Median values with interquartile ranges are shown as boxes with whiskers spanning over 150% of the interquartile ranges. Single cancer samples are visualized as points. Effect sizes and p values are displayed in the plot captions. Numbers of analyzed cancer samples are indicated in the X axes._
+
+\newpage
+
+```{r fig-lca-cna-count, fig.width = figur::convert(rep_figs$lca_cna_count, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_cna_count, to = 'in')$h, fig.cap = 'Counts of gene deletions and amplifications in the genetic subsets of urothelial cancers.'}
+
+rep_figs$lca_cna_count$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-cna-count). Counts of gene deletions and amplifications in the genetic subsets of urothelial cancers.__ 
+
+_Counts of deletions and amplifications were computed for cancer samples in the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` based on the published information, and were compared between the genetic subsets of urothelial cancers by Kruskal-Wallis test with $\eta^2$ effect size statistic. P values were adjusted for multiple testing with the false discovery rate method. Median values with interquartile ranges are shown as boxes with whiskers spanning over 150% of the interquartile ranges. Single cancer samples are visualized as points. Effect sizes and p values are displayed in the plot captions. Numbers of analyzed cancer samples are indicated in the X axes._
+
+\newpage
+
+```{r tab-lca-dge, tab.cap = 'Expression of FGF- and FGFR-coding genes in the genetic subsets of urothelial cancers of the TCGA BLCA cohort. log2-transformed expression levels are presented as medians with interquartile ranges and ranges. Statistical significance of differences between the genetic subsets was determined by one-way ANOVA with eta-square effect size statistic. P values were corrected for multiple testing with the false discovery rate method. The table is available as a supplementary Excel file.'}
+
+rep_tabs$lca_dge[1, 1] %>% 
+  mutate(Variable = '') %>% 
+  set_names(' ') %>% 
+  flextable %>%
+  set_widths(16)
+
+```
+
+\newpage
+
+```{r fig-lca-dge-fgfr, fig.width = figur::convert(rep_figs$lca_dge_fgfr, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_dge_fgfr, to = 'in')$h, fig.cap = 'Differential expression of FGFR-coding genes in the genetic subsets of urothelial cancers.'}
+
+rep_figs$lca_dge_fgfr$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-dge-fgfr). Differential expression of FGFR-coding genes in the genetic subsets of urothelial cancers.__ 
+
+_Differences in log2-transformed mRNA levels of FGF- and FGFR-coding genes were compared between the genetic subsets of urothelial cancers in the `r globals$cohort_labs["tcga"]` cohort by one-way ANOVA with $\eta^2$ effect size statistic. Differences in expression of FGFR1, FGFR2, and FGFR3 were found significant. Median log2-transformed expression values with interquartile ranges are depicted as boxes with whiskers spanning over 150% of the interquartile ranges. Single cancer samples are visualized as points. Effect sizes and p values are displayed in the plot captions. Numbers of analyzed cancer samples are indicated in the X axes._
+
+\newpage
+
+```{r fig-lca-dge-fgf, fig.width = figur::convert(rep_figs$lca_dge_fgf, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_dge_fgf, to = 'in')$h, fig.cap = 'Differential expression of FGF-coding genes in the genetic subsets of urothelial cancers.'}
+
+rep_figs$lca_dge_fgf$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-dge-fgf). Differential expression of FGF-coding genes in the genetic subsets of urothelial cancers.__ 
+
+_Differences in log2-transformed mRNA levels of FGF- and FGFR-coding genes were compared between the genetic subsets of urothelial cancers in the `r globals$cohort_labs["tcga"]` cohort by one-way ANOVA with $\eta^2$ effect size statistic. Differences in expression of FGF2, FGF5, FGF7, and FGF17 were found significant. Median log2-transformed expression values with interquartile ranges are depicted as boxes with whiskers spanning over 150% of the interquartile ranges. Single cancer samples are visualized as points. Effect sizes and p values are displayed in the plot captions. Numbers of analyzed cancer samples are indicated in the X axes._
+
+\newpage
+
+```{r tab-lca-clinic, tab.cap = 'Demographic, clinical, and pathological characteristic of the genetic subsets of urothelial cancers. Numeric features are presented as medians with interquartile ranges and ranges. Qualitative variables are shown as percentages and observation counts of the categories.'}
+
+flextable::flextable(rep_tabs$lca_clinic) %>% 
+  set_widths(c(1.5, 2, rep(2.1, 6), 2.3, 2.1)) %>% 
+  merge_v(1) %>%
+  footnote(1, 9:10, 
+           value = as_paragraph('Numeric variables: Kruskal-Wallis test with \u03B7\u00B2 effect size statistic. Categorical variables: \u03C7\u00B2 test with Cramer V effect size statistic.'), 
+           part = 'header', 
+           ref_symbols = 'a') %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r fig-lca-clinic, fig.width = figur::convert(rep_figs$lca_clinic, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_clinic, to = 'in')$h, fig.cap = 'Age and gender in the genetic subsets.'}
+
+rep_figs$lca_clinic$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-clinic). Age and gender in the genetic subsets.__ 
+
+_Differences in age (A) and gender (B) between the genetic subsets of urothelial cancers in the `r globals$cohort_labs[c("genie", "tcga")] %>% paste(collapse = ' and ')` were investigated by Kruskal-Wallis test and $\chi^2$ test, respectively. $\eta^2$ and Cramer's V served as effect size metrics. P values were corrected for multiple testing with the false discovery rate method. Median age with the interquartile range is presented in box plots with whiskers spanning over 150% of the interquartile range and single cancer patients visualized as points. Percentages of women and men in the genetic subsets are shown in stack plots. Effect sizes and p values are displayed in the plot captions. Numbers of observations in the genetic subsets are indicated in the X axes._
+
+\newpage
+
+```{r fig-lca-stage-class, fig.width = figur::convert(rep_figs$lca_stage_class, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_stage_class, to = 'in')$h, fig.cap = 'Pathological tumor stage and consensus molecular class distribution in the genetic subsets of urothelial cancers.'}
+
+rep_figs$lca_stage_class$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-stage-class). Pathological tumor stage and consensus molecular class distribution in the genetic subsets of urothelial cancers.__ 
+
+_Differences in distribution of pathological tumor stages (A) and consensus molecular classes (B) between the genetic subsets were investigated by $\chi^2$ test with Cramer's V effect size statistic. P values were adjusted for multiple testing with the false discovery rate method. Percentages of pathological stages and consensus classes within the genetic subsets are presented in stack plots. Effect sizes and p values are displayed in the plot captions. Numbers of complete observations are indicated in the X axes._
+
+\newpage
+
+```{r fig-lca-os, fig.width = figur::convert(rep_figs$lca_os, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_os, to = 'in')$h, fig.cap = 'Overall survival in the genetic subsets of urothelial cancers.'}
+
+rep_figs$lca_os$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-os). Overall survival in the genetic subsets of urothelial cancers.__ 
+
+_Overall survival information was provided for the `r globals$cohort_labs[c("genie", "msk", "tcga")] %>% collapse_and` study participants. Approximate overall survival was calculated for the `r globals$cohort_labs["genie"]` cohort based on age at enrollment in years and age at the last follow-up or death in days. Overall survival was subsequently compared between the genetic subsets by false discovery rate-corrected Peto-Peto test. Fractions of surviving patients are presented in Kaplan-Meier plots. P values for globals differences in survival between the subsets are indicated in the plots, numbers of observations and deaths are displayed in the plot captions. Numbers of observations and deaths in the FGFR3 mutation strata are presented in the plot legends._
+
+\newpage
+
+```{r fig-lca-cox, fig.width = figur::convert(rep_figs$lca_cox, to = 'in')$w, fig.height = figur::convert(rep_figs$lca_cox, to = 'in')$h, fig.cap = 'Cox modeling of overall survival in the genetic subsets of urothelial carcinoma.'}
+
+rep_figs$lca_cox$plot
+
+```
+
+__Figure \@ref(fig:fig-lca-cox). Cox modeling of overall survival in the genetic subsets of urothelial carcinoma.__ 
+
+_Overall survival (`r globals$cohort_labs["msk"]`) and approximate overall survival (`r globals$cohort_labs["genie"]`) was modeled as a function of genetic subset assignment alone or as a function of genetic subset assignment and clinical confounders (`r globals$cohort_labs["genie"]`: age and gender, `r globals$cohort_labs["msk"]`: age, gender, and pathological tumor stage) with Cox proportional hazard regression. Significance of the genetic subset term was investigated by likelihood ratio test (LRT) between the model with genetic subset assignment only and the model with genetic subset assignment and clinical confounders as explanatory factors. _
+
+_(A) Numeric statistics of performance of Cox models with genetic subset assignment and Cox models with genetic subset assignment and clinical confounders as explanatory factors. Concordance between the observed and predicted survival was assessed by Harrell's concordance index (high values: good concordance), model calibration was investigated by integrated Brier score (IBS; low values: good calibration), and fraction of survival variance explained by the model was gauged by R^2 statistic. The statistic values are visualized in a bubble plot with point color coding for model type and point size representing R^2. Numbers of complete observations and deaths are indicated in the plot facets._
+
+_(B, C) Cox model coefficient estimates expressed as hazard ratios (HR). HR with 95% confidence intervals are visualized with Forest plots faceted by model type. Numbers of complete observations and deaths, and results of LRT are presented in the plot captions._
+
+\newpage
+
+# Methods
+
+## Software
+
+Data handling and analysis was accomplished with R version 4.2.3. 
+For general transformation tasks for matrix, tabular, and text data, base R, _tidyverse_ package bundle [@Wickham2019], _rlang_ [@Henry2022], [_trafo_](https://github.com/PiotrTymoszuk/trafo), and _stringi_ [@Gagolewski2021] were utilized. 
+General data visualization tasks were performed with _ggplot2_ [@Wickham2016], _cowplot_ [@Wilke2019], and _flextable_ [@Gohel2022]. 
+R packages specific for particular analysis and visualization steps are referenced below.
+
+## Data sources
+
+Four collectives of urothelial carcinoma patients were evaluated in the current report: 
+the urothelial cancer subset of the GENIE cohort referred to as GENIE BLCA [@Sweeney2017], 
+the MSK IMPACT collective [@Clinton2022], 
+the bladder cancer TCGA collective referred to as TCGA BLCA [@Liu2018; @Robertson2017], 
+and the IMvigor clinical study cohort [@Balar2017]. 
+
+The GENIE BLCA cohort [@Sweeney2017] includes n = `r nrow(genie$clinic)` cases of bladder and urinary tract cancers selected by oncotree classification 'BLAD', 'BLCA', 'BLSC', 'UA', 'UAD', 'UCA', 'UCU', 'UPA', 'URCA', 'USCC', or 'UTUC'. 
+The available data sets for the GENIE BLCA cohort included basic clinical information (age at sequencing in years, sex, follow-up in days, mortality), total mutation burden (TMB) expressed as fraction of genome, detailed information on location, variant type, nucleotide sequence and protein residues affected by somatic mutations, as well as 0/1 coded absence/presence of gene deletions and amplifications. 
+Approximate overall survival was computed as the time interval between the last follow-up in days and age at sequencing in years. 
+In case of multiple samples per participant, the earliest sample, i.e. the specimen with the lowest ID, was included in the current analysis. 
+The GENIE BLCA data sets were fetched from the [cBioportal API](https://www.cbioportal.org/) with tools provided by the _cbioportalR_ package [@Whiting2024] and formatted with in-house developed R scripts.
+
+The MSK IMPACT collective consisted of n = `r nrow(msk$clinic)` patients with predominantly muscle-invasive urothelial cancers [@Clinton2022].  
+In case of multiple samples available for a patient, the sample with the lowest ID was included in the analysis. 
+The clinical information included entries on participants age, gender, overall survival, cancer pathological stage, and cancer treatment. 
+The mutation data set included detailed information on mutation nucleotide sequence, variant type, and affected protein residues. 
+The copy number variant data were provided in 0/1 coded presence of gene deletions and amplifications. 
+The data sets for the MSK impact study were downloaded from [cBioportal](https://www.cbioportal.org/) and implemented in R with in-house developed scripts. 
+
+Data sets for the TCGA BLCA cohort [@Liu2018; @Robertson2017] was fetched from the [cBioportal](https://www.cbioportal.org/) repository with in-house developed scripts for n = `r table(tcga$expression$tissue_type)['tumor']` predominantly muscle-invasive urothelial cancer patients. 
+The clinical information consisted of demographic variables (e.g. age, sex, BMI, smoking history), pathological features (e.g. pathological staging, histology, grade, extracapsular extension), survival information (overall, tumor-specific and relapse-free survival), and TMB expressed as mutation count per MB. 
+The somatic mutation data set included detailed information on location, variant type, nucleotide sequence and affected protein residues. 
+The copy number variant data set consisted of 0/1 coded presence of gene amplifications and deletions. 
+The expression data set for the TCGA BLCA collective consisted of $log_2(x + 1)$-transformed RSEM-normalized  gene-integrated transcript counts obtained by bulk cancer RNA sequencing. 
+
+The IMvigor data set included a subset of `r nrow(imvigor$expression)` bladder and ureter muscle non-invasive and muscle-invasive cancers of the IMvigor 210 trial subjected to RNAseq and DNA sequencing [@Balar2017; @Mariathasan2018]. 
+The study participants were treated with an anti-PD-L1 drug (atezolizumab) following platinum chemotherapy. 
+The clinical data set included basic demographic, clinical and pathological features, best overall response (complete/partial response [CR/PR], stable/progressive disease [SD/PD]), overall survival, and TMB quantified as mutation count per MB. 
+The mutation data set consisted of 0/1 coded basic information on presence of any somatic mutations in a particular gene. 
+The expression data set consisted of $log_2(x + 1)$-transformed gene-integrated transcript counts obtained by bulk cancer RNA sequencing. 
+The IMvigor data sets were obtained from the R package _IMvigor210CoreBiologies_. 
+
+Assignment of the TCGA BLCA and IMvigor cancer samples to consensus molecular classes was done with the nearest centroid algorithm fed with ComBat-normalized whole-genome log_2 mRNA expression levels (R package _consensusMIBC_) [@Kamoun2020]. 
+
+JSON files with domain structures of FGFR1 (ID: P11362), FGFR2 (ID: P21802), FGFR3 (ID: P22607), and FGFR4 (ID: P22455) proteins were downloaded from [UniProt](https://www.uniprot.org) and processed with the _jsonlite_ package [@Ooms2023]. 
+
+## Descriptive statistics, statistical inference, and effect size
+
+If not indicated otherwise, descriptive statistics for quantitative variables included median, interquartile range, and range. 
+Descriptive statistic for qualitative variables were percentage and count within categories. 
+Differences of means or medians of qualitative variables were investigated by Mann-Whitney, tow-tailed T test, Kruskal-Wallis test, and one-way ANOVA, depending on the number of analysis groups and normality of distribution of the variable. 
+Correlation was assessed by Pearson's correlation test. 
+Effect size of differences in variable levels, distribution, and correlation was assessed with the following statistics [@Cohen2013]: 
+
+* r for differences between two groups, non-parametric tests: small for r < 0.2, medium for 0.2 $\leq$ r < 0.4, large for r $\geq$ 0.4
+
+* Cohen's d for differences between two groups, parametric tests: small for d < 0.5, medium for 0.5 $\leq$ d < 0.8, large for d $\geq$ 0.8
+
+* $\eta^2$ for differences between three or more groups: small for $\eta^2$ < 0.06, moderate for 0.06 $\leq$ $\eta^2$ < 0.14, large for $\eta^2 \geq$ 0.14
+
+* Cramer's V for comparison of category frequencies of a numeric variable: small for r < 0.2, medium for 0.2 $\leq$ r < 0.4, large for r $\geq$ 0
+
+* Pearson's $\rho$ for correlation, parametric tests: small for $\rho$ < 0.3, medium for 0.3 $\leq$ $\rho$ < 0.5, large for r $\geq$ 0.5
+
+Hypothesis testing results were adjusted for multiple comparisons separately for each analysis step and investigated cohort with the false discovery rate method (FDR) [@Benjamini1995]. 
+Differences with p < 0.05 were considered statistically significant. 
+Statistical hypothesis testing was accomplished with the development packages [_ExDA_](https://github.com/PiotrTymoszuk/ExDA) and [@Mangiafico2022; @Kassambara2021] internally employing statistical tools of base R, _stats_, _rstatix_, and _rcompanion_ [@Mangiafico2022; @Kassambara2021]. 
+
+## Survival analysis
+
+Differences in overall, disease-specific, and relapse-free survival between patients stratified by genetic features such as _FGFR3_ mutations of genetic subsets were investigated with Peto-Peto test. 
+Fractions of surviving patients were visualized with Kaplan-Meier plots. 
+Survival analyses and visualizations were done with packages _survival_ and _survminer_ [@Kassambara2016; @Therneau2000]. 
+
+## Co-occurrence of genetic features
+
+Co-occurrence analysis was performed in two settings: 
+(1) for the most common genetic features (mutations, amplifications, deletions) present in at least 5% of cancer samples in all cohorts and 
+(2) for all available mutations, amplifications, and deletions of FGF- and FGFR-coding genes. 
+Co-occurrence of genetic features was investigated by Jaccard's similarity coefficient J and Jaccard's distance computed with the $D = 1 - J$ formula. 
+Significance of co-occurrence, i.e. $J > 0$, was assessed by bootstrap test with B = 10000 iterations. 
+Mutual co-occurrence (e.g. between _FGFR3_ mutations and _RB1_ mutations) was depicted as a heat map of contingency table. 
+
+For visualization of co-occurrence of multiple genetic features in two-dimensional Euclidean space, matrices of pairwise Jaccard's distances were subjected to multi-dimensional scaling (MDS). 
+Subsequently, the genetic features of interest were displayed in scatter plots with point size corresponding to the general frequency of the genetic alteration. 
+
+Co-occurrence analysis was done with [_clustTools_](https://github.com/PiotrTymoszuk/clustTools) and _jaccard_ R packages [@Chung2018]. 
+
+## Genetic subsets of urothelial cancers
+
+Definition and evaluation of genetic subsets of urothelial cancers was done for the GENIE BLCA training cohort, and the MSK IMPACT and TCGA BLCA test collectives, for which both mutation and copy number variant data were provided. 
+
+Genetic subsets of urothelial cancers were developed for the GENIE BLCA training cohort with latent class modeling [@Weller2020; @Linzer2011]. 
+The explanatory variables were binary indexes (presence/absence) of genetic alterations present in at least 5% of samples in all data sets. 
+Presence of FGF3, FGF4, FGF19, or CCND1 amplification was subsumed under 11q13 amplification prior to the modeling. Presence of CDKN2A, CDKN2B, or MTAP deletions was subsumed under 9p21 deletion prior to the modeling. 
+The latent class models were fit with R function `tune_lca()` (package [_polcaExtra_](https://github.com/PiotrTymoszuk/polcaExtra)) with the maximal iteration number set to 3000 and numbers of replicates, i.e. random starts of the modeling procedure, set to 5. 
+Selection of the optimal subset number was motivated by the minimum of Bayesian Information Criterion (BIC). 
+With this selection criterion, a six-subset model whose classes were named after characteristic gene and chromosome alterations was chosen for definition of the genetic subsets. 
+
+Subsequently, assignment of cancer samples from the MSK IMPACT and TCGA BLCA test collectives to the genetic subsets was predicted based on conditional subset assignment probabilities using `predict()` method from [_polcaExtra_](https://github.com/PiotrTymoszuk/polcaExtra) package. 
+Quality of the subset assignment in the training and test collective was assessed by a visual inspection of the class assignment probabilities (posterior p) and by comparison of frequency of the subset-defining genetic features between the subsets ($\chi^2$ test with Cramer's V effect size statistic). 
+
+## Surviival modeling
+
+For each of the GENIE BLCA and MSK IMPACT cohorts, two types of Cox proportional hazard models of overall survival were constructed: (1) a model with genetic subset assignment as a sole explanatory factor, and (2) a model with genetic subset assignment and clinically relevant confounders (GENIE BLCA: age and gender, MSK IMPACT: age, gender, and pathological tumor stage). 
+The Cox models were constructed, checked for the proportional hazard assumption and evaluated with tools provided by R packages _survival_ [@Grambsch1994; @Therneau2000] and [_coxExtensions_](https://github.com/PiotrTymoszuk/coxExtensions). 
+Overall Cox model performance was evaluated by Harrell's C index (high values: good concordance between the predicted and observed survival), integrated Brier score (IBS; low values: good model calibration), and R^2 as a measure of survival variance explained by the model. 
+Significance of the genetic subset term and its independence from clinical confounders was determined by likelihood ratio test between the model with subset assignment and the model with cluster assignment and clinical confounders as explanatory factors (function `anova()`). 
+Estimates of model coefficients were retrieved with `summary()` method. 
+
+\newpage
+
+# Data and code availability
+
+Data from publicly available sources were analyzed. 
+The R analysis pipeline is available as a [GitHub repository](https://github.com/PiotrTymoszuk/FGFR-BLCA)
+
+\newpage
+
+# References
