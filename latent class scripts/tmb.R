@@ -1,4 +1,7 @@
-# Differences in total mutation burdens between the genetic clusters
+# Differences in total mutation burdens between the genetic clusters.
+#
+# Statistical significance is determined by FDR-corrected Kruskal-Wallis test
+# with eta-square effect size statistic.
 
   insert_head()
 
@@ -74,12 +77,8 @@
   lca_tmb$stats <-
     map2(lca_tmb$data,
          lca_tmb$variables,
-         ~explore(.x,
-                  variables = .y,
-                  split_factor = 'clust_id',
-                  what = 'table',
-                  pub_styled = TRUE)) %>%
-    map(format_desc)
+         fast_num_stats,
+         split_fct = 'clust_id')
 
 # Testing for differences between the genetic strata -------
 
@@ -88,17 +87,17 @@
   lca_tmb$test <-
     map2(lca_tmb$data,
          lca_tmb$variables,
-         ~compare_variables(.x,
-                            variables = .y,
-                            split_factor = 'clust_id',
-                            what = 'eff_size',
-                            types = 'kruskal_etasq',
-                            ci = FALSE,
-                            exact = FALSE,
-                            pub_styled = TRUE,
-                            adj_method = 'BH')) %>%
+         ~f_kruskal_test(.x[.y],
+                         f = .x[['clust_id']],
+                         exact = FALSE,
+                         safely = TRUE,
+                         as_data_frame = TRUE,
+                         adj_method = 'BH')) %>%
+    map(re_adjust) %>%
     map(mutate,
-        plot_cap = paste(eff_size, significance, sep = ', '))
+        eff_size = paste('\u03B7\u00B2 =', signif(etasq, 2)),
+        plot_cap = paste(eff_size, significance, sep = ', ')) %>%
+    map(as_tibble)
 
 # Plotting ------
 

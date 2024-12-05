@@ -27,6 +27,7 @@
 
   library(htGLMNET)
   library(consensusMIBC)
+  library(impute)
 
   library(soucer)
 
@@ -47,16 +48,19 @@
   list(cache_path = c('./data/genie.RData',
                       './data/msk.RData',
                       './data/tcga.RData',
-                      './data/imvigor.RData'),
+                      './data/imvigor.RData',
+                      './data/bcan.RData'),
        script_path = c('./import scripts/genie.R',
                        './import scripts/msk.R',
                        './import scripts/tcga.R',
-                       './import scripts/imvigor.R'),
+                       './import scripts/imvigor.R',
+                       './import scripts/bcan.R'),
        message = paste('Loading cached',
                        c('GENIE BLCA study',
                          'MSK 2022 study',
                          'TCGA BLCA study',
-                         'IMvigor study'))) %>%
+                         'IMvigor study',
+                         'BCAN study'))) %>%
     pwalk(access_cache)
 
 # ComBat expression adjustment and assignment to the molecular subtypes -------
@@ -65,7 +69,7 @@
 
   access_cache(cache_path = './data/combat.RData',
                script_path = './import scripts/combat.R',
-               message = 'Loading cached ComBat adjutment results')
+               message = 'Loading cached ComBat adjustment results')
 
   c('./import scripts/subtypes.R') %>%
     source_all(message = TRUE, crash = TRUE)

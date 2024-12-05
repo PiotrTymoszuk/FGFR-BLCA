@@ -1,5 +1,8 @@
 # Differential expression of the FGF and FGFR genes in the the genetic clusters.
-# The analysis is done only for the TCGA cohort
+# The analysis is done only for the TCGA cohort.
+#
+# Statistical significance is determined by one-way ANOVA with eta-square effect
+# size metrics. FDR correction.
 
   insert_head()
 
@@ -18,7 +21,8 @@
 
   ## analysis variables
 
-  lca_dge$variables <- globals[c("receptors", "ligands")] %>%
+  lca_dge$variables <-
+    globals[c("receptors", "ligands", "binding_proteins")] %>%
     reduce(union)
 
   lca_dge$variables <-
@@ -32,36 +36,33 @@
   insert_msg('Descriptive stats')
 
   lca_dge$stats <- lca_dge$data %>%
-    explore(variables = lca_dge$variables,
-            split_factor = 'clust_id',
-            what = 'table',
-            pub_styled = TRUE) %>%
-    format_desc
-
+    fast_num_stats(split_fct = 'clust_id',
+                   variables = lca_dge$variables)
 # One-way ANOVA ------
 
   insert_msg('One-way ANOVA')
 
-  lca_dge$test <- lca_dge$data %>%
-    test_anova(split_fct = 'clust_id',
-               variables = lca_dge$variables,
-               adj_method = 'BH') %>%
-    .$anova %>%
-    re_adjust(method = 'none') %>%
-    mutate(eff_size = paste('\u03B7\u00B2 =', signif(effect_size, 2)),
+  lca_dge$test <-
+    f_one_anova(lca_dge$data[lca_dge$variables],
+                f = lca_dge$data$clust_id,
+                safely = TRUE,
+                as_data_frame = TRUE,
+                adj_method = 'BH') %>%
+    re_adjust %>%
+    mutate(eff_size = paste('\u03B7\u00B2 =', signif(etasq, 2)),
            plot_cap = paste(eff_size, significance, sep = ', '),
-           variable = response,
-           ax_lab = paste(html_italic(response),
+           ax_lab = paste(html_italic(variable),
                           plot_cap,
                           sep = '<br>'),
            ax_lab = ifelse(p_adjusted < 0.05,
-                           html_bold(ax_lab), ax_lab))
+                           html_bold(ax_lab), ax_lab)) %>%
+    as_tibble
 
   ## significant effects
 
   lca_dge$significant <- lca_dge$test %>%
-    filter(p_adjusted < 0.05) %>%
-    .$response
+    filter(p_adjusted < 0.05, etasq >= 0.06) %>%
+    .$variable
 
 # Box plots for single variables --------
 
@@ -88,22 +89,12 @@
 
 # Result table ------
 
-  insert_msg('Result tables')
-
-  ## n numbers
-
-  lca_dge$n_numbers <- lca_dge$data %>%
-    count(clust_id) %>%
-    column_to_rownames('clust_id') %>%
-    t %>%
-    as_tibble %>%
-    mutate(variable = 'Samples, N')
+  insert_msg('Result table')
 
   lca_dge$result_tbl <-
     merge_stat_test(lca_dge$stats, lca_dge$test) %>%
     format_res_tbl(dict = NULL,
                    remove_complete = TRUE) %>%
-    full_rbind(lca_dge$n_numbers, .) %>%
     relocate(variable) %>%
     set_names(c('Variable',
                 levels(lca_dge$data$clust_id),

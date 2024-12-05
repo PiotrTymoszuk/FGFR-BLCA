@@ -17,7 +17,11 @@
          'clustTools' = 'https://github.com/PiotrTymoszuk/clustTools',
          'microViz' = 'https://github.com/PiotrTymoszuk/microViz',
          'polcaExtra' = 'https://github.com/PiotrTymoszuk/polcaExtra',
-         'coxExtensions' = 'https://github.com/PiotrTymoszuk/coxExtensions') %>%
+         'coxExtensions' = 'https://github.com/PiotrTymoszuk/coxExtensions',
+         'fastTest' = 'https://github.com/PiotrTymoszuk/fastTest',
+         'perich' = 'https://github.com/PiotrTymoszuk/perich',
+         'graphExtra' = 'https://github.com/PiotrTymoszuk/graphExtra',
+         'htGLMNET' = 'https://github.com/PiotrTymoszuk/htGLMNET') %>%
     compress(names_to = 'obj_name',
              values_to = 'x') %>%
     mutate(ref_name = paste0('_', obj_name, '_'))

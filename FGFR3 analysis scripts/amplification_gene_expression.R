@@ -13,7 +13,8 @@
 
   ## expression data
 
-  fgfr_ampl$variables <- globals[c("receptors", "ligands")] %>%
+  fgfr_ampl$variables <-
+    globals[c("receptors", "ligands", "binding_proteins")] %>%
     reduce(union)
 
   fgfr_ampl$data <- tcga$expression %>%
@@ -45,31 +46,30 @@
   insert_msg('Descriptive stats')
 
   fgfr_ampl$stats <- fgfr_ampl$data %>%
-    explore(variables = fgfr_ampl$variables,
-            split_factor = 'amp11q13',
-            what = 'table',
-            pub_styled = TRUE) %>%
-    format_desc
+    fast_num_stats(variables = fgfr_ampl$variables,
+                   split_fct = 'amp11q13')
 
 # Testing for differences between WT and amplified cancers -------
 
   insert_msg('Testing for differences')
 
-  fgfr_ampl$test <- fgfr_ampl$data %>%
-    test_two_groups(split_fct = 'amp11q13',
-                    variables = fgfr_ampl$variables,
-                    type = 'wilcox',
-                    adj_method = 'BH') %>%
-    re_adjust(method = 'none') %>%
-    mutate(eff_size = paste('r =', signif(effect_size, 2)),
-           plot_cap = paste(eff_size, significance, sep = ', '),
-           variable = response)
+  fgfr_ampl$test <-
+    f_wilcox_test(fgfr_ampl$data[fgfr_ampl$variables],
+                  f = fgfr_ampl$data$amp11q13,
+                  exact = FALSE,
+                  as_data_frame = TRUE,
+                  adj_method = 'BH',
+                  safely = TRUE) %>%
+    re_adjust %>%
+    mutate(eff_size = paste('r =', signif(biserial_r, 2)),
+           plot_cap = paste(eff_size, significance, sep = ', ')) %>%
+    as_tibble
 
   ## significant differences
 
   fgfr_ampl$significant <- fgfr_ampl$test %>%
     filter(p_adjusted < 0.05) %>%
-    .$response
+    .$variable
 
 # Box plots --------
 
@@ -103,10 +103,6 @@
                     fgfr_ampl$test) %>%
     format_res_tbl(dict = NULL,
                    remove_complete = TRUE) %>%
-    full_rbind(tibble(variable = 'Samples, N',
-                      WT = table(fgfr_ampl$data$amp11q13)['WT'],
-                      amplified = table(fgfr_ampl$data$amp11q13)['amplified']),
-               .) %>%
     set_names(c('Variable',
                 levels(fgfr_ampl$data$amp11q13),
                 'Significance', 'Effect size'))

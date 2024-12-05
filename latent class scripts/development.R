@@ -24,7 +24,7 @@
 
 # tuning of the poLCA models ---------
 
-  insert_msg('Tuniniig of the poLCA models')
+  insert_msg('Tuninig of the poLCA models')
 
   lca_dev$tune_object <- tune_lca(formula = lca_globals$formula,
                                   data = lca_dev$data,

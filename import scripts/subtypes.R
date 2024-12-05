@@ -21,13 +21,18 @@
 
   subtypes$assignment <- subtypes$data %>%
     map(getConsensusClass,
+        minCor = 0.5,
         gene_id = 'hgnc_symbol') %>%
     map(rownames_to_column, 'sample_id') %>%
     map(mutate,
+        consensusClass = ifelse(is.na(consensusClass),
+                                'not assigned', consensusClass),
+        consensusClass = ifelse(separationLevel < 0.2,
+                                'not assigned', consensusClass),
         consensusClass = factor(consensusClass ,
                                 c('LumP', 'LumU', 'LumNS',
                                   'Stroma-rich', 'Ba/Sq',
-                                  'NE-like'))) %>%
+                                  'NE-like', 'not assigned'))) %>%
     map(as_tibble)
 
 # END -------

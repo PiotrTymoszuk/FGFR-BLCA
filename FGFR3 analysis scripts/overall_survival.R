@@ -19,10 +19,10 @@
                        fgfr_os$data,
                        inner_join, by = 'sample_id')
 
-  ## TCGA and MSK: variants of the data sets without pT4 cancers
+  ## TCGA, MSK, and BCAN: variants of the data sets without pT4 cancers
 
-  fgfr_os$data[c('msk_wo_t4', 'tcga_wo_t4')] <-
-    fgfr_os$data[c('msk', 'tcga')] %>%
+  fgfr_os$data[c('msk_wo_t4', 'tcga_wo_t4', 'bcan_wo_t4')] <-
+    fgfr_os$data[c('msk', 'tcga', 'bcan')] %>%
     map(filter, pt_stage != 'T4')
 
   fgfr_os$data <- fgfr_os$data %>%
@@ -105,7 +105,7 @@
   fgfr_os$km_plots <-
     list(x = fgfr_os$km_plots,
          y = c(globals$cohort_labs,
-               paste(globals$cohort_labs[c("msk", "tcga")],
+               paste(globals$cohort_labs[c("msk", "tcga", "bcan")],
                      'without pT4 cancers')),
          w = fgfr_os$n_captions,
          z = fgfr_os$legend_labs) %>%
@@ -123,23 +123,56 @@
 
   insert_msg('Result table')
 
-  fgfr_os$result_tbl <- fgfr_os$stats %>%
+  ## numbers of patients and events
+
+  fgfr_os$result_tbl$n_numbers <- fgfr_os$n_groups %>%
+    map(column_to_rownames, 'FGFR3_mutation') %>%
+    map(select, n_total, n_events) %>%
+    map(t) %>%
+    map(as_tibble) %>%
+    map(mutate, variable = c('Patients, N', 'Events, N')) %>%
+    map(relocate, variable)
+
+  ## median survival times and test results
+
+  fgfr_os$result_tbl$stats <- fgfr_os$stats %>%
     map(mutate,
-        median = paste0(signif(median, 3),
-                           ' [95% CI: ',
-                           signif(lower, 3),
-                           ' to ', signif(upper, 3), ']')) %>%
+        median = ifelse(is.na(median),
+                        '',
+                        paste0(signif(median, 3),
+                               ' [95% CI: ',
+                               signif(lower, 3),
+                               ' to ', signif(upper, 3), ']'))) %>%
     map(select, FGFR3_mutation, median) %>%
     map(column_to_rownames, 'FGFR3_mutation') %>%
     map(t) %>%
     map(as_tibble)
 
-  fgfr_os$result_tbl <-
-    map2(fgfr_os$result_tbl,
-         map(fgfr_os$test, ~.x[c('variable', 'significance')]),
+  fgfr_os$result_tbl$stats <-
+    map2(fgfr_os$result_tbl$stats,
+         map(fgfr_os$test, ~.x['significance']),
          cbind) %>%
     map(as_tibble) %>%
+    map(mutate, variable = 'Median overall survival, days') %>%
     map(relocate, variable)
+
+  ## the entire result table
+
+  fgfr_os$result_tbl <-
+    map2(fgfr_os$result_tbl$n_numbers,
+         fgfr_os$result_tbl$stats,
+         full_rbind) %>%
+    compress(names_to = 'cohort') %>%
+    mutate(subset = ifelse(stri_detect(cohort, regex = 't4$'),
+                           'without pT4 cancers', 'all patients'),
+           cohort = stri_extract(cohort,
+                                 regex = paste(globals$analysis_cohorts,
+                                               collapse = '|')),
+           cohort = globals$cohort_labs[cohort]) %>%
+    relocate(cohort, subset) %>%
+    set_names(c('Cohort', 'Subset', 'Variable',
+                levels(fgfr_os$data[[1]]$FGFR3_mutation),
+                'Significance'))
 
 # END ------
 

@@ -86,7 +86,8 @@
 
   ## expression annotation
   ## manual substitution of
-  ## the gene '102800317' according to the recent NCBI Gene
+  ## the gene '102800317' and the gene '3730'
+  ## according to the recent NCBI Gene
 
   imvigor$exp_annotation <-
     cds@featureData@data[c('entrez_id',
@@ -97,6 +98,9 @@
 
   imvigor$exp_annotation[imvigor$exp_annotation$entrez_id == '102800317', 'gene_symbol'] <-
     'TPTEP2-CSNK1E'
+
+  imvigor$exp_annotation[imvigor$exp_annotation$entrez_id == '3730', 'gene_symbol'] <-
+    'ANOS1'
 
   ## re-naming the expression data set,
   ## removing features without gene symbol assignment

@@ -45,6 +45,19 @@
   lca_clinic$variables$tcga <-
     lca_clinic$variables$tcga[lca_clinic$variables$tcga != 'tissue']
 
+# N numbers --------
+
+  insert_msg('N numbers of samples')
+
+  lca_clinic$n_numbers <- lca_clinic$data %>%
+    map(count, clust_id) %>%
+    map(column_to_rownames, 'clust_id') %>%
+    map(t) %>%
+    map(as_tibble) %>%
+    map(mutate,
+        variable = 'Samples, N') %>%
+    map(relocate, variable)
+
 # Descriptive stats -------
 
   insert_msg('Analysis stats')
@@ -125,6 +138,8 @@
          merge_stat_test) %>%
     map(format_res_tbl,
         dict = lca_clinic$lexicon) %>%
+    map2(., lca_clinic$n_numbers,
+         ~full_rbind(.y, .x)) %>%
     compress(names_to = 'cohort') %>%
     mutate(cohort = globals$cohort_labs[cohort]) %>%
     relocate(cohort) %>%

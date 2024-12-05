@@ -21,7 +21,8 @@
 
   ## analysis variables
 
-  expl_corr$variables <- globals[c("receptors", "ligands")]
+  expl_corr$variables <-
+    globals[c("receptors", "ligands", "binding_proteins")]
 
   ## analysis data
 
@@ -47,12 +48,13 @@
   for(i in names(expl_corr$data)) {
 
     expl_corr$test[[i]] <- expl_corr$variable_pairs %>%
-      future_map_dfr(~correlate_variables(expl_corr$data[[i]],
-                                          variables = .x,
-                                          what = 'correlation',
-                                          type = 'pearson',
-                                          ci = TRUE),
-                     .options = furrr_options(seed = TRUE)) %>%
+      future_map(~safely(correlate_variables)(expl_corr$data[[i]],
+                                              variables = .x,
+                                              what = 'correlation',
+                                              type = 'pearson',
+                                              ci = TRUE),
+                 .options = furrr_options(seed = TRUE)) %>%
+      map_dfr(~.x$result) %>%
       re_adjust(method = 'BH') %>%
       mutate(corr_id = paste(variable1, variable2, sep = '_'),
              variable1 = factor(variable1, reduce(expl_corr$variables, c)),
@@ -70,10 +72,11 @@
         abs(estimate) >= 0.3) %>%
     map(~.x$corr_id)
 
-  ## effects shared by both cohorts
+  ## effects shared by at least two cohorts
 
   expl_corr$common_significant <- expl_corr$significant %>%
-    reduce(intersect)
+    shared_features(m = 2) %>%
+    as.character
 
 # Bubble plots for the shared significant effects -------
 
@@ -103,12 +106,12 @@
                       fill = factor(sign(estimate)),
                       size = abs(estimate))) +
            geom_point(shape = 21) +
-           geom_text(aes(label = signif(estimate, 2),
-                         color = factor(sign(estimate))),
-                     size = 2.5,
-                     vjust = -1.2,
-                     hjust = 0.5,
-                     show.legend = FALSE) +
+           #geom_text(aes(label = signif(estimate, 2),
+            #             color = factor(sign(estimate))),
+             #        size = 2.2,
+              #       vjust = -1.2,
+               #      hjust = 0.5,
+                #     show.legend = FALSE) +
            scale_fill_manual(values = c('-1' = 'steelblue',
                                         '0' = 'gray60',
                                         '1' = 'firebrick'),
@@ -123,7 +126,7 @@
                                          '0' = 'ns',
                                          '1' = 'positive'),
                               name = 'Correlation') +
-           scale_size_area(max_size = 5,
+           scale_size_area(max_size = 4,
                            limits = c(0, 1),
                            name = "r") +
            scale_x_discrete(limits = expl_corr$common_limits) +

@@ -12,7 +12,9 @@
 
   ## log2-transformed, restricted to the common genes
 
-  combat$raw_expression <- list(tcga = tcga, imvigor = imvigor) %>%
+  combat$raw_expression <- list(tcga = tcga,
+                                imvigor = imvigor,
+                                bcan = bcan) %>%
     map(~.x$expression)
 
   combat$genes <- combat$raw_expression %>%
@@ -29,15 +31,18 @@
 
   insert_msg('Batch effect adjustment')
 
-  combat$expression <- pre_process(train = combat$raw_expression$tcga,
-                                   test = combat$raw_expression$imvigor)
+  combat$expression <-
+    multi_process(train = combat$raw_expression$tcga,
+                  test = combat$raw_expression[c("imvigor", "bcan")])
 
-  combat$expression <- combat$expression[c("train", "test")] %>%
+  combat$expression <-
+    list(tcga = combat$expression$train,
+         imvigor = combat$expression$test$imvigor,
+         bcan = combat$expression$test$bcan) %>%
     map(t) %>%
     map(as.data.frame) %>%
     map(rownames_to_column, 'sample_id') %>%
-    map(as_tibble) %>%
-    set_names(names(combat$raw_expression))
+    map(as_tibble)
 
 # Cachinig the results -------
 

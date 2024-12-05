@@ -1,4 +1,9 @@
-# Quality check for the genetic clusters
+# Quality check for the genetic clusters.
+#
+# Distribution of the class-defining features in the genetic clusters are
+# compared by chi-square test with Cramer's V effect size statistic.
+# FDR correction. The proper check of genetic background is done by
+# permutation testing in another script
 
   insert_head()
 
@@ -33,7 +38,8 @@
   lca_eval$n_total_labs <- lca_eval$data %>%
     map_dbl(nrow) %>%
     map2_chr(names(.), .,
-             ~paste(globals$cohort_labs[.x], .y, sep = '\nn = '))
+             ~paste(globals$cohort_labs[.x], .y, sep = '\nn = ')) %>%
+    set_names(names(lca_eval$data))
 
   lca_eval$n_numbers <- lca_eval$clust_objects %>%
     map(ngroups) %>%
@@ -55,7 +61,7 @@
 
   lca_eval$n_plot <- lca_eval$n_numbers %>%
     compress(names_to = 'cohort') %>%
-    mutate(cohort = factor(cohort, globals$analysis_cohorts),
+    mutate(cohort = factor(cohort, rev(globals$analysis_cohorts)),
            cohort = droplevels(cohort)) %>%
     ggplot(aes(x = percent,
                y = cohort,
@@ -80,6 +86,7 @@
 
   ## silhouette widths do not make much sense
   ## in the evidently non-Euclidean setting
+  ## neighborhood preservation is the most important metric
 
   lca_eval$clust_stats <- lca_eval$clust_objects %>%
     map(summary) %>%
@@ -105,21 +112,20 @@
 
   insert_msg('Chi-square tests')
 
-  plan('multisession')
-
   lca_eval$test <- lca_eval$data %>%
-    future_map(compare_variables,
-               variables = lca_eval$variables,
-               split_factor = 'clust_id',
-               what = 'eff_size',
-               types = 'cramer_v',
-               exact = FALSE,
-               ci = FALSE,
-               adj_method = 'BH',
-               pub_styled = TRUE,
-               .parallel = TRUE,
-               .options = furrr_options(seed = TRUE)) %>%
+    map(~f_chisq_test(.x[lca_eval$variables],
+                      f = .x[['clust_id']],
+                      as_data_frame = TRUE,
+                      adj_method = 'BH',
+                      safely = TRUE)) %>%
+    map(as_tibble)
+
+  ## formatting the testing results
+
+  lca_eval$test <- lca_eval$test %>%
+    map(re_adjust) %>%
     map(mutate,
+        eff_size = paste('V =', signif(cramer_v, 2)),
         plot_cap = paste(eff_size, significance, sep = ', '),
         gene_symbol = stri_split_fixed(variable,
                                        pattern = '_',
@@ -133,9 +139,10 @@
                         html_bold(ax_lab), ax_lab),
         gene_html = ifelse(p_adjusted < 0.05,
                            html_bold(html_italic(gene_symbol)),
-                           html_italic(gene_symbol)))
-
-  plan('sequential')
+                           html_italic(gene_symbol)),
+        gene_html = ifelse(!is.na(p_adjusted),
+                           html_italic(gene_symbol),
+                           gene_html))
 
   ## significant differences
 
@@ -143,8 +150,11 @@
     map(filter, p_adjusted < 0.05) %>%
     map(~.x$variable)
 
+  ## common significant differences, shared by at least two cohorts
+
   lca_eval$common_significant <- lca_eval$significant %>%
-    reduce(intersect)
+    shared_features(m = 2) %>%
+    as.character
 
 # Stack plots for single genetic features ---------
 
@@ -197,7 +207,7 @@
 
 # Heat maps of the clustering features -------
 
-  insert_msg('Classification and ')
+  insert_msg('Heat maps')
 
   ## classification of the features by their character and  general frequency
   ## in the genie cohort
@@ -257,6 +267,38 @@
            labs(title = y,
                 subtitle = paste(z, collapse = ', '),
                 x = 'sample'))
+
+# Oncoplots -------
+
+  insert_msg('Oncoplots')
+
+  lca_eval$oncoplots <-
+    list(data = lca_eval$data,
+         plot_title = globals$cohort_labs[names(lca_eval$data)],
+         variable_classification = lca_eval$test %>%
+           map(mutate,
+               alteration = factor(alteration,
+                                   c('mutation', 'deletion', 'amplification'))) %>%
+           map(~.x[c('variable', 'alteration')])) %>%
+    pmap(plot_bionco,
+         variables = lca_eval$variables,
+         split_fct = 'clust_id',
+         hide_x_axis_text = TRUE,
+         cust_theme = globals$common_theme +
+           theme(axis.title.y = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.ticks.x = element_blank(),
+                 axis.line = element_blank(),
+                 panel.grid.major.x = element_blank(),
+                 strip.text.x = element_text(hjust = 0, angle = 90)),
+         color_scale = c('gray85', 'orangered3'),
+         one_plot = FALSE,
+         x_lab = 'cancer sample') %>%
+    map(~.x$main) %>%
+    map2(., lca_eval$test,
+         ~.x +
+           theme(axis.text.y = element_markdown()) +
+           scale_y_discrete(labels = set_names(.y$gene_html, .y$variable)))
 
 # Result table -------
 

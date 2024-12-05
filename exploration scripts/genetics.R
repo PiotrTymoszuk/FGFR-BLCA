@@ -40,14 +40,45 @@
   ## components of the FGF/FGFR system are highlighted with bold font
 
   expl_genet$fgf_genes <-
-    list(receptors = globals$receptors,
-         ligands = globals$ligands)
+    globals[c("receptors", "ligands", "binding_proteins")]
 
   expl_genet$lexicon <-
     tibble(variable = reduce(expl_genet$variables, union)) %>%
     mutate(label = html_italic(variable),
            label = ifelse(variable %in% reduce(expl_genet$fgf_genes, union),
                           html_bold(label), label))
+
+  ## data for the FGF, FGFR, and FGFBP-coding genes
+  ## detected in at least two cohorts:
+  ## if a gene is not present in a cohort it is assumed all WT
+
+  expl_genet$fgf_data <- globals$cohort_expr %>%
+    eval %>%
+    map(~.x[c('mutation', 'deletion', 'amplification')]) %>%
+    transpose %>%
+    map(compact) %>%
+    map(map,
+        select,
+        any_of(reduce(expl_genet$fgf_genes, union)))
+
+  expl_genet$fgf_genes <- expl_genet$fgf_data %>%
+    map(map, colSums) %>%
+    map(map, ~.x[.x > 0]) %>%
+    map(map, names) %>%
+    map(shared_features, m = 2) %>%
+    map(as.character)
+
+  expl_genet$fgf_data <-
+    map2(expl_genet$fgf_data,
+         expl_genet$fgf_genes,
+         function(x, y) x %>%
+           map(select, any_of(y))) %>%
+    map(~map2_dfr(.x, names(.x),
+                  function(dat, coh) mutate(dat, cohort = coh))) %>%
+    map(relocate, cohort)
+
+  expl_genet$fgf_data <- expl_genet$fgf_data %>%
+    map(map_dfc, ~ifelse(is.na(.x), 0, .x))
 
 # N numbers -------
 
@@ -72,12 +103,27 @@
 
   insert_msg('Frequency of alterations')
 
-  expl_genet$stats <- expl_genet$data %>%
-    map(count_binary,
+  ## frequency of all alterations,
+  ## and alterations in the FGF, FGFR, and FGFBP genes
+
+  expl_genet[c("stats", "fgf_stats")] <-
+    expl_genet[c("data", "fgf_data")] %>%
+    map(map,
+        count_binary,
         split_fct = 'cohort') %>%
-    map(mutate,
+    map(map,
+        mutate,
         cohort = factor(cohort, globals$analysis_cohorts),
         cohort = droplevels(cohort))
+
+  expl_genet$fgf_stats <- expl_genet$fgf_stats %>%
+    map(mutate,
+        gene_group = ifelse(variable %in% globals$receptors,
+                            'receptor',
+                            ifelse(variable %in% globals$ligands,
+                                   'ligand', 'BP')),
+        gene_group = factor(gene_group,
+                            c('receptor', 'ligand', 'BP')))
 
   ## top alterations present in at least 5% of samples
   ## in all cohorts
@@ -97,18 +143,16 @@
   expl_genet$test <-
     map2(expl_genet$data,
          expl_genet$top_alterations,
-         ~compare_variables(.x,
-                            variables = .y,
-                            split_factor = 'cohort',
-                            what = 'eff_size',
-                            types = 'cramer_v',
-                            exact = FALSE,
-                            ci = FALSE,
-                            pub_styled = FALSE,
-                            adj_method = 'BH')) %>%
+         ~f_chisq_test(.x[.y],
+                       f = .x$cohort,
+                       safely = TRUE,
+                       as_data_frame = TRUE,
+                       adj_method = 'BH')) %>%
+    map(re_adjust) %>%
     map(mutate,
-        eff_size = paste('V =', signif(estimate, 2)),
-        plot_cap = paste(eff_size, significance, sep = ', '))
+        eff_size = paste('V =', signif(cramer_v, 2)),
+        plot_cap = paste(eff_size, significance, sep = ', ')) %>%
+    map(as_tibble)
 
   ## significant effects
 
@@ -134,8 +178,11 @@
                       y = reorder(variable, percent),
                       fill = cohort)) +
            geom_bar(stat = 'identity',
-                    color = 'black',
+                    color = 'white',
                     position = position_dodge(0.9)) +
+           geom_vline(xintercept = 0,
+                      linetype = 'solid',
+                      linewidth = 0.15) +
            scale_y_discrete(labels = function(x) exchange(x, expl_genet$lexicon)) +
            scale_fill_manual(values = globals$cohort_colors,
                              labels = w,
@@ -177,18 +224,6 @@
 
   insert_msg('Detailed bar plots for the genes of interest')
 
-  ## plotting data
-
-  expl_genet$fgf_stats <- expl_genet$stats %>%
-    map(filter,
-        variable %in% reduce(expl_genet$fgf_genes, union)) %>%
-    map(mutate,
-        gene_group = ifelse(variable %in% expl_genet$fgf_genes$receptors,
-                            'receptors', 'ligands'),
-        gene_group = factor(gene_group, c('receptors', 'ligands'))) %>%
-    map(blast, variable) %>%
-    map(map_dfr, function(x) if(all(x$n == 0)) NULL else x)
-
   ## bar plots
 
   expl_genet$fgf_plots <-
@@ -196,7 +231,7 @@
          y = paste0(c('Somatic mutations',
                       'Gene deletion',
                       'Gene amplification'),
-                    ', <em>FGFR/FGF</em> genes'),
+                    ', <em>FGFR/FGF/FGFBP</em> genes'),
          z = expl_genet$n_captions,
          w = expl_genet$n_legends) %>%
     pmap(function(x, y, z, w) x %>%
@@ -207,8 +242,12 @@
                       scales = 'free',
                       space = 'free') +
            geom_bar(stat = 'identity',
-                    color = 'black',
-                    position = position_dodge(0.9)) +
+                    color = 'white',
+                    position = position_dodge(0.9),
+                    linewidth = 0.01) +
+           geom_vline(xintercept = 0,
+                      linetype = 'solid',
+                      linewidth = 0.15) +
            scale_fill_manual(values = globals$cohort_colors,
                              labels = w,
                              name = 'Cohort') +
@@ -227,7 +266,9 @@
   expl_genet$fgf_result_tbl <- expl_genet$fgf_stats %>%
     map(mutate,
         percent = signif(percent, 2),
-        cohort = globals$cohort_labs[cohort]) %>%
+        cohort = globals$cohort_labs[cohort],
+        gene_group = car::recode(as.character(gene_group),
+                                 "'BP' = 'binding protein'")) %>%
     map(arrange, gene_group, variable, cohort) %>%
     map(select,
         gene_group, variable, cohort,
@@ -242,6 +283,7 @@
 
   expl_genet$data <- NULL
   expl_genet$fgf_stats <- NULL
+  expl_genet$fgf_data <- NULL
 
   expl_genet <- compact(expl_genet)
 

@@ -18,6 +18,7 @@
 
   library(exda)
   library(microViz)
+  library(fastTest)
 
   library(survival)
   library(survminer)

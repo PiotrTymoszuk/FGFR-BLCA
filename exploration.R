@@ -11,12 +11,14 @@
 #
 # 5) Characteristic of the mutation types and location for the FGFR genes.
 #
-# 6) Co-expression of FGF and FGFR gene mRNA in the cancer tissue.
+# 6) Co-expression of FGF and FGFR gene mRNA in the cancer tissue: correlation
+# and network analysis.
 #
 # 7) Differential expression of FGFR and FGF genes in cancer samples with and
 # without mutations in the FGFR1 - 4.
 #
-# 8) Co-occurrence of alterations in FGF and FGFR genes.
+# 8) Co-occurrence of alterations in FGF and FGFR genes: multi-dimensional
+# scaling and a network analysis.
 
 # tools -------
 
@@ -28,6 +30,10 @@
   library(exda)
   library(survival)
   library(survminer)
+  library(fastTest)
+
+  library(igraph)
+  library(graphExtra)
 
   library(jsonlite)
 
@@ -80,6 +86,12 @@
   access_cache(cache_path = './cache/expl_occur.RData',
                script_path = './exploration scripts/co_occurrence.R',
                message = 'Loading cached co-occurrence analysis results')
+
+  ## network analyses
+
+  c('./exploration scripts/co_expression_networks.R',
+    './exploration scripts/alteration_networks.R') %>%
+    source_all(message = TRUE, crash = TRUE)
 
 # END -----
 

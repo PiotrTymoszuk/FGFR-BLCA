@@ -1,5 +1,5 @@
-# differences in distribution of the consensus molecular subtypes between
-# the cohorts. Done for the TCGA BLCA and Imvigor cohorts
+# Differences in distribution of the consensus molecular subtypes between
+# the cohorts. Done for the TCGA BLCA, Imvigor, and BCAN cohorts
 
   insert_head()
 
@@ -13,10 +13,12 @@
 
   expl_sub$data <- subtypes$assignment %>%
     map(~.x[c('sample_id', 'consensusClass')]) %>%
+    map(filter, !is.na(consensusClass), consensusClass != 'not assigned') %>%
     compress(names_to = 'cohort') %>%
     mutate(cohort = unname(globals$cohort_labs[cohort]),
            cohort = factor(cohort, unname(globals$cohort_labs)),
-           cohort = droplevels(cohort)) %>%
+           cohort = droplevels(cohort),
+           consensusClass = droplevels(consensusClass)) %>%
     filter(complete.cases(.))
 
 # Descriptive stats ------

@@ -10,9 +10,16 @@
 
   insert_msg('Analysis variables and data')
 
+  ## for BCAN: collapsing the non-bladder and metastasis organs
+
   expl_cohorts$data <- globals$cohort_expr %>%
     eval %>%
     map(~.x$clinic)
+
+  expl_cohorts$data$bcan <- expl_cohorts$data$bcan %>%
+    mutate(tissue = ifelse(tissue == 'bladder',
+                           'bladder', 'non-bladder'),
+           tissue = factor(tissue, c('bladder', 'non-bladder')))
 
   expl_cohorts$lexicon <- globals$clinic_lexicon %>%
     mutate(unit = ifelse(variable == 'tmb_per_mb',
@@ -59,7 +66,8 @@
            cohort = factor(cohort, unname(globals$cohort_labs)),
            death = as.character(death),
            death = car::recode(death, "'0' = 'no'; '1' = 'yes'"),
-           death = factor(death, c('no', 'yes')))
+           death = factor(death, c('no', 'yes'))) %>%
+    map_dfc(function(x) if(is.factor(x)) droplevels(x) else x)
 
 # Descriptive stats -------
 
@@ -82,15 +90,19 @@
   expl_cohorts$test_lexicon <- expl_cohorts$lexicon %>%
     filter(test_type != 'none')
 
-  expl_cohorts$test <- expl_cohorts$data %>%
-    compare_variables(variables = expl_cohorts$test_lexicon$variable,
-                      split_factor = 'cohort',
-                      what = 'eff_size',
-                      types = expl_cohorts$test_lexicon$test_type,
-                      ci = FALSE,
-                      exact = FALSE,
-                      pub_styled = TRUE,
-                      adj_method = 'BH') %>%
+  expl_cohorts$test <-
+    list(x = expl_cohorts$test_lexicon$variable,
+         y = expl_cohorts$test_lexicon$test_type) %>%
+    pmap_dfr(function(x, y) expl_cohorts$data[, c('cohort', x)] %>%
+               filter(complete.cases(.)) %>%
+               compare_variables(variables = x,
+                                 split_factor = 'cohort',
+                                 what = 'eff_size',
+                                 types = y,
+                                 ci = FALSE,
+                                 exact = FALSE,
+                                 pub_styled = TRUE)) %>%
+    re_adjust %>%
     mutate(plot_cap = paste(eff_size, significance, sep = ', '))
 
 # Result table -------
@@ -132,7 +144,8 @@
   expl_cohorts$plots$age <- expl_cohorts$plots$age +
     scale_fill_manual(values = unname(globals$cohort_colors[c("genie",
                                                               "msk",
-                                                              "tcga")]))
+                                                              "tcga",
+                                                              "bcan")]))
 
   expl_cohorts$plots[names(expl_cohorts$plots) != 'age'] <-
     expl_cohorts$plots[names(expl_cohorts$plots) != 'age'] %>%

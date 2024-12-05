@@ -2,7 +2,7 @@
 # and deletions.
 #
 # Co-occurrence is investigated by two-dimensional MDS of the Jaccard distance
-# matrices. The analysis is done for the GENIE and TCGA cohort.
+# matrices. The analysis is done for the GENIE, MSK and TCGA cohort.
 
   insert_head()
 
@@ -112,6 +112,33 @@
                                title_suffix = globals$cohort_labs[i]))
 
   }
+
+# Oncoplots --------
+
+  insert_msg('Oncoplots')
+
+  lca_occur$oncoplots <-
+    list(data = lca_occur$data,
+         plot_title = globals$cohort_labs[names(lca_occur$data)]) %>%
+    pmap(plot_bionco,
+         split_fct = NULL,
+         one_plot = FALSE,
+         hide_x_axis_text = TRUE,
+         cust_theme = globals$common_theme +
+           theme(axis.title.y = element_blank(),
+                 axis.text.x = element_blank(),
+                 axis.ticks.x = element_blank(),
+                 axis.line = element_blank(),
+                 panel.grid.major.x = element_blank(),
+                 strip.text.x = element_text(hjust = 0, angle = 90)),
+         color_scale = c('gray85', 'orangered3'),
+         x_lab = 'cancer sample') %>%
+    map(~.x$main +
+          theme(axis.text.y = element_markdown()) +
+          scale_y_discrete(labels = function(x) exchange(x,
+                                                         lca_occur$lexicon,
+                                                         value = 'label_html')))
+
 
 # caching the analysis results -------
 

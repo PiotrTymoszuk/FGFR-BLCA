@@ -32,12 +32,12 @@
   lca_pred$model <- lca_dev$tune_object$models$class_6
 
   lca_pred$model$class_names <-
-    c('mutRB1',
-      'hyperMut',
-      'mutFGFR3',
+    c('del9p21',
       'oligoMut',
       'ampMDM2',
-      'del9p21')
+      'mutRB1',
+      'mutFGFR3',
+      'hyperMut')
 
   ## predictions
 
@@ -46,8 +46,8 @@
 
   lca_pred$posteriors[c('msk', 'tcga')] <-
     lca_pred$factor_data[c("msk", "tcga")] %>%
-    map(predict,
-        object = lca_pred$model)
+    map(~predict.polcax(object = lca_pred$model,
+                        newdata = .x))
 
 # Diagnostic plots: class-assignment posterior p -------
 
@@ -97,11 +97,17 @@
         sample_id = observation,
         clust_id = clust_id)
 
-# END -----
+# caching --------
+
+  insert_msg('Caching')
 
   #lca_pred$data <- NULL
   lca_pred$factor_data <- NULL
 
   lca_pred <- compact(lca_pred)
+
+  save(lca_pred, file = './cache/lca_pred.RData')
+
+# END -----
 
   insert_tail()

@@ -17,6 +17,8 @@
                                            r = 2,
                                            unit = 'mm')
 
+  ## common theme for plots
+
   globals$common_theme <- theme_classic() +
     theme(axis.text = globals$common_text,
           axis.title = globals$common_text,
@@ -37,6 +39,16 @@
           plot.margin = globals$common_margin,
           panel.grid.major = element_line(color = 'gray90'))
 
+  ## common theme for networks
+
+  globals$net_theme <- theme_void() +
+    theme(plot.title = element_text(size = 8,
+                                    face = 'bold'),
+          plot.subtitle = globals$common_text,
+          legend.text = globals$common_text,
+          legend.title = globals$common_text,
+          plot.margin = globals$common_margin)
+
 # cohort labs and colors ------
 
   insert_msg('Color labs and colors')
@@ -44,12 +56,14 @@
   globals$cohort_labs <- c(genie = 'GENIE BLCA',
                            msk = 'MSK IMPACT',
                            tcga = 'TCGA BLCA',
-                           imvigor = 'IMvigor')
+                           imvigor = 'IMvigor',
+                           bcan = 'BCAN')
 
   globals$cohort_colors <- c(genie = 'indianred3',
                              msk = 'darkolivegreen4',
                              tcga = 'steelblue',
-                             imvigor = 'gray60')
+                             imvigor = 'gray60',
+                             bcan = 'plum4')
 
   ## a lexicon data frame for convenient annotation with `exchange()`
 
@@ -77,9 +91,17 @@
 
   ## gene symbols
 
-  globals$receptors <- paste0('FGFR', 1:4)
+  globals$receptors <- c(paste0('FGFR', 1:4),
+                         'FGFRL1', 'TGFBR3')
 
-  globals$ligands <- paste0('FGF', c(1:10, 15:23))
+  globals$ligands <- paste0('FGF', c(1:14, 17:23))
+
+  globals$binding_proteins <- c(paste0('FGFBP', 1:3),
+                                'KL', 'KLB', 'PTX3',
+                                'SDC1', 'SDC2', 'SDC4',
+                                'DCN', 'CD44', 'HSPG2',
+                                'GPC1', 'GPC3', 'GPC4',
+                                'TNFAIP6', 'FIBP', 'ANOS1')
 
   ## protein lengths
 
@@ -93,8 +115,8 @@
 
   globals$sub_colors <-
     c('LumP' = 'steelblue',
-      'LumU' = 'cornsilk',
-      'LumNS' = 'gray60',
+      'LumU' =  'goldenrod',
+      'LumNS' = 'gray40',
       'Stroma-rich' = 'orangered3',
       'Ba/Sq' = 'darkolivegreen4',
       'NE-like' = 'plum4')
@@ -105,7 +127,8 @@
       'LumNS' = 'luminal non-specified',
       'Stroma-rich' = 'stroma-rich',
       'Ba/Sq' = 'basal/squamous',
-      'NE-like' = 'neuroendocrine-like')
+      'NE-like' = 'neuroendocrine-like',
+      'not assigned' = 'not assigned')
 
 # clinical variables ------
 
@@ -132,7 +155,7 @@
 
   globals$mutation_colors <-
     c('missense' = 'indianred3',
-      'nonsense' = 'gray70',
+      'nonsense' = 'aquamarine3',
       'stop loss' = 'brown2',
       'in-frame deletion' = 'steelblue2',
       'in-frame insertion' = 'firebrick2',
@@ -141,7 +164,8 @@
       'splice region' = 'cornsilk',
       'splice site' = 'bisque3',
       'intron' = 'darkolivegreen',
-      "3'UTR" = 'orangered')
+      "3'UTR" = 'orangered',
+      'silent' = 'gray70')
 
   globals$variant_colors <-
     c('SNP' = 'orangered3',

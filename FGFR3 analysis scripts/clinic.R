@@ -15,7 +15,7 @@
   fgfr_clinic$lexicon <- globals$clinic_lexicon %>%
     filter(!variable %in% c('tmb_per_mb', 'bi_response', 'death')) %>%
     mutate(test_type = ifelse(format == 'numeric',
-                              'kruskal_etasq', 'cramer_v'),
+                              'wilcoxon_r', 'cramer_v'),
            plot_type = ifelse(format == 'numeric',
                               'box', 'stack'),
            ax_label = ifelse(is.na(unit),
@@ -31,7 +31,13 @@
   fgfr_clinic$data <-
     map2(fgfr_globals$genetic_groups[names(fgfr_clinic$data)],
          fgfr_clinic$data,
-         inner_join, by = 'sample_id')
+         inner_join, by = 'sample_id') %>%
+    map(map_dfc, function(x) if(is.factor(x)) droplevels(x) else x)
+
+  fgfr_clinic$data$bcan <- fgfr_clinic$data$bcan %>%
+    mutate(tissue = ifelse(tissue == 'bladder',
+                           'bladder', 'non-bladder'),
+           tissue = factor(tissue, c('bladder', 'non-bladder')))
 
   ## data set-specific variable vectors
 
@@ -39,6 +45,19 @@
     map(names) %>%
     map(~filter(fgfr_clinic$lexicon, variable %in% .x)) %>%
     map(~.x$variable)
+
+# N numbers -------
+
+  insert_msg('Total numbers of samples')
+
+  fgfr_clinic$n_numbers <- fgfr_clinic$data %>%
+    map(count, FGFR3_mutation) %>%
+    map(column_to_rownames, 'FGFR3_mutation') %>%
+    map(t) %>%
+    map(as.data.frame) %>%
+    map(mutate, variable = 'Patients, N') %>%
+    map(relocate, variable) %>%
+    map(as_tibble)
 
 # Descriptive stats -------
 
@@ -73,7 +92,13 @@
                             pub_styled = TRUE,
                             adj_method = 'BH')) %>%
     map(mutate,
-        plot_cap = paste(eff_size, significance, sep = ', '))
+        plot_cap = paste(eff_size, significance, sep = ', '),
+        significance = ifelse(stri_detect(eff_size, fixed = 'Inf'),
+                              NA, significance),
+        plot_cap = ifelse(stri_detect(eff_size, fixed = 'Inf'),
+                          NA, plot_cap),
+        eff_size = ifelse(stri_detect(eff_size, fixed = 'Inf'),
+                          NA, eff_size))
 
 # Plots --------
 
@@ -97,16 +122,22 @@
            fgfr_clinic$data[[i]],
            split_factor = 'FGFR3_mutation',
            scale = 'percent',
-           cust_theme = globals$common_theme,
+           cust_theme = globals$common_theme +
+             theme(axis.title.x = element_markdown(),
+                   legend.title = element_markdown()),
+           x_lab = html_italic('FGFR3'),
            x_n_labs = TRUE) %>%
       set_names(fgfr_clinic$test[[i]]$variable)
 
     fgfr_clinic$plots[[i]]$age <- fgfr_clinic$plots[[i]]$age +
-      scale_fill_manual(values = globals$mut_status_color)
+      scale_fill_manual(values = globals$mut_status_color,
+                        name = html_italic('FGFR3'))
 
     fgfr_clinic$plots[[i]][names(fgfr_clinic$plots[[i]]) != 'age'] <-
       fgfr_clinic$plots[[i]][names(fgfr_clinic$plots[[i]]) != 'age'] %>%
-      map(~.x + scale_fill_brewer(palette = 'Purples'))
+      map(~.x +
+            scale_fill_brewer(palette = 'Purples',
+                              name = html_italic('FGFR3')))
 
   }
 
@@ -120,6 +151,8 @@
          merge_stat_test) %>%
     map(format_res_tbl,
         dict = fgfr_clinic$lexicon) %>%
+    map2(., fgfr_clinic$n_numbers,
+         ~full_rbind(.y, .x)) %>%
     compress(names_to = 'cohort') %>%
     mutate(cohort = globals$cohort_labs[cohort]) %>%
     relocate(cohort) %>%

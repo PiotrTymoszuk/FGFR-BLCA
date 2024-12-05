@@ -10,6 +10,8 @@
 
   library(exda)
   library(microViz)
+  library(fastTest)
+  library(perich)
 
   library(furrr)
 
@@ -32,8 +34,13 @@
 
   insert_msg('Analysis scripts')
 
-  c('./subtype scripts/genetic.R',
-    './subtype scripts/dge.R') %>%
+  ## genetics of the consensus subtypes
+
+  access_cache(cache_path = './cache/sub_genet.RData',
+               script_path = './subtype scripts/genetic.R',
+               message = 'Cached results for genetic alterations')
+
+  c('./subtype scripts/dge.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
 # END ------

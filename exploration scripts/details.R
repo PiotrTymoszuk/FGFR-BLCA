@@ -1,5 +1,5 @@
 # Details of mutation type and mutation location for FGFR1 - 4.
-# The analysis is done for the GENIE and TCGA cohorts.
+# The analysis is done for the GENIE, MSK, TCGA, and BCAN cohorts.
 
   insert_head()
 
@@ -15,12 +15,14 @@
 
   expl_fgfr$data <- list(genie = genie,
                          msk = msk,
-                         tcga = tcga) %>%
+                         tcga = tcga,
+                         bcan = bcan) %>%
     map(~.x$mutation_detail)
 
   expl_fgfr$n_totals <- list(genie = genie,
                              msk = msk,
-                             tcga = tcga) %>%
+                             tcga = tcga,
+                             bcan = bcan) %>%
     map(~.x$mutation) %>%
     map_dbl(nrow)
 
@@ -51,7 +53,8 @@
                                          "'DEL' = 'deletion';
                                          'INS' = 'insertion'"))
 
-  expl_fgfr$data[c('msk', 'tcga')] <- expl_fgfr$data[c('msk', 'tcga')] %>%
+  expl_fgfr$data[c('msk', 'tcga', 'bcan')] <-
+    expl_fgfr$data[c('msk', 'tcga', 'bcan')] %>%
     map(transmute,
         sample_id = Tumor_Sample_Barcode,
         gene_symbol = Hugo_Symbol,
@@ -73,6 +76,8 @@
                                     'Silent' = 'silent';
                                     'Splice_Region' = 'splice region';
                                     'Splice_Site' = 'splice site'"),
+        mutation_type = ifelse(mutation_type == "3'Flank",
+                               "3'UTR", mutation_type),
         variant_type = car::recode(Variant_Type,
                                    "'DEL' = 'deletion'; 'INS' = 'insertion'"))
 
@@ -91,7 +96,8 @@
                                  'splice region',
                                  'splice site',
                                  'intron',
-                                 "3'UTR")),
+                                 "3'UTR",
+                                 'silent')),
         variant_type = factor(variant_type,
                               c('SNP', 'DNP', 'ONP',
                                 'deletion', 'insertion')))
@@ -154,22 +160,22 @@
 
   expl_fgfr$stack_plots <-
     list(data = unlist(expl_fgfr$stats, recursive = FALSE),
-         fill_var = c(rep('mutation_type', 3),
-                      rep('variant_type', 3),
-                      rep('protein_domain', 3)),
+         fill_var = c(rep('mutation_type', 4),
+                      rep('variant_type', 4),
+                      rep('protein_domain', 4)),
          plot_title = c(paste('Mutation type,',
-                              globals$cohort_labs[c("genie", "msk", "tcga")]),
+                              globals$cohort_labs[c("genie", "msk", "tcga", "bcan")]),
                         paste('Variant type,',
-                              globals$cohort_labs[c("genie", "msk", "tcga")]),
+                              globals$cohort_labs[c("genie", "msk", "tcga", "bcan")]),
                         paste('Protein domain,',
-                              globals$cohort_labs[c("genie", "msk", "tcga")])),
+                              globals$cohort_labs[c("genie", "msk", "tcga", "bcan")])),
          plot_subtitle = paste('total samples: n =',
                                rep(expl_fgfr$n_totals, 3)),
          fill_title = '',
-         palette = globals[c(rep("mutation_colors", 3),
-                             rep("variant_colors", 3),
-                             rep("domain_colors", 3))],
-         reverse_fill = c(rep(TRUE, 6), rep(FALSE, 3))) %>%
+         palette = globals[c(rep("mutation_colors", 4),
+                             rep("variant_colors", 4),
+                             rep("domain_colors", 4))],
+         reverse_fill = c(rep(TRUE, 8), rep(FALSE, 4))) %>%
     pmap(plot_stack,
          x_var = 'percent',
          y_var = 'gene_symbol',
@@ -195,7 +201,22 @@
            protein_length = globals$receptor_lengths) %>%
       pmap(position_plot,
            fill_var = 'protein_domain',
-           palette = globals$domain_colors) %>%
+           palette = globals$domain_colors[c("Ig-like C2-type 1",
+                                             "Ig-like C2-type 2",
+                                             "Ig-like C2-type 3",
+                                             "Protein kinase")] %>%
+             c('not assigned' = 'gray40'),
+           y_limits = rev(c('missense',
+                            'nonsense',
+                            'in−frame deletion',
+                            'in−frame insertion',
+                            'frame shift deletion',
+                            'frame shift insertion',
+                            'splice region',
+                            'splice site')),
+           point_shape = 16,
+           point_size = 1,
+           point_alpha = 1)%>%
       map(~.x +
             theme(plot.title = element_markdown()) +
             labs(fill = 'Protein domain'))
@@ -214,47 +235,19 @@
 
   ## adding the domain schemes to the position plots
 
-  expl_fgfr$position_plots$genie <-
-    list(position_plot = expl_fgfr$position_plots$genie,
-         domain_tbl = expl_fgfr$domain_lst,
-         protein_name = names(expl_fgfr$domain_lst),
-         protein_length = globals$receptor_lengths,
-         rel_heights = list(c(2, 4 + 0.5),
-                            c(2, 4 + 0.5),
-                            c(2, 9 + 0.5),
-                            c(2, 3 + 0.5))) %>%
-    pmap(append_domain_scheme,
-         align = 'v',
-         rm_position_legend = TRUE,
-         rm_domain_legend = TRUE)
+  for(i in names(expl_fgfr$position_plots)) {
 
-  expl_fgfr$position_plots$msk <-
-    list(position_plot = expl_fgfr$position_plots$msk,
-         domain_tbl = expl_fgfr$domain_lst,
-         protein_name = names(expl_fgfr$domain_lst),
-         protein_length = globals$receptor_lengths,
-         rel_heights = list(c(2, 3 + 0.5),
-                            c(2, 2 + 0.5),
-                            c(2, 6 + 0.5),
-                            c(2, 1 + 0.5))) %>%
-    pmap(append_domain_scheme,
-         alig = 'v',
-         rm_position_legend = TRUE,
-         rm_domain_legend = TRUE)
+    expl_fgfr$position_plots[[i]] <-
+      list(position_plot = expl_fgfr$position_plots[[i]],
+           domain_tbl = expl_fgfr$domain_lst,
+           protein_name = names(expl_fgfr$domain_lst),
+           protein_length = globals$receptor_lengths) %>%
+      pmap(append_domain_scheme,
+           align = 'v',
+           rm_position_legend = TRUE,
+           rm_domain_legend = TRUE)
 
-  expl_fgfr$position_plots$tcga <-
-    list(position_plot = expl_fgfr$position_plots$tcga,
-         domain_tbl = expl_fgfr$domain_lst,
-         protein_name = names(expl_fgfr$domain_lst),
-         protein_length = globals$receptor_lengths,
-         rel_heights = list(c(2, 1 + 0.5),
-                            c(2, 2 + 0.5),
-                            c(2, 5 + 0.5),
-                            c(2, 1 + 0.5))) %>%
-    pmap(append_domain_scheme,
-         alig = 'v',
-         rm_position_legend = TRUE,
-         rm_domain_legend = TRUE)
+  }
 
 # Result tables --------
 

@@ -13,6 +13,10 @@
   library(jaccard)
   library(expm)
 
+  library(glmnet)
+  library(DescTools)
+  library(performanceEstimation)
+  library(CalibrationCurves)
   library(ranger)
 
   library(cowplot)
@@ -65,8 +69,11 @@
     if(!is.null(dict)) {
 
       df <- df %>%
-        exchange(variable = 'variable',
-                 dict = dict, ...)
+        mutate(variable = ifelse(stri_detect(variable,
+                                             regex = '^(Samples|Patients)'), #
+                                 variable,
+                                 exchange(variable,
+                                          dict = dict, ...)))
 
     }
 
@@ -225,6 +232,7 @@
                             plot_subtitle = NULL,
                             x_lab = 'protein position',
                             y_lab = NULL,
+                            y_limits = NULL,
                             palette_title = NULL,
                             reverse_split = TRUE,
                             protein_length = NULL, ...) {
@@ -314,7 +322,15 @@
 
     if(!is.null(protein_length)) {
 
-      pos_plot <- pos_plot + scale_x_continuous(limits = c(0, protein_length))
+      pos_plot <- pos_plot +
+        scale_x_continuous(limits = c(0, protein_length))
+
+    }
+
+    if(!is.null(y_limits)) {
+
+      pos_plot <- pos_plot +
+        scale_y_discrete(limits = y_limits)
 
     }
 
@@ -674,133 +690,599 @@
 
   }
 
-# Random Forests ------
+# ML modeling ---------
 
-  tune_rf <- function(data,
-                      formula,
-                      tune_grid, ...) {
+  augment_multi <- function(data,
+                            minorities = c('LumU', 'LumNS', 'Stroma-rich'),
+                            k = 7,
+                            perc.over = rep(4, 3),
+                            perc.under = rep(1, 3)) {
 
-    ## tunes a Random Forest model by minimizing the OOB prediction error
+    ## multi-class augmentation
 
-    ## construction of the models ---------
+    data_lst <- minorities %>%
+      map(~mutate(data,
+                  consensusClass = ifelse(consensusClass == .x, .x, 'other'),
+                  consensusClass = factor(consensusClass, c('other', .x)))) %>%
+      set_names(minorities)
 
-    tune_grid <- tune_grid %>%
-      mutate(model_id = paste0('rf_', 1:nrow(.)))
+    synth_lst <-
+      list(data = data_lst,
+           perc.over = perc.over,
+           perc.under = perc.under) %>%
+      pmap(smote,
+           form = consensusClass ~ .) %>%
+      map_dfr(filter,
+              consensusClass %in% minorities)
 
-    tune_models <- tune_grid %>%
-      select(-model_id) %>%
-      pmap(ranger,
-           formula = formula,
-           data = data, ...) %>%
-      set_names(tune_grid$model_id)
+    major_tbl <- data %>%
+      filter(!consensusClass %in% minorities)
 
-    ## OOB stats ----------
+    if(nrow(major_tbl) != 0) synth_lst <- rbind(major_tbl, synth_lst)
 
-    oob_errors <- tune_models %>%
-      map_dbl(~.x$prediction.error)
-
-    tune_stats <- tune_grid %>%
-      mutate(oob_error = oob_errors) %>%
-      relocate(model_id, oob_error) %>%
-      as_tibble
-
-    best_tune <- tune_stats %>%
-      filter(oob_error == min(oob_error, na.rm = TRUE))
-
-    best_tune <- best_tune[1, ]
-
-    tune_stats <- tune_stats %>%
-      mutate(best = ifelse(model_id == best_tune$model_id,
-                           'yes', 'no'))
-
-    list(stats = tune_stats,
-         best_tune = best_tune)
+    synth_lst %>%
+      mutate(consensusClass = factor(consensusClass,
+                                     levels(data$consensusClass)))
 
   }
 
-  plot_ranger_tuning <- function(tune_stats,
-                                 plot_title = NULL,
-                                 plot_subtitle = NULL,
-                                 x_lab = '# variables per random tree, mtry',
-                                 y_lab = 'Classification error, OOB',
-                                 split_color = c(gini = 'cornflowerblue',
-                                                 extratrees = 'orangered3',
-                                                 hellinger = 'darkolivegreen4',
-                                                 variance = 'darkolivegreen4',
-                                                 maxstat = 'steelblue'),
-                                 split_labels = c(gini = 'Gini index',
-                                                  extratrees = 'ExtraTrees',
-                                                  hellinger = 'Hellinger',
-                                                  variance = 'Variance',
-                                                  maxstat = 'MaxStat'),
-                                 split_title = 'Split rule',
-                                 line_alpha = 0.5,
-                                 point_alpha = 0.75,
-                                 split_by_node_size = FALSE) {
+  remove_missing <- function(data) {
 
+    ## removes observations with missing expression data
 
-    ## plots results of tuning of a Random Forest classifier or a regressor
+    row_complete <- rowMissing(data[names(data) != 'consensusClass'])
 
-    ## plot subtitle --------
+    row_complete <- row_complete == 0
 
-    if(is.null(plot_subtitle)) {
+    data[row_complete, ]
 
-      sub_tbl <- tune_stats %>%
-        filter(best == 'yes')
+  }
 
-      min_error <- paste('Minimal error =', signif(sub_tbl$oob_error, 2))
+  tune_glmnet <- function(x, y, indexes, ...) {
 
-      sub_tbl <- sub_tbl %>%
-        select(-model_id, -oob_error, -best)
+    ## finds optimal lambda by repeated cross-validation
 
-      tune_params <- sub_tbl %>%
-        as.list %>%
-        map2_chr(names(.), .,
-                 paste, sep = ' = ') %>%
-        paste(collapse = ', ')
+    ## tuning --------
 
-      plot_subtitle <- paste(min_error, tune_params, sep = '\n')
+    mod_lst <- indexes %>%
+      future_map(function(fold) cv.glmnet(x = x,
+                                          y = y,
+                                          foldid = fold, ...),
+                 .options = furrr_options(seed = TRUE))
+
+    mod_stats <- mod_lst %>%
+      map(~as_tibble(.x[c('lambda', 'cvm')])) %>%
+      map(filter, cvm == min(cvm)) %>%
+      map_dfr(~.x[1, ])
+
+    best_tune <- mod_stats %>%
+      filter(cvm == min(cvm))
+
+    ## training ---------
+
+    glmnet_model <- glmnet(x = x,
+                           y = y,
+                           lambda = best_tune$lambda, ...)
+
+    ## output --------
+
+    list(stats = mod_stats,
+         best_tune = best_tune,
+         model = glmnet_model)
+
+  }
+
+  tune_ranger <- function(x, y,
+                          tune_grid,
+                          tune_stat = c('prediction.error',
+                                        'mse',
+                                        'rsq'), ...) {
+
+    ## tunes the Ranger RF model by minimizing the OOB prediction error
+    ## or maximizing R^2
+
+    ## tuning models and stats ---------
+
+    tune_stat <-
+      match.arg(tune_stat[1], c('prediction.error', 'mse', 'rsq'))
+
+    tune_grid <- tune_grid %>%
+      mutate(model_id = paste0('model_', 1:nrow(.)))
+
+    tune_models <- tune_grid %>%
+      select(- model_id) %>%
+      future_pmap(ranger,
+                  x = x,
+                  y = y,
+                  ...,
+                  .options = furrr_options(seed = TRUE))
+
+    tune_stats <- tune_models %>%
+      map(~.x[c('prediction.error', 'r.squared', 'prediction.error')]) %>%
+      map(set_names, c('mse_oob', 'rsq_oob', 'class_error_oob')) %>%
+      map(compact) %>%
+      map_dfr(as_tibble)
+
+    tune_stats <- cbind(tune_grid, tune_stats) %>%
+      as_tibble
+
+    if(tune_stat == 'mse') {
+
+      best_tune <- tune_stats %>%
+        filter(mse_oob == min(mse_oob))
+
+    } else if(tune_stat == 'mse') {
+
+      best_tune <- tune_stats %>%
+        filter(rsq_oob == max(rsq_oob))
+
+    } else {
+
+      best_tune <- tune_stats %>%
+        filter(class_error_oob == min(class_error_oob))
 
     }
 
-    ## plotting -------
+    best_tune <- best_tune[1, ]
 
-    tune_plot <- tune_stats %>%
-      ggplot(aes(x = mtry,
-                 y = oob_error,
-                 fill = splitrule,
-                 color = splitrule))
+    ## the best-performing model
 
-    if(split_by_node_size) {
+    ranger_args <-
+      best_tune[!names(best_tune) %in% c(c('mse_oob',
+                                          'rsq_oob',
+                                          'class_error_oob',
+                                          'model_id'))]
 
-      tune_plot <- tune_plot +
-        facet_grid(. ~ factor(min.node.size),
-                   scales = 'free',
-                   space = 'free',
-                   labeller = as_labeller(function(x) paste('min.node =', x)))
+    best_model <- call2(.fn = 'ranger',
+                        x = x,
+                        y = y,
+                        probability = TRUE,
+                        !!!ranger_args,
+                        ...) %>%
+      eval
+
+
+    ## output -------
+
+    list(stats = tune_stats,
+         best_tune = best_tune,
+         model = best_model)
+
+  }
+
+  oof_glmnet <- function(x_train,
+                         x_test,
+                         y_train,
+                         y_test, ...) {
+
+    ## retrieves OOF predictions for lists of X matrices and Y response vectors
+
+    ## models ---------
+
+    models <-
+      list(x = x_train,
+           y = y_train) %>%
+      pmap(glmnet, ...)
+
+    ## predictions -------
+
+    oof_probs <-
+      list(object = models,
+           newx = x_test) %>%
+      pmap(predict, type = 'response') %>%
+      map(~.x[, , 1]) %>%
+      map(as.data.frame) %>%
+      map(~set_colnames(.x, paste0(colnames(.x), '_elnet')))
+
+    oof_classes <-
+      list(object = models,
+           newx = x_test) %>%
+      pmap(predict, type = 'class')
+
+    oof_preds <-
+      list(x = oof_probs,
+           y = oof_classes,
+           z = y_test) %>%
+      pmap(function(x, y, z) x %>%
+             mutate(obs = factor(y, levels(y_test[[1]])),
+                    pred = z))
+
+    oof_preds %>%
+      map(rownames_to_column, 'sample_id') %>%
+      compress(names_to = 'fold_id')
+
+  }
+
+  oof_ranger <- function(x_train,
+                         x_test,
+                         y_train,
+                         y_test, ...) {
+
+    ## computes OOF predictions for a ranger model
+
+    ## models --------
+
+    models <-
+      list(x = x_train,
+           y = y_train) %>%
+      pmap(ranger,
+           probability = TRUE, ...)
+
+    class_levels <- levels(y_train[[1]])
+
+    ## predictions --------
+
+    oof_probs <-
+      list(object = models,
+           data = x_test) %>%
+      pmap(predict) %>%
+      map(~.x$predictions) %>%
+      map(as.data.frame) %>%
+      map(~set_colnames(.x, paste0(colnames(.x), '_ranger')))
+
+    oof_classes <- list()
+
+    for(i in seq_along(oof_probs)) {
+
+      oof_classes[[i]] <- 1:nrow(oof_probs[[i]]) %>%
+        map(~which(oof_probs[[i]][.x, ] == max(oof_probs[[i]][.x, ]))) %>%
+        map_dbl(~.x[[1]])
+
+      oof_classes[[i]] <-
+        factor(class_levels[oof_classes[[i]]], class_levels)
 
     }
 
-    tune_plot <- tune_plot +
-      geom_path(alpha = line_alpha) +
-      geom_point(shape = 16,
-                 size = 2,
-                 alpha = point_alpha) +
-      geom_smooth(se = FALSE,
-                  show.legend = FALSE)  +
-      scale_color_manual(values = split_color,
-                         labels = split_labels,
-                         name = split_title) +
-      scale_fill_manual(values = split_color,
-                        labels = split_labels,
-                        name = split_title) +
+    oof_preds <-
+      list(x = oof_probs,
+           y = oof_classes,
+           z = y_test,
+           w = x_test) %>%
+      pmap(function(x, y, z, w) x %>%
+             mutate(obs = factor(y, levels(y_test[[1]])),
+                    pred = z,
+                    sample_id = rownames(w)))
+
+    oof_preds %>%
+      compress(names_to = 'fold_id')
+
+  }
+
+  brier_squares <- function(prediction) {
+
+    ## calculates Brier squares, i.e. squared differences between the observed
+    ## outcome and the class assignment probability
+
+    obs_levs <- levels(prediction[['obs']])
+
+    if(length(obs_levs) == 2) {
+
+      pos_class <- obs_levs[2]
+
+      prediction <- mutate(prediction,
+                           .num_outcome = as.numeric(obs) - 1,
+                           square_dist = (.num_outcome - .data[[pos_class]])^2)
+
+      prediction <- prediction %>%
+        select(-.num_outcome)
+
+    } else {
+
+      outcomes_num <-
+        as.data.frame(Dummy(prediction[['obs']],
+                            method = 'full',
+                            levels = obs_levs))
+
+      fitted_num <- prediction[obs_levs]
+
+      sqd <- map2(outcomes_num, fitted_num,
+                  function(x, y) (x - y)^2)
+
+      sqd <- reduce(sqd, function(x, y) x + y)
+
+      prediction <-
+        mutate(prediction, square_dist = sqd)
+
+    }
+
+    prediction
+
+  }
+
+  brier_reference <- function(prediction, n = 100) {
+
+    ## calculates reference Brier squares expected for a NULL model
+
+    if(n == 1) {
+
+      resamp_data <- prediction
+
+      resamp_data[['obs']] <- resamp_data[['obs']] %>%
+        sample(size = nrow(prediction), replace = FALSE)
+
+      resamp_data <- brier_squares(resamp_data)
+
+      prediction[['square_ref']] <- resamp_data[['square_dist']]
+
+      return(prediction)
+
+    } else {
+
+      refs <- map(1:n,
+                  function(x) brier_reference(prediction, n = 1)) %>%
+        map(~.x$square_ref)
+
+      refs <- reduce(refs, `+`)/n
+
+      prediction[['square_ref']] <- refs
+
+      return(prediction)
+
+    }
+
+  }
+
+  caret_stats <- function(prediction) {
+
+    ## a helper wrapper around multiClassSummary()
+
+    ## re-leveling, because caret assumes the response of interest as the
+    ## first level
+
+    levs <- rev(levels(prediction[['obs']]))
+
+    prediction[c("obs", "pred")] <- prediction[c("obs", "pred")] %>%
+      map_dfc(factor, levs)
+
+    caret_stats <- multiClassSummary(prediction, lev = levs)
+
+    caret_stats <- c(caret_stats,
+                     brier_score = mean(prediction[['square_dist']]),
+                     brier_reference = mean(prediction[['square_ref']]))
+
+    caret_names <- names(caret_stats)
+
+    matrix(caret_stats, nrow = 1) %>%
+      as.data.frame %>%
+      set_names(caret_names) %>%
+      mutate(Kappa = ifelse(Kappa < 0, 0, Kappa)) %>%
+      as_tibble
+
+
+  }
+
+  ml_summary <- function(prediction) {
+
+    ## computes numeric metrics of classification model performance
+
+    ## predictions for the training, canonical CV data
+
+    if(!'resample' %in% names(prediction)) {
+
+      return(caret_stats(prediction))
+
+    }
+
+    if(!all(stri_detect(prediction$resample, fixed = 'Rep'))) {
+
+      stats <- prediction %>%
+        blast(resample) %>%
+        map_dfr(caret_stats) %>%
+        map_dfc(mean)
+
+    } else {
+
+      prediction <- prediction %>%
+        mutate(fold_no = stri_split_fixed(resample,
+                                          pattern = '.',
+                                          simplify = TRUE)[, 1],
+               rep_no = stri_split_fixed(resample,
+                                         pattern = '.',
+                                         simplify = TRUE)[, 2])
+
+      stats <- prediction %>%
+        blast(rep_no) %>%
+        map(blast, fold_no) %>%
+        map(map_dfr, caret_stats) %>%
+        map_dfr(map_dfc, mean) %>%
+        map_dfc(mean)
+
+    }
+
+    return(stats)
+
+  }
+
+  plot_confusion <- function(mtx,
+                             plot_title = NULL,
+                             x_lab = 'observed class',
+                             y_lab = 'predicted class',
+                             txt_size = 2.3) {
+
+    ## heat map visualization of confusion matrices
+
+    plot_tbl <- mtx %>%
+      as.data.frame %>%
+      mutate(count = Freq,
+             percent = count/sum(count) * 100,
+             plot_lab = paste0(signif(percent, 2), '%\n(n = ',
+                               count, ')'))
+
+    plot_tbl %>%
+      ggplot(aes(x = obs,
+                 y = pred,
+                 fill = .data[['percent']])) +
+      geom_tile(color = 'black') +
+      geom_text(aes(label = plot_lab),
+                size = txt_size) +
+      scale_fill_gradient(low = 'white',
+                          high = 'firebrick',
+                          limits = c(0, 100),
+                          name = '% of all samples') +
       globals$common_theme +
       labs(title = plot_title,
-           subtitle = plot_subtitle,
            x = x_lab,
            y = y_lab)
 
-    tune_plot
+  }
+
+  plot_calibration <- function(prediction,
+                               discrete = TRUE,
+                               smooth = FALSE,
+                               logistic.cal = TRUE,
+                               bins = NULL,
+                               plot_title = NULL,
+                               x_lab = 'mean predicted probability',
+                               y_lab = 'observed fraction',
+                               fill_title = 'consensus\nclass',
+                               point_size = 1,
+                               line_size = 0.5,
+                               color_palette = globals$sub_colors, ...) {
+
+    ## plots a calibration curve for a multinomial model.
+    ## the general idea is taken from Python's sklearn calibration_curve()
+    ## and R package calibrationCurves, for discrete and flexible
+    ## calibration, respectively.
+    ## Dots stand for arguments passed to valProbggplot
+
+    ## plotting data ----------
+
+    ## list of predictions for each of the classes
+
+    classes <- levels(prediction$obs)
+
+    pred_lst <- classes %>%
+      map(~transmute(prediction,
+                     p_value = .data[[.x]],
+                     class = ifelse(obs == .x, 1, 0))) %>%
+      set_names(classes)
+
+    ## plotting: discrete bins ------------
+
+    if(discrete) {
+
+      ## binning: simple heuristics is used by
+      ## default (Sturges). By we're trying to coerce it
+      ## to have at least one positive class assignment in a bin
+
+      if(is.null(bins)) {
+
+        class_n <- table(prediction$obs)
+
+        bins <- ceiling(1 + log2(class_n))
+
+        bin_n <- list(x = pred_lst,
+                      y = bins) %>%
+          pmap(function(x, y) x %>%
+                 mutate(p_strata = cut(p_value,
+                                       breaks = y))) %>%
+          map(group_by, p_strata) %>%
+          map(mutate, n_bin = sum(class)) %>%
+          map(~.x$n_bin)
+
+        bins <-
+          map2(bin_n, bins,
+               function(x, y) if(any(x == 0)) y - 1 else y)
+
+      }
+
+      pred_lst <-
+        list(x = pred_lst,
+             y = bins) %>%
+        pmap(function(x, y) x %>%
+               mutate(p_strata = cut(p_value,
+                                     breaks = y)))
+
+
+      ## mean probabilities
+
+      bin_means <- pred_lst %>%
+        map(group_by, p_strata) %>%
+        map(summarise,
+            mean_predicted = mean(p_value, na.rm = TRUE),
+            mean_observed = mean(class, na.rm = TRUE),
+            n_bin = sum(class)) %>%
+        map(ungroup)
+
+      bin_means <- bin_means %>%
+        compress(names_to = 'class')
+
+      ## plot
+
+      cal_plot <- bin_means %>%
+        ggplot(aes(x = mean_predicted,
+                   y = mean_observed,
+                   color = class)) +
+        geom_abline(slope = 1,
+                    intercept = 0,
+                    linetype = 'dashed')
+
+      if(smooth) {
+
+        cal_plot <- cal_plot +
+          geom_smooth(..., se = FALSE)
+
+      } else {
+
+        cal_plot <- cal_plot +
+          geom_path()
+
+      }
+
+      cal_plot <- cal_plot +
+        geom_point(shape = 16,
+                   size = point_size) +
+        scale_color_manual(values = color_palette,
+                           name = fill_title) +
+        globals$common_theme +
+        labs(title = plot_title,
+             x = x_lab,
+             y = y_lab)
+
+      return(cal_plot)
+
+    }
+
+    ## plotting: non-discrete calibration curves -------------
+
+    plot_tbl <-
+      list(y = map(pred_lst, ~.x$class),
+           p = map(pred_lst, ~.$p_value)) %>%
+      pmap(valProbggplot,
+           logistic.cal = logistic.cal, ...)
+
+    if(logistic.cal) {
+
+      plot_tbl <- plot_tbl %>%
+        map(~.x$CalibrationCurves[['LogisticCalibration']])
+
+    } else {
+
+      plot_tbl <- plot_tbl %>%
+        map(~.x$CalibrationCurves[['FlexibleCalibration']])
+
+    }
+
+    plot_tbl <- plot_tbl %>%
+      compress(names_to = 'class') %>%
+      mutate(class = factor(class, classes))
+
+    cal_plot <- plot_tbl %>%
+      ggplot(aes(x = x,
+                 y = y,
+                 color = class)) +
+      geom_abline(slope = 1,
+                  intercept = 0,
+                  linetype = 'dashed') +
+      geom_path() +
+      scale_color_manual(values = color_palette,
+                         name = fill_title) +
+      globals$common_theme +
+      labs(title = plot_title,
+           x = x_lab,
+           y = y_lab)
+
+    return(cal_plot)
 
   }
 

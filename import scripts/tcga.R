@@ -12,13 +12,17 @@
 
   tcga$expression <- read_tsv('./data/TCGA PanCancer/data_mrna_seq_v2_rsem.txt')
 
-  ## annotation
+  ## annotation, manual correction for the 3730 gene (Entrez ID)
 
   tcga$annotation <- tcga$expression %>%
     transmute(probe_id = paste0('probe_', 1:nrow(.)),
               gene_symbol = Hugo_Symbol,
               entrez_id = Entrez_Gene_Id) %>%
     filter(complete.cases(.))
+
+  tcga$annotation <- tcga$annotation %>%
+    mutate(gene_symbol = ifelse(entrez_id == '3730',
+                                'ANOS1', gene_symbol))
 
   ## integration of expression by arithmetic mean
 

@@ -1,5 +1,9 @@
 # Frequency of FGFR and FGF alterations in the molecular subtypes.
-# The subtype information is available only for the TCGA and IMvigor subsets.
+# The subtype information is available only for the TCGA, IMvigor,
+# and BCAN cohorts.
+#
+# Statistical significance is terted by weighted permutations implemented
+# by perich.
 
   insert_head()
 
@@ -7,13 +11,20 @@
 
   sub_genet <- list()
 
+# parallel backend --------
+
+  insert_msg('Parallel backend')
+
+  plan('multisession')
+
 # analysis data -------
 
   insert_msg('Analysis data')
 
   ## variables
 
-  sub_genet$variables <- globals[c("receptors", "ligands")] %>%
+  sub_genet$variables <-
+    globals[c("receptors", "ligands", "binding_proteins")] %>%
     reduce(union)
 
   ## data, appending with the subtype information
@@ -22,8 +33,8 @@
     eval %>%
     map(~.x[c('mutation', 'deletion', 'amplification')]) %>%
     map(compact) %>%
-    map(map, select, sample_id, any_of(sub_genet$variables)) %>%
     map(map, column_to_rownames, 'sample_id') %>%
+    map(map, ~.x[!names(.x) %in% c('sample_id', 'patient_id', 'tissue_type')]) %>%
     map(~map2(., names(.),
               ~set_names(.x, paste(names(.x), .y, sep = '_')))) %>%
     map(map, rownames_to_column, 'sample_id') %>%
@@ -33,14 +44,15 @@
     map2(map(subtypes$assignment, ~.x[c('sample_id', 'consensusClass')]),
          sub_genet$data[names(subtypes$assignment)],
          inner_join, by = 'sample_id') %>%
-    map(select, -sample_id)
+    map(select, -sample_id) %>%
+    map(filter, !is.na(consensusClass))
 
   ## removal of features completely absent from the data sets
 
   for(i in names(sub_genet$data)) {
 
     sub_genet$data[[i]] <- sub_genet$data[[i]] %>%
-      map_dfc(function(x) if(sum(as.numeric(x)) == 0) NULL else x)
+      map_dfc(function(x) if(sum(as.numeric(x), na.rm = TRUE) == 0) NULL else x)
 
   }
 
@@ -48,7 +60,11 @@
 
   sub_genet$variables <- sub_genet$data %>%
     map(select, -consensusClass) %>%
-    map(names)
+    map(names) %>%
+    map(~.x[stri_detect(.x,
+                        regex = sub_genet$variables %>%
+                          paste(collapse = '|') %>%
+                          paste0('^(', ., ')_'))])
 
 # N numbers -------
 
@@ -69,68 +85,97 @@
 
   insert_msg('Descriptive stats')
 
-  sub_genet$stats <- sub_genet$data %>%
-    map(count_binary,
-        split_fct = 'consensusClass')
+  sub_genet$stats <-
+    list(data = sub_genet$data,
+         variables = sub_genet$variables) %>%
+    pmap(count_binary,
+         split_fct = 'consensusClass')
 
 # Testing for differences between the cohorts ----
 
   insert_msg('Testing for differences between the molecular subsets')
 
+  ## done with permutation testing
+
   sub_genet$test <-
     list(x = sub_genet$data,
-         y = sub_genet$variables,
-         z = c(TRUE, FALSE)) %>%
-    pmap(function(x, y, z) x %>%
-           compare_variables(variables = y,
-                             split_factor = 'consensusClass',
-                             what = 'eff_size',
-                             types = 'cramer_v',
-                             exact = FALSE,
-                             ci = FALSE,
-                             pub_styled = TRUE,
-                             adj_method = 'BH',
-                             .parallel = z,
-                             .paropts = furrr_options(seed = TRUE,
-                                                      globals = 'sub_genet'))) %>%
+         y = sub_genet$variables) %>%
+    pmap(function(x, y) perTest(x = x[y],
+                                f = x[['consensusClass']],
+                                background = x[, -1],
+                                alternative = 'greater',
+                                n_iter = 10000,
+                                as_data_frame = TRUE,
+                                compress = TRUE,
+                                adj_method = 'BH'))
+
+  ## formatting the results:
+  ## plot captions with the global effect size and the global p value
+  ## identification of significantly enriched alterations
+
+  sub_genet$test <- sub_genet$test %>%
+    map(re_adjust, 'global_p_value') %>%
+    map(as_tibble) %>%
+    map(group_by, variable) %>%
     map(mutate,
-        plot_cap = paste(eff_size, significance, sep = ', '),
+        cramer_v = sqrt(chisq/sum(n_total)/df),
+        global_significance = significance,
+        global_eff_size = paste('V =', signif(cramer_v, 2)),
+        plot_cap = paste(global_eff_size, global_significance, sep = ', ')) %>%
+    map(ungroup)
+
+  sub_genet$test <- sub_genet$test %>%
+    map(re_adjust) %>%
+    map(mutate,
+        cluster_significance = significance,
+        regulation = ifelse(p_adjusted < 0.05 & ES >= 1.2,
+                            'enriched', 'ns'),
+        regulation = factor(regulation, c('enriched', 'ns')))
+
+  ## alteration type
+
+  sub_genet$test <- sub_genet$test %>%
+    map(mutate,
         gene_symbol = stri_split_fixed(variable,
                                        pattern = '_',
                                        simplify = TRUE)[, 1],
         alteration = stri_split_fixed(variable,
                                       pattern = '_',
-                                      simplify = TRUE)[, 2],
-        plot_title = paste(html_italic(gene_symbol), alteration),
-        hm_lab = paste(plot_title, plot_cap, sep = '<br>'),
-        hm_lab = ifelse(p_adjusted < 0.05,
-                        html_bold(hm_lab), hm_lab))
+                                      simplify = TRUE)[, 2])
 
   ## significant effects
 
   sub_genet$significant <- sub_genet$test %>%
-    map(filter, p_adjusted < 0.05) %>%
-    map(~.x$variable)
+    map(filter, regulation == 'enriched') %>%
+    map(~.x$variable) %>%
+    map(unique)
 
   ## common significant effects
 
   sub_genet$common_significant <- sub_genet$significant %>%
-    reduce(intersect)
+    shared_features(m = 2) %>%
+    as.character
+
+  ## global testing results to be displayed in the plots
+
+  sub_genet$stack_test <- sub_genet$test %>%
+    map(filter, !duplicated(variable))
 
 # Stack plots for single genetic features --------
 
   insert_msg('Stack plots')
 
-  plan('multisession')
+  ## plots
 
   for(i in names(sub_genet$data)) {
 
     sub_genet$plots[[i]] <-
-      list(variable = sub_genet$test[[i]]$variable,
-           plot_title = sub_genet$test[[i]]$plot_title %>%
+      list(variable = sub_genet$stack_test[[i]]$variable,
+           plot_title = sub_genet$stack_test[[i]]$gene_symbol %>%
+             html_italic %>%
              paste(globals$cohort_labs[[i]], sep = ', '),
-           plot_subtitle = sub_genet$test[[i]]$plot_cap) %>%
-      future_pmap(plot_variable,
+           plot_subtitle = sub_genet$stack_test[[i]]$plot_cap) %>%
+      pmap(plot_variable,
                   sub_genet$data[[i]],
                   split_factor = 'consensusClass',
                   type = 'stack',
@@ -139,18 +184,17 @@
                     theme(plot.title = element_markdown()),
                   x_n_labs = TRUE,
                   y_lab = '% of subset',
-                  x_lab = 'MIBC consesus subset',
-                  .options = furrr_options(seed = TRUE)) %>%
-      set_names(sub_genet$test[[i]]$variable)
+                  x_lab = 'MIBC consesus subset') %>%
+      set_names(sub_genet$stack_test[[i]]$variable)
 
   }
 
-  plan('sequential')
-
   ## styling
 
-  sub_genet$plots$imvigor <-  sub_genet$plots$imvigor %>%
-    map(~.x +
+  sub_genet$plots[c("imvigor", "bcan")] <-
+    sub_genet$plots[c("imvigor", "bcan")] %>%
+    map(map,
+        ~.x +
           scale_fill_manual(values = unname(globals$mut_status_color),
                             labels = names(globals$mut_status_color),
                             name = ''))
@@ -182,7 +226,10 @@
 
   sub_genet$result_tbl <-
     map2(sub_genet$stats,
-         sub_genet$test,
+         sub_genet$stack_test %>%
+           map(mutate,
+               eff_size = global_eff_size,
+               significance = global_significance),
          merge_stat_test) %>%
     compress(names_to = 'cohort') %>%
     mutate(gene_symbol = stri_split_fixed(variable,
@@ -209,16 +256,16 @@
                 'Samples with alterations, N',
                 'Total samples, N',
                 'Significance',
-                'Effects size'))
+                'Effect size'))
 
-# Heat map representation of alterations of interest -------
+# Oncoplot representation of alterations of interest -------
 
-  insert_msg('Heat map')
+  insert_msg('Oncoplots')
 
   ## these are: FGFR3 mutations and amplifications of FGF3, FGF4, and FGF19
   ## the full representation is possible only for the TCGA cohort
 
-  sub_genet$hm_variables <-
+  sub_genet$onco_variables <-
     c('FGFR1_mutation',
       'FGFR2_mutation',
       'FGFR3_mutation',
@@ -231,62 +278,73 @@
       'FGF4_amplification',
       'FGF19_amplification')
 
-  sub_genet$hm_data <- sub_genet$data %>%
-    map(select, consensusClass, any_of(sub_genet$hm_variables)) %>%
-    map(~mutate(.x, observation = paste0('sample_', 1:nrow(.x)))) %>%
-    map(pivot_longer,
-        cols = any_of(sub_genet$hm_variables),
-        names_to = 'variable',
-        values_to = 'alteration') %>%
+  sub_genet$onco_data <- sub_genet$data %>%
+    map(select, consensusClass, any_of(sub_genet$onco_variables)) %>%
     map(mutate,
-        variable = factor(variable, rev(sub_genet$hm_variables)),
-        gene_symbol = stri_split_fixed(variable,
-                                       pattern = '_',
-                                       simplify = TRUE)[, 1],
-        gene_group = ifelse(gene_symbol %in% globals$receptors,
-                            'receptor', 'ligand'),
-        gene_group = factor(gene_group, c('receptor', 'ligand')))
+        consensusClass = fct_recode(consensusClass,
+                                    `Stroma\nrich` = 'Stroma-rich'))
+
+  sub_genet$onco_variables <- sub_genet$onco_data %>%
+    map(names) %>%
+    map(intersect, sub_genet$onco_variables)
+
+  ## Y axis labels: significant effects are highlighted
+
+  sub_genet$axis_labs <-
+    map2(sub_genet$stack_test,
+         sub_genet$significant,
+         ~mutate(.x,
+                 axis_lab = paste(html_italic(gene_symbol),
+                                  alteration, sep = '<br>'),
+                 axis_lab = ifelse(variable %in% .y,
+                                   html_bold(axis_lab), axis_lab))) %>%
+    map(~set_names(.x$axis_lab, .x$variable))
 
   ## heat maps
 
-  sub_genet$hm_plots <-
-    list(x = sub_genet$hm_data,
-         y = globals$cohort_labs[names(sub_genet$hm_data)],
-         z = sub_genet$n_captions,
-         w = sub_genet$test) %>%
-    pmap(function(x, y, z, w) x %>%
-           ggplot(aes(x = reorder(observation, -alteration),
-                      y = variable,
-                      fill = factor(alteration))) +
-           geom_tile() +
-           facet_grid(gene_group ~ consensusClass,
-                      scales = 'free',
-                      space = 'free') +
-           scale_y_discrete(labels = set_names(w$hm_lab, w$variable)) +
-           scale_fill_manual(values = c('0' = 'gray70',
-                                        '1' = 'orangered3'),
-                             labels = c('0' = 'absent',
-                                        '1' = 'present'),
-                             name = '') +
-           globals$common_theme +
+  sub_genet$onco_plots <-
+    list(data = sub_genet$onco_data,
+         variables = sub_genet$onco_variables,
+         plot_title = globals$cohort_labs[names(sub_genet$onco_data)]) %>%
+    pmap(plot_bionco,
+         split_fct = 'consensusClass',
+         hide_x_axis_text = TRUE,
+         cust_theme = globals$common_theme +
            theme(axis.title.y = element_blank(),
-                 axis.text.y = element_markdown(),
                  axis.text.x = element_blank(),
                  axis.ticks.x = element_blank(),
                  axis.line = element_blank(),
                  panel.grid.major.x = element_blank(),
-                 strip.text.x = element_text(hjust = 0, angle = 90)) +
-           labs(title = y,
-                subtitle = z,
-                x = 'sample'))
+                 strip.text.x = element_text(hjust = 0, angle = 90)),
+         color_scale = c('gray85', 'orangered3'),
+         one_plot = FALSE,
+         x_lab = 'cancer sample') %>%
+    map(~.x$main) %>%
+    map2(., sub_genet$axis_labs,
+         ~.x +
+           labs(subtitle = stri_replace(.x$labels$subtitle,
+                                        fixed = '\n',
+                                        replacement = '-')) +
+           theme(axis.text.y = element_markdown()) +
+           scale_y_discrete(labels = .y))
 
-# END ------
+# Caching --------
+
+  insert_msg('Caching')
 
   sub_genet$data <- NULL
   sub_genet$hm_data <- NULL
+  sub_genet$onco_data <- NULL
+  sub_genet$stack_test <- NULL
 
   sub_genet <- compact(sub_genet)
 
+  save(sub_genet, file = './cache/sub_genet.RData')
+
+# END ------
+
   rm(i)
+
+  plan('sequential')
 
   insert_tail()

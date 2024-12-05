@@ -10,7 +10,7 @@
 
   insert_msg('General frequency of genetic alterations')
 
-  ## facetting by the gene (?) and common X scale
+  ## faceting by the gene (?) and common X scale
 
   rep_figs$general_freq <- expl_genet$plots %>%
     map(~.x +
@@ -36,7 +36,9 @@
               .,
               ncol = 2) %>%
     plot_grid(get_legend(expl_genet$plots$mutation +
-                           theme(legend.position = 'bottom')),
+                           guides(fill = guide_legend(nrow = 2)) +
+                           theme(legend.position = 'bottom',
+                                 legend.title = element_blank())),
               nrow = 2,
               rel_heights = c(0.9, 0.1))
 
@@ -48,32 +50,33 @@
               w = 180,
               h = 180)
 
-# Frequency of alterations of FGF and FGFR genes ------
+# Frequency of alterations of FGF, FGFR, and FGFBP genes ------
 
-  insert_msg('Frequency of alterations of FGF and FGFR genes')
+  insert_msg('Frequency of alterations of FGF, FGFR, and FGFBP genes')
 
   rep_figs$fgfr_freq <- expl_genet$fgf_plots %>%
-    map(~.x +
-          scale_x_continuous(limits = expl_genet$fgf_plots %>%
-                               map(~.x$data$percent) %>%
-                               reduce(c) %>%
-                               max %>%
-                               c(0, .)) +
-          theme(plot.subtitle = element_blank(),
-                legend.position = 'none')) %>%
-    c(list(legend = get_legend(expl_genet$fgf_plots)))
-
-  rep_figs$fgfr_freq <-
-    rep_figs$fgfr_freq[c("mutation", "amplification", "deletion", "legend")] %>%
+    map2(., c('Somatic mutations', 'Deletions', 'Amplifications'),
+         ~.x +
+           labs(title = .y) +
+           scale_x_continuous(limits = expl_genet$fgf_plots %>%
+                                map(~.x$data$percent) %>%
+                                reduce(c) %>%
+                                max %>%
+                                c(0, .)) +
+           theme(plot.subtitle = element_blank(),
+                 legend.position = 'none')) %>%
+    c(list(legend = get_legend(expl_genet$fgf_plots$mutation))) %>%
     plot_grid(plotlist = .,
               ncol = 2,
-              rel_heights = c(10, 4.5)) %>%
+              align = 'hv',
+              axis = 'tblr') %>%
     as_figure(label = 'fgfr_fgf_alteration_frequency',
               ref_name = 'fgfr_freq',
               caption = paste('Frequency of somatic mutations and copy number',
-                              'alterations of FGF- and FGFR-coding genes.'),
+                              'alterations of FGF-, FGFR-, and FGFBP-coding',
+                              'genes.'),
               w = 180,
-              h = 180)
+              h = 230)
 
 # Classification of mutations of FGFR genes ------
 
@@ -84,21 +87,30 @@
              'protein_domain_split')] <-
     list(expl_fgfr$stack_plots[c("mutation_type.genie",
                                  "mutation_type.msk",
-                                 "mutation_type.tcga")],
+                                 "mutation_type.tcga",
+                                 "mutation_type.bcan")],
          expl_fgfr$stack_plots[c("variant_type.genie",
-                                 "variant_type.genie",
-                                 "variant_type.tcga")],
+                                 "variant_type.msk",
+                                 "variant_type.tcga",
+                                 "variant_type.bcan")],
          expl_fgfr$stack_plots[c("protein_domain.genie",
                                  "protein_domain.genie",
-                                 "protein_domain.tcga")]) %>%
-    map2(., c(2, 1, 1),
-         function(pl, n_col) pl %>%
+                                 "protein_domain.tcga",
+                                 "protein_domain.bcan")]) %>%
+    map2(., c(2, 1, 2),
+         function(pl, n_row) pl %>%
           map(~.x +
                 theme(legend.position = 'none')) %>%
-          c(list(get_legend(pl[[1]] +
-                              guides(fill = guide_legend(ncol = n_col))))) %>%
-          plot_grid(plotlist = .,
-                    ncol = 2))
+           plot_grid(plotlist = .,
+                     ncol = 2,
+                     align = 'hv',
+                     axis = 'tblr') %>%
+           plot_grid(get_legend(pl[[1]] +
+                                  theme(legend.position = 'bottom',
+                                        legend.text = element_text(margin = ggplot2::margin(r = 5, l = 5))) +
+                                  guides(fill = guide_legend(nrow = n_row))),
+                     nrow = 2,
+                     rel_heights = c(0.75, 0.25)))
 
   rep_figs[c('mutation_type',
              'variant_type',
@@ -130,68 +142,28 @@
              'fgfr4_position')] <- expl_fgfr$position_plots %>%
     transpose %>%
     list(x = .,
-         y = map(expl_fgfr$domain_plots, get_legend)) %>%
+         y = map(expl_fgfr$domain_plots,
+                 ~get_legend(.x +
+                               theme(legend.position = 'bottom',
+                                     legend.title = element_blank(),
+                                     legend.text = element_text(margin = ggplot2::margin(r = 5,
+                                                                                         l = 5)))))) %>%
     pmap(function(x, y) c(x, list(legend = y)))
 
-  ## stitching the panels per hand: the most flexible solution
+  rep_figs[c('fgfr1_position',
+             'fgfr2_position',
+             'fgfr3_position',
+             'fgfr4_position')] <- rep_figs[c('fgfr1_position',
+                                              'fgfr2_position',
+                                              'fgfr3_position',
+                                              'fgfr4_position')] %>%
+    map(~plot_grid(plotlist = .x[1:4],
+                   ncol = 2,
+                   align = 'hv',
+                   axis = 'tblr') %>%
+          plot_grid(.x[[5]], nrow = 2, rel_heights = c(0.85, 0.15)))
 
-  rep_figs$fgfr1_position <-
-    plot_grid(rep_figs$fgfr1_position$genie,
-              rep_figs$fgfr1_position$legend,
-              rep_figs$fgfr1_position$msk,
-              plot_grid(rep_figs$fgfr1_position$tcga,
-                        nrow = 2,
-                        rel_heights = c(0.65, 0.35)),
-              ncol = 2,
-              rel_heights = c(4, 3) + 0.5,
-              align = 'hv',
-              axis = 'tblr')
-
-  rep_figs$fgfr2_position <-
-    plot_grid(rep_figs$fgfr2_position$genie,
-              rep_figs$fgfr2_position$legend,
-              plot_grid(ggdraw(),
-                        rep_figs$fgfr2_position$msk,
-                        ncol = 2,
-                        rel_widths = c(0.12, 0.88)),
-              plot_grid(ggdraw(),
-                        rep_figs$fgfr2_position$tcga,
-                        ncol = 2,
-                        rel_widths = c(0.12, 0.88)),
-              ncol = 2,
-              rel_heights = c(1, 0.75),
-              align = 'hv',
-              axis = 'tblr')
-
-  rep_figs$fgfr3_position <-
-    plot_grid(rep_figs$fgfr3_position$genie,
-              rep_figs$fgfr3_position$legend,
-              rep_figs$fgfr3_position$msk,
-              plot_grid(rep_figs$fgfr3_position$tcga,
-                        nrow = 2,
-                        rel_heights = c(0.9, 0.1)),
-              ncol = 2,
-              rel_heights = c(1.12, 0.88),
-              align = 'hv',
-              axis = 'tblr')
-
-  rep_figs$fgfr4_position <-
-    plot_grid(rep_figs$fgfr4_position$genie,
-              rep_figs$fgfr4_position$legend,
-              plot_grid(ggdraw(),
-                        rep_figs$fgfr4_position$msk,
-                        ncol = 2,
-                        rel_widths = c(0.05, 0.95)),
-              plot_grid(ggdraw(),
-                        rep_figs$fgfr4_position$tcga,
-                        ncol = 2,
-                        rel_widths = c(0.05, 0.95)),
-              ncol = 2,
-              rel_heights = c(1, 0.65),
-              align = 'hv',
-              axis = 'tblr')
-
-  ## the figures
+  ## the figure objects
 
   rep_figs[c('fgfr1_position',
              'fgfr2_position',
@@ -206,10 +178,10 @@
                         '_mutations_protein_position'),
          ref_name = names(.),
          caption = paste('Residues of', c('FGFR1', 'FGFR2', 'FGFR3', 'FGFR4'),
-                         'protein affected by somatic mutations.'),
-         h = c(160, 170, 230, 140)) %>%
+                         'protein affected by somatic mutations.')) %>%
     pmap(as_figure,
-         w = 180)
+         w = 180,
+         h = 230)
 
 # Co-occurrence of the most common gene alterations --------
 
@@ -272,7 +244,7 @@
     pmap(as_figure,
          w = 180)
 
-# Co-occurrence of FGF and FGFR gene alterations -------
+# Co-occurrence of FGF, FGFR, FGFBP gene alterations -------
 
   insert_msg('Co-occurrence of FGF and FGFR gene alterations')
 
@@ -327,100 +299,122 @@
                    'overlap_selected_fgf_fgfr_genes'),
          ref_name = names(.),
          caption = paste('Co-occurrence of genetic alterations',
-                         c('of FGF- and FGFR-coding genes',
+                         c('of FGF-, FGFR-, and FGFBP-coding genes',
                            'selected FGF- and FGFR-coding genes'),
                          'in urothelial cancer.'),
          h = c(180, 190)) %>%
     pmap(as_figure,
          w = 180)
 
-# Correlation of FGF and FGFR gene expression --------
+# Correlation of FGF, FGFR, FGFBP gene expression --------
 
-  insert_msg('Correlation of FGF and FGFR gene expression')
+  insert_msg('Correlation of FGF, FGFR, and FGFBP gene expression')
 
   rep_figs$fgfr_correlation <- expl_corr$bubble_plots %>%
     map(~.x +
-          guides(x = guide_axis(angle = 45)) +
-          theme(legend.position = 'none')) %>%
+          guides(x = guide_axis(angle = 90)) +
+          theme(legend.position = 'none',
+                axis.text = element_text(size = 7))) %>%
+    c(list(get_legend(expl_corr$bubble_plots[[1]]))) %>%
     plot_grid(plotlist = .,
               nrow = 2,
               align = 'hv',
               axis = 'tblr') %>%
-    plot_grid(get_legend(expl_corr$bubble_plots[[1]]),
-              ncol = 2,
-              rel_widths = c(0.85, 0.15)) %>%
     as_figure(label = 'fgfr_fgf_expression_correlation',
               ref_name = 'fgfr_correlation',
-              caption = paste('Correlation of mRNA levels of FGF- and',
-                              'FGFR-coding genes.'),
-              w = 180,
-              h = 220)
+              caption = paste('Correlation of mRNA levels of FGF-,',
+                              'FGFR-, and FGFBP coding genes.'),
+              w = 190,
+              h = 230)
+
+# Co-expression networks of FGF, FGFR, and FGFBP genes -------
+
+  insert_msg('Co-expression networks of FGF, FGFR, and FGFBP genes')
+
+  rep_figs$fgfr_networks <- expl_exnet$plots %>%
+    map(~.x +
+          theme(plot.subtitle = element_blank(),
+                legend.position = 'none')) %>%
+    c(list(get_legend(expl_exnet$plots[[1]] +
+                        theme(legend.box = 'horizontal',
+                              legend.text = element_text(margin = ggplot2::margin(r = 10)))))) %>%
+    plot_grid(plotlist = .,
+              ncol = 2,
+              align = 'hv',
+              axis = 'tblr') %>%
+    as_figure(label = 'fgfr_fgf_coexpression_networks',
+              ref_name = 'fgfr_networks',
+              caption = paste('Co-expression networks of',
+                              'FGF-, FGFR-, and FGFBP-coding genes.'),
+              w = 190,
+              h = 190)
 
 # Differential gene expression in tumors with and without FGFR3 mutations ------
 
   insert_msg('FGFR3 mutations: differential gene expression')
 
-  ## upper panel: Volcano plots
+  ## First figure: Volcano plots
 
-  rep_figs$fgfr_dge$top <- expl_dge$volcano_plots$FGFR3_mut %>%
+  rep_figs$fgfr_dge_volcano <- expl_dge$volcano_plots$FGFR3_mut %>%
     map(~.x + theme(legend.position = 'none')) %>%
+    c(list(get_legend(expl_dge$volcano_plots$FGFR3_mut[[1]]))) %>%
     plot_grid(plotlist = .,
               ncol = 2,
               align = 'hv',
               axis = 'tblr')
 
-  ## bottom panel: box plots
+  ## second figure: box plots
 
-  rep_figs$fgfr_dge$bottom <- expl_dge$box_plots %>%
-    map(~.x[c('FGFR1', 'FGFR3', 'FGF2', 'FGF5', 'FGF7')]) %>%
+  rep_figs$fgfr_dge_box <- expl_dge$box_plots %>%
+    map(~.x[c('FGFR1', 'FGFR3', 'FGF2', 'FGF7', 'SDC1')]) %>%
     transpose %>%
     unlist(recursive = FALSE) %>%
+    map(~.x + theme(axis.title.x = element_blank())) %>%
     plot_grid(plotlist = .,
-              ncol = 4,
+              ncol = 3,
               align = 'hv',
               axis = 'tblr')
 
-  ## the entire figure
+  ## the figure objects
 
-  rep_figs$fgfr_dge <- plot_grid(rep_figs$fgfr_dge$top,
-                                 rep_figs$fgfr_dge$bottom,
-                                 nrow = 2,
-                                 rel_heights = c(1.2, 3),
-                                 labels = LETTERS,
-                                 label_size = 10) %>%
-    as_figure(label = 'fgfr3_mutation_gene_expression',
-              ref_name = 'fgfr_dge',
-              caption = paste('Expression of FGF- and FGFR-coding genes',
-                              'in urothelial cancers stratified by presence',
-                              'of FGFR3 mutations.'),
-              w = 180,
-              h = 230)
+  rep_figs[c('fgfr_dge_volcano', 'fgfr_dge_box')] <-
+    rep_figs[c('fgfr_dge_volcano', 'fgfr_dge_box')] %>%
+    list(x = .,
+         label = c('fgfr3_mutation_gene_expression_volcano',
+                   'fgfr3_mutation_gene_expression_representative'),
+         ref_name = names(.),
+         caption = paste('Expression of FGF-, FGFR-, and FGFBP-coding genes',
+                         'in urothelial cancers stratified by presence',
+                         'of FGFR3 mutations:',
+                         c('Volcano plots.',
+                           'selected differentially expressed genes.')),
+         w = c(190, 180),
+         h = c(190, 230)) %>%
+    pmap(as_figure)
 
 # Total mutation burden in cancers with and without FGFR3 mutations -------
 
   insert_msg('Total mutation burden and FGFR3 mtations')
 
   rep_figs$fgfr_tmb <-
-    list(tmb = map(fgfr_tmb$plots,
-                   ~.x$tmb_per_mb),
-         mutations = map(fgfr_tmb$plots,
+    list(mutations = map(fgfr_tmb$plots,
                          ~.x$mutations),
+         list(ggdraw()),
          deletions = map(fgfr_tmb$plots[c("genie", "msk", "tcga")],
                          ~.x$deletions),
-         list(ggdraw()),
          amplifications = map(fgfr_tmb$plots[c("genie", "msk", "tcga")],
-                              ~.x$amplifications),
-         list(ggdraw())) %>%
+                              ~.x$amplifications)) %>%
+    map(compact) %>%
     unlist(recursive = FALSE) %>%
-    map(~.x + theme(plot.title.position = 'plot')) %>%
+    #map(~.x + theme(plot.title.position = 'plot')) %>%
     plot_grid(plotlist = .,
-              ncol = 4,
+              ncol = 3,
               align = 'hv',
               axis = 'tblr',
-              labels = c('A', '', '', '',
-                         'B', '', '', '',
-                         'C', '', '', '',
-                         'D'),
+              labels = c('A', '', '',
+                         '', '', '',
+                         'B', '', '',
+                         'C', '', ''),
               label_size = 10) %>%
     as_figure(label = 'fgfr3_mutations_total_mutation_burden',
               ref_name = 'fgfr_tmb',
@@ -435,9 +429,9 @@
   insert_msg('Overall survival in cancers with and without FGFR3 mutations')
 
   rep_figs$fgfr_os <-
-    fgfr_os$km_plots[c("genie", "msk", "tcga", "imvigor")] %>%
+    fgfr_os$km_plots[c("genie", "msk", "tcga", "imvigor", "bcan")] %>%
     map2(., c('approximate overall survival, days',
-              rep('overall survival, days', 3)),
+              rep('overall survival, days', 4)),
          ~.x +
            labs(x = .y) +
            theme(legend.position = 'bottom')) %>%
@@ -450,25 +444,32 @@
               caption = paste('Overall survival of patients with FGFR3 WT',
                               'and FGFR3-mutated cancers.'),
               w = 180,
-              h = 180)
+              h = 230)
 
 # Disease-specific and relapse-free survival with WT and FGFR3 mutated cancers ------
 
   insert_msg('DSS and RFS in cancers with and without FGFR3 mutations')
 
   rep_figs$fgfr_rfs <-
-    fgfr_rfs$km_plots[c("tss", "tss_wo_t4", "rfs", "rfs_wo_t4")] %>%
+    fgfr_rfs$km_plots[c("tss_tcga", "tss_tcga_wo_t4",
+                        "tss_bcan", "tss_bcan_wo_t4",
+                        "rfs_tcga", "rfs_tcga_wo_t4")] %>%
     map2(., rep(c(globals$cohort_labs["tcga"],
                   paste(globals$cohort_labs["tcga"],
-                        'without pT4 cancers')), 2),
+                        'without pT4 cancers')), 3),
          ~.x +
-           labs(title = .y) +
-           theme(legend.position = 'bottom')) %>%
+           #labs(title = .y) +
+           theme(legend.position = 'bottom',
+                 plot.title.position = 'plot',
+                 plot.title = element_text(hjust = 1),
+                 plot.subtitle = element_text(hjust = 1))) %>%
     plot_grid(plotlist = .,
               ncol = 2,
               align = 'hv',
               axis = 'tblr',
-              labels = c('A', '', 'B', ''),
+              labels = c('A', '',
+                         '', '',
+                         'B', ''),
               label_size = 10) %>%
     as_figure(label = 'fgfr3_disease_specific_relapse_free_survival',
               ref_name = 'fgfr_rfs',
@@ -476,7 +477,7 @@
                               'patients with FGFR3 WT and FGFR3 mutated',
                               'cancers.'),
               w = 180,
-              h = 180)
+              h = 230)
 
 # Differential gene expression in cancers with and without 11q13 amplification -------
 
@@ -495,50 +496,43 @@
                               'cancers with and without amplification of the',
                               '11q13 chromosome region.'),
               w = 180,
-              h = 80)
+              h = 70)
 
 # Molecular subtypes and gene alteration: heat maps --------
 
   insert_msg('Consensus subtypes and top gene alteration heat map')
 
-  ## upper panel: distribution of the consensus classes
-
-  rep_figs$fgfr_subtypes$top <-
-    plot_grid(expl_sub$plot +
-                coord_flip() +
-                theme(legend.position = 'none',
-                      axis.title.y = element_blank()),
-              get_legend(expl_sub$plot +
-                           theme(legend.position = 'bottom')),
-              ncol = 2)
-
-  ## bottom panel: heat maps
-
-  rep_figs$fgfr_subtypes$bottom <- sub_genet$hm_plots %>%
+  rep_figs$fgfr_subtypes <- sub_genet$onco_plots %>%
     map(~.x +
           theme(legend.position = 'none',
                 strip.text.y = element_blank(),
                 strip.background.y = element_blank(),
                 axis.text.y = element_markdown(size = 7),
-                strip.text.x = element_text(size = 7))) %>%
+                strip.text.x = element_text(size = 7),
+                axis.title.x = element_text(size = 7)))
+
+  ## hiding the non-assigned samples
+
+  for(i in names(rep_figs$fgfr_subtypes)) {
+
+    rep_figs$fgfr_subtypes[[i]]$data <-
+      rep_figs$fgfr_subtypes[[i]]$data %>%
+      filter(consensusClass != 'not assigned')
+
+  }
+
+  rep_figs$fgfr_subtypes <- rep_figs$fgfr_subtypes %>%
     plot_grid(plotlist = .,
-              nrow = 2,
-              rel_heights = c(1, 0.5),
+              nrow = 3,
+              rel_heights = c(1, 0.57, 0.65),
               align = 'hv',
               axis = 'tblr') %>%
-    plot_grid(get_legend(sub_genet$hm_plots[[1]]),
-              ncol = 2,
-              rel_widths = c(0.85, 0.15))
-
-  ## the entire figure
-
-  rep_figs$fgfr_subtypes <-
-    plot_grid(rep_figs$fgfr_subtypes$top,
-              rep_figs$fgfr_subtypes$bottom,
+    plot_grid(get_legend(sub_genet$onco_plots[[1]] +
+                           theme(legend.position = 'bottom',
+                                 legend.text = element_text(size = 7),
+                                 legend.title = element_text(size = 7))),
               nrow = 2,
-              rel_heights = c(1, 3.5),
-              labels = LETTERS,
-              label_size = 10) %>%
+              rel_heights = c(0.95, 0.05)) %>%
     as_figure(label = 'consensus_subtypes_fgf_fgfr_gene_alterations',
               ref_name = 'fgfr_subtypes',
               caption = paste('Alterations of FGF- and FGFR-coding genes',
@@ -556,17 +550,12 @@
   rep_figs$fgfr_subdetails$top <- sub_genet$plots %>%
     map(~.x$FGFR3_mutation) %>%
     map(~.x +
+          guides(x = guide_axis(angle = 45)) +
           theme(legend.position = 'none',
+                plot.subtitle = element_text(size = 7),
                 axis.text.x = element_text(size = 7),
                 axis.title.x = element_blank())) %>%
-    plot_grid(plotlist = .,
-              ncol = 2,
-              align = 'hv',
-              axis = 'tblr') %>%
-    plot_grid(get_legend(sub_genet$plots[[1]]$FGFR3_mutation +
-                           theme(legend.position = 'bottom')),
-              nrow = 2,
-              rel_heights = c(0.9, 0.1))
+    c(list(get_legend(sub_genet$plots[[1]]$FGFR3_mutation)))
 
   ## bottom panel: FGF3/4/19 amplification
 
@@ -575,40 +564,94 @@
                            "FGF4_amplification",
                            "FGF19_amplification")] %>%
     map(~.x +
+          guides(x = guide_axis(angle = 45)) +
           theme(legend.position = 'none',
-                axis.text.x = element_text(size = 7))) %>%
-    c(list(get_legend(sub_genet$plots$tcga$FGF3_amplification))) %>%
-    plot_grid(plotlist = .,
-              ncol = 2,
-              align = 'hv',
-              axis = 'tblr')
+                plot.subtitle = element_text(size = 7),
+                axis.text.x = element_text(size = 7),
+                axis.title.x = element_blank())) %>%
+    c(list(get_legend(sub_genet$plots$tcga$FGF3_amplification)))
 
   ## the complete figure
 
   rep_figs$fgfr_subdetails <-
-    plot_grid(rep_figs$fgfr_subdetails$top,
-              rep_figs$fgfr_subdetails$bottom,
-              nrow = 2,
-              rel_heights = c(1.1, 2),
-              labels = LETTERS,
+    c(rep_figs$fgfr_subdetails$top,
+      rep_figs$fgfr_subdetails$bottom) %>%
+    plot_grid(plotlist = .,
+              ncol = 2,
+              align = 'hv',
+              axis = 'tblr',
+              labels = c('A', '',
+                         '', '',
+                         'B', ''),
               label_size = 10) %>%
     as_figure(label = 'consensus_subtypes_fgf_fgfr_alteration_details',
               ref_name = 'fgfr_subdetails',
               caption = paste('Frequency of somatic mutations of FGFFR3',
                               'and amplification of FGF3/4/19 in consensus',
                               'molecular classes of urothelial cancer.'),
+              w = 190,
+              h = 230)
+
+# Molecular subtypes and expression of FGF and FGFR genes -----
+
+  insert_msg('Molecular subtypes and expression of FGF, FGFR, FGFBP genes')
+
+  ## heat map plots are presented:
+  ## not-assigned, NE-like, and LumNS samples are removed
+
+  rep_figs$sub_fgfr_dge <- sub_dge$hm_plots %>%
+    map(~.x +
+          guides(y = guide_axis(n.dodge = 2)) +
+          theme(legend.position = 'none',
+                strip.text.x = element_text(size = 7),
+                plot.subtitle = element_text(size = 7),
+                axis.text.y = element_markdown(size = 7),
+                plot.margin = ggplot2::margin(r = 2, l = 2,
+                                              t = 0, b = 1,
+                                              unit = 'mm')))
+
+  for(i in names(rep_figs$sub_fgfr_dge)) {
+
+    rep_figs$sub_fgfr_dge[[i]]$data <-
+      rep_figs$sub_fgfr_dge[[i]]$data %>%
+      filter(!consensusClass %in% c('not assigned', 'LumNS', 'NE-like'))
+
+  }
+
+  rep_figs$sub_fgfr_dge <- rep_figs$sub_fgfr_dge %>%
+    plot_grid(plotlist = .,
+              nrow = 3,
+              align = 'hv',
+              axis = 'tblr') %>%
+    plot_grid(get_legend(sub_dge$hm_plots[[1]] +
+                           theme(legend.position = 'bottom',
+                                 legend.text = element_text(size = 7),
+                                 legend.title = element_text(size = 7))),
+              nrow = 2,
+              rel_heights = c(0.92, 0.08)) %>%
+    as_figure(label = 'molecular_subtypes_expression_FGF_FGFR_FGFBP',
+              ref_name = 'sub_fgfr_dge',
+              caption = paste('Differential expression of FGF-, FGFR-,',
+                              'and FGFR-coding genes in the consensus molecular',
+                              'classes of urothelial cancers.'),
               w = 180,
-              h = 210)
+              h = 230)
 
-# Molecular subtypes and expression of FGF and FGFR genes -------
+# Molecular subtypes and expression of FGF and FGFR genes: details -------
 
-  insert_msg('Molecular subtypes and expression of FGF- and FGFR-coding genes')
+  insert_msg('Molecular subtypes and expression of FGF-, FGFR-, FGFBP coding genes')
 
   rep_figs[c('sub_fgfr_expression',
+             'sub_fgfbp_expression',
+             'sub_sdc_expression',
              'sub_fgf_expression1',
              'sub_fgf_expression2')] <-
     list(map(sub_dge$plots,
-             ~.x[c('FGFR1', 'FGFR3')]),
+             ~.x[c('FGFR1', 'FGFR3', 'TGFBR3')]),
+         map(sub_dge$plots,
+             ~.x[c('FGFBP1', 'KL', 'DCN')]),
+         map(sub_dge$plots,
+             ~.x[c('SDC1', 'SDC2', 'GPC3')]),
          map(sub_dge$plots,
              ~.x[c('FGF2', 'FGF5', 'FGF7')]),
          map(sub_dge$plots,
@@ -616,32 +659,261 @@
     map(transpose) %>%
     map(unlist, recursive = FALSE) %>%
     map(map,
-        ~.x + theme(legend.position = 'none',
-                    axis.text.x = element_text(size = 7),
-                    axis.title.x = element_blank())) %>%
+        ~.x +
+          guides(x = guide_axis(angle = 90)) +
+          theme(legend.position = 'none',
+                plot.subtitle = element_text(size = 7),
+                axis.text.x = element_text(size = 7),
+                axis.text.y = element_text(size = 7),
+                axis.title.x = element_blank(),
+                axis.title.y = element_text(size = 7))) %>%
     map(~plot_grid(plotlist = .x,
-                   ncol = 2,
+                   ncol = 3,
                    align = 'hv',
                    axis = 'tblr'))
 
   rep_figs[c('sub_fgfr_expression',
+             'sub_fgfbp_expression',
+             'sub_sdc_expression',
              'sub_fgf_expression1',
              'sub_fgf_expression2')] <-
     rep_figs[c('sub_fgfr_expression',
+               'sub_fgfbp_expression',
+               'sub_sdc_expression',
                'sub_fgf_expression1',
                'sub_fgf_expression2')] %>%
     list(x = .,
          label = c('molecular_subtypes_expression_FGFR',
+                   'molecular_subtypes_expression_FGFBP',
+                   'molecular_subtypes_expression_SDC',
                    'molecular_subtypes_expression_FGF',
                    'molecular_subtypes_expression_FGF'),
          ref_name = names(.),
          caption = paste('Differential expression of',
-                         c('FGFR-coding', 'FGF-coding', 'FGF-coding'),
+                         c('FGFR-coding', 'FGFBP-coding',
+                           'FGFBP-coding', 'FGF-coding', 'FGF-coding'),
                          'genes in the consensus molecular classes of urothelial',
                          'cancers.'),
-         h = c(120, 180, 120)) %>%
+         h = c(230, 230, 230, 230, 170)) %>%
     pmap(as_figure,
-         w = 180)
+         w = 190)
+
+# Modeling of the consensus subsets --------
+
+  insert_msg('Modeling of the consensus subsets')
+
+  ## Ensemble model is not shown at the moment, it is poorly calibrated!
+
+  ## upper panel: plots of the performance stats
+
+  rep_figs$sub_elnet$upper <- ml_eval$stat_plot +
+    guides(fill = 'none',
+           color = 'none') +
+    theme(plot.subtitle = element_blank())
+
+  rep_figs$sub_elnet$upper$data <-
+    rep_figs$sub_elnet$upper$data %>%
+    filter(algorithm != 'ensemble')
+
+  ## bottom panel: confusion matrices
+
+  rep_figs$sub_elnet$bottom <-
+    ml_eval$confusion_plots[c("elnet", "ranger")] %>%
+    transpose %>%
+    unlist(recursive = FALSE) %>%
+    map(~.x +
+          theme(legend.position = 'none',
+                axis.text = element_text(size = 7),
+                axis.title = element_text(size = 7))) %>%
+    plot_grid(plotlist = .,
+              ncol = 2,
+              align = 'hv',
+              axis = 'tblr')
+
+  ## the entire figure
+
+  rep_figs$sub_elnet <-
+    plot_grid(rep_figs$sub_elnet$upper,
+              rep_figs$sub_elnet$bottom,
+              nrow = 2,
+              rel_heights = c(1, 2.5),
+              labels = LETTERS,
+              label_size = 10) %>%
+    as_figure(label = 'consensus_subset_prediction_fgf_fgfr_fgfbp_genes',
+              ref_name = 'sub_elnet',
+              caption = paste('Prediction of molecular consensus classes of',
+                              'urothelial cancer by machine learning models',
+                              'which use expression of FGFR-, FGF-, and',
+                              'FGFBP-coding genes as the sole explanatory',
+                              'factors.'),
+              w = 180,
+              h = 230)
+
+# Elastic Net model, calibration ---------
+
+  insert_msg('Elastic Net model, calibration')
+
+  rep_figs$sub_cal_elnet <-
+    ml_eval[c("brier_square_plots", "calibration_plots")] %>%
+    map(~.x$elnet)
+
+  rep_figs$sub_cal_elnet[['calibration_plots']] <-
+    rep_figs$sub_cal_elnet[['calibration_plots']] %>%
+    map(~.x + labs(title = ''))
+
+  rep_figs$sub_cal_elnet <- rep_figs$sub_cal_elnet %>%
+    transpose %>%
+    unlist(recursive = FALSE) %>%
+    map(~.x + theme(plot.subtitle = element_blank())) %>%
+    plot_grid(plotlist = .,
+              ncol = 2,
+              rel_widths = c(1, 1.2),
+              align = 'h',
+              axis = 'tblr') %>%
+    as_figure(label = 'consensus_subset_calibration_elastic_net',
+              ref_name = 'sub_cal_elnet',
+              caption = paste('Calibration of the Elastic Net model of',
+                              'consensus molecular classes of urothelial',
+                              'cancers.'),
+              w = 180,
+              h = 210)
+
+# Random Forest model, calibration ---------
+
+  insert_msg('Random Forest model, calibration')
+
+  rep_figs$sub_cal_ranger <-
+    ml_eval[c("brier_square_plots", "calibration_plots")] %>%
+    map(~.x$ranger)
+
+  rep_figs$sub_cal_ranger[['calibration_plots']] <-
+    rep_figs$sub_cal_ranger[['calibration_plots']] %>%
+    map(~.x + labs(title = ''))
+
+  rep_figs$sub_cal_ranger <- rep_figs$sub_cal_ranger %>%
+    transpose %>%
+    unlist(recursive = FALSE) %>%
+    map(~.x + theme(plot.subtitle = element_blank())) %>%
+    plot_grid(plotlist = .,
+              ncol = 2,
+              rel_widths = c(1, 1.2),
+              align = 'h',
+              axis = 'tblr') %>%
+    as_figure(label = 'consensus_subset_calibration_random_forest',
+              ref_name = 'sub_cal_ranger',
+              caption = paste('Calibration of the Random Forest model of',
+                              'consensus molecular classes of urothelial',
+                              'cancers.'),
+              w = 180,
+              h = 210)
+
+# ML models: variable importance --------
+
+  insert_msg('Elastic Net model, variable importance')
+
+  rep_figs$sub_imp <- ml_imp$coef_plots %>%
+    map(~.x + theme(legend.position = 'none')) %>%
+    c(list(get_legend(ml_imp$coef_plots[[1]])),
+      list(ml_imp$ranger_plot)) %>%
+    plot_grid(plotlist = .,
+              ncol = 3,
+              align = 'hv',
+              axis = 'tblr',
+              labels = c('A', '', '',
+                         '', '', 'B'),
+              label_size = 10) %>%
+    as_figure(label = 'consensus_subset_prediction_key_genes',
+              ref_name = 'sub_imp',
+              caption = paste('Importance of explanatory variables in the',
+                              'Elastic Net model of molecular consensus',
+                              'classes of urothelial cancers.'),
+              w = 190,
+              h = 160)
+
+# Modeling of overall survival with FGFR, FGF, and FGFBP gene expression --------
+
+  insert_msg('Modeling of overall survival')
+
+  ## upper panel: variable importance and model evaluation stats
+
+  rep_figs$surv_ml$upper <-
+    plot_grid(surv_imp$coef_plot +
+                theme(legend.position = 'none',
+                      axis.text.y = element_markdown(size = 7)),
+              surv_eval$stat_plot +
+                guides(fill = 'none',
+                       color = 'none',
+                       size = guide_legend(override.aes = list(fill = 'steelblue'))) +
+                theme(legend.position = 'bottom',
+                      plot.subtitle = element_blank()),
+              ncol = 2,
+              align = 'v',
+              axis = 'tblr',
+              labels = c('A', 'B'),
+              label_size = 10)
+
+  ## bottom panel: KM plots of survival in tertiles of the LP score
+
+  rep_figs$surv_ml$bottom <- surv_eval$tertile_km_plots %>%
+    map(~.x +
+          theme(legend.title = element_blank(),
+                legend.position = 'bottom',
+                legend.text = element_text(size = 7))) %>%
+    plot_grid(plotlist = .,
+              ncol = 2,
+              align = 'hv',
+              labels = c('C', ''),
+              label_size = 10)
+
+  ## the entire figure
+
+  rep_figs$surv_ml <- plot_grid(rep_figs$surv_ml$upper,
+                                rep_figs$surv_ml$bottom,
+                                nrow = 2,
+                                rel_heights = c(1, 2)) %>%
+    as_figure(label = 'overall_survival_fgf_signature',
+              ref_name = 'surv_ml',
+              caption = paste('Development and evaluation of an Elastic',
+                              'Net Cox model of overall survival with',
+                              'expression of FGFR-, FGF-, and FGFBP-coding genes',
+                              'as explanatory factors.'),
+              w = 180,
+              h = 230)
+
+# KM analysis for the FGFR, FGF, and FGFBP genes -------
+
+  insert_msg('KM analysis for expression of the genes of interest')
+
+  rep_figs[c("surv_km1", "surv_km2")] <-
+    list(transpose(surv_km$plots)[c('TNFAIP6', 'GPC1', 'FIBP')],
+         transpose(surv_km$plots)[c('FGF11', 'FGFBP1')]) %>%
+    map(unlist, recursive = FALSE) %>%
+    map(map,
+        ~.x +
+          theme(legend.position = 'bottom',
+                legend.text = element_text(size = 7),
+                legend.title = element_blank(),
+                legend.justification = 1,
+                plot.subtitle = element_text(size = 7))) %>%
+    map(~plot_grid(plotlist = .,
+                   ncol = 3,
+                   align = 'hv',
+                   axis = 'tblr'))
+
+  ## figure objects
+
+  rep_figs[c("surv_km1", "surv_km2")] <-
+    rep_figs[c("surv_km1", "surv_km2")] %>%
+    list(x = .,
+         label = c('candidate_overall_survival_markers1',
+                   'candidate_overall_survival_markers2'),
+         ref_name = names(.),
+         caption = paste('Candidate transcriptional markers of overall survival',
+                         'among the genes coding for FGFR, FGF,',
+                         'and FGFBP proteins.'),
+         h = c(230, 170)) %>%
+    pmap(as_figure,
+         w = 190)
 
 # Genetic subtypes: development -------
 
@@ -708,13 +980,13 @@
               w = 180,
               h = 80)
 
-# Genetic subsets: most common genetic alterations -------
+# Genetic subsets: the class-defining genetic alterations -------
 
-  insert_msg('Genetic clusters: top genetic alterations')
+  insert_msg('Genetic clusters: the class-defining genetic alterations')
 
   ## GENIE and MSK cohorts
 
-  rep_figs$lca_genet1 <- lca_eval$hm_plots[c("genie", "msk")] %>%
+  rep_figs$lca_genet1 <- lca_eval$oncoplots[c("genie", "msk")] %>%
     map(~.x +
           theme(legend.position = 'none',
                 strip.text = element_text(size = 7),
@@ -733,7 +1005,7 @@
 
   ## TCGA
 
-  rep_figs$lca_genet2 <- lca_eval$hm_plots$tcga
+  rep_figs$lca_genet2 <- lca_eval$oncoplots$tcga
 
   ## the figures
 
@@ -743,7 +1015,7 @@
          label = c('genetic_clusters_top_genetic_alterations_genie_msk',
                      'genetic_clusters_top_genetic_alterations_tcga'),
          ref_name = names(.),
-         caption = paste('Distribution of the most frequent somatic',
+         caption = paste('Distribution of the class-defining somatic',
                          'mutations and copy number alterations in the',
                          'genetic subsets of urothelial cancers',
                          c('in the GENIE BLCA and MSK cohorts.',
@@ -870,9 +1142,9 @@
 
   insert_msg('Genetic subsets: differential gene expression')
 
-  rep_figs[c('lca_dge_fgfr', 'lca_dge_fgf')] <-
-    list(lca_dge$plots[c("FGFR1", "FGFR2", "FGFR3")],
-         lca_dge$plots[c('FGF2', 'FGF5', 'FGF7', 'FGF17')]) %>%
+  rep_figs[c('lca_dge_fgfr', 'lca_dge_fgfbp')] <-
+    list(lca_dge$plots[c("FGFR1", "FGFR2", "FGFR3", "FGF5")],
+         lca_dge$plots[c("PTX3", "SDC1", "GPC1", "TNFAIP6")]) %>%
     map(map,
         ~.x +
           guides(x = guide_axis(angle = 45)) +
@@ -884,14 +1156,14 @@
                    align = 'hv',
                    axis = 'tblr'))
 
-  rep_figs[c('lca_dge_fgfr', 'lca_dge_fgf')] <-
-    rep_figs[c('lca_dge_fgfr', 'lca_dge_fgf')] %>%
+  rep_figs[c('lca_dge_fgfr', 'lca_dge_fgfbp')] <-
+    rep_figs[c('lca_dge_fgfr', 'lca_dge_fgfbp')] %>%
     list(x = .,
-         label = c('genetic_subsets_fgfr_receptor_expression',
-                   'genetic_subsets_fgf_ligand_expression'),
+         label = c('genetic_subsets_fgfr_fgf_expression',
+                   'genetic_subsets_fgbp_ligand_expression'),
          ref_name = names(.),
          caption = paste('Differential expression of',
-                         c('FGFR-coding', 'FGF-coding'),
+                         c('FGFR- and FGF-coding', 'FGFBP-coding'),
                          'genes in the genetic subsets of',
                          'urothelial cancers.')) %>%
     pmap(as_figure,
@@ -1008,7 +1280,7 @@
               w = 140,
               h = 210)
 
-# Cox modeling of overall survival --------
+# Genetic subsets: Cox modeling of overall survival --------
 
   insert_msg('Cox modeling of overall survival')
 
@@ -1049,6 +1321,20 @@
                               'genetic subsets of urothelial carcinoma.'),
               w = 180,
               h = 230)
+
+# Summary scheme: FGFR signaling ---------
+
+  insert_msg('FGFR signaling scheme')
+
+  rep_figs$summary <-
+    plot_grid(ggdraw() +
+                draw_image('./schemes/FGFR_signaling_blca.png')) %>%
+    as_figure(label = 'fgfr_signaling_blca',
+              ref_name = 'summary',
+              caption = paste('Proposed scheme of FGFR signaling',
+                              'in urothelial cancers.'),
+              w = 180,
+              h = 1352/2648)
 
 # Saving on the disc ------
 

@@ -2,7 +2,7 @@
 # FGF/FGFR genes.
 #
 # Co-occurrence is investigated by two-dimensional MDS of the Jaccard distance
-# matrices. The analysis is done for the GENIE and TCGA cohort.
+# matrices. The analysis is done for the GENIE, MSK, and TCGA cohort.
 
   insert_head()
 
@@ -27,7 +27,8 @@
     map(map,
         select,
         sample_id,
-        any_of(reduce(globals[c("receptors", "ligands")], union))) %>%
+        any_of(reduce(globals[c("receptors", "ligands", "binding_proteins")],
+                      union))) %>%
     map(map, column_to_rownames, 'sample_id') %>%
     map(~map2(., names(.),
               ~set_names(.x, paste(names(.x), .y, sep = '_')))) %>%

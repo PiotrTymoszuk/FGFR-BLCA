@@ -13,14 +13,17 @@
 
   ## TMB provided by the study authors
 
-  fgfr_tmb$data$tmb <- globals$cohort_expr %>%
+  fgfr_tmb$raw_data$tmb <- globals$cohort_expr %>%
     eval %>%
     map(~.x$clinic) %>%
-    map(select, sample_id, tmb_per_mb, any_of('msi_score'))
+    map(safely(select),
+        sample_id, tmb_per_mb, any_of('msi_score')) %>%
+    map(~.x$result) %>%
+    compact
 
-  fgfr_tmb$data$tmb <-
-    map2(fgfr_globals$genetic_groups[names(fgfr_tmb$data$tmb)],
-         fgfr_tmb$data$tmb,
+  fgfr_tmb$raw_data$tmb <-
+    map2(fgfr_globals$genetic_groups[names(fgfr_tmb$raw_data$tmb)],
+         fgfr_tmb$raw_data$tmb,
          inner_join, by = 'sample_id') %>%
     map(~filter(.x, complete.cases(.x)))
 
@@ -28,7 +31,7 @@
   ## Amplifications and deletions in the IMvigor cohort are copies
   ## of the mutation counts
 
-  fgfr_tmb$data$counts <-  globals$cohort_expr %>%
+  fgfr_tmb$raw_data$counts <-  globals$cohort_expr %>%
     eval %>%
     map(~.x[c('mutation', 'deletion', 'amplification')]) %>%
     map(compact) %>%
@@ -41,10 +44,28 @@
                         values_to = .y))) %>%
     map(reduce, left_join, by = 'sample_id')
 
-  fgfr_tmb$data <-
-    map2(fgfr_tmb$data$tmb,
-         fgfr_tmb$data$counts,
-         left_join, by = 'sample_id')
+  for(i in names(fgfr_tmb$raw_data$counts)) {
+
+    if(!is.null(fgfr_tmb$raw_data$tmb[[i]])) {
+
+      fgfr_tmb$data[[i]] <-
+        full_join(fgfr_tmb$raw_data$tmb[[i]],
+                  fgfr_tmb$raw_data$counts[[i]],
+                  by = 'sample_id')
+
+    } else {
+
+      fgfr_tmb$data[[i]] <-
+        inner_join(fgfr_globals$genetic_groups[[i]],
+                   fgfr_tmb$raw_data$counts[[i]],
+                   by = 'sample_id')
+
+    }
+
+  }
+
+  fgfr_tmb$data <- fgfr_tmb$data %>%
+    map(filter, !is.na(FGFR3_mutation))
 
   ## variable lexicon
 
@@ -71,19 +92,18 @@
                 variable %in% .x)) %>%
     map(~.x$variable)
 
+  fgfr_tmb$raw_data <- NULL
+  fgfr_tmb <- compact(fgfr_tmb)
+
 # Descriptive stats ------
 
   insert_msg('Descriptive stats')
 
   fgfr_tmb$stats <-
-    map2(fgfr_tmb$data,
-         fgfr_tmb$variables,
-         ~explore(.x,
-                  variables = .y,
-                  split_factor = 'FGFR3_mutation',
-                  what = 'table',
-                  pub_styled = TRUE)) %>%
-    map(format_desc)
+    list(data = fgfr_tmb$data,
+         variables = fgfr_tmb$variables) %>%
+    pmap(fast_num_stats,
+         split_fct = 'FGFR3_mutation')
 
 # Testing for differences between the genetic strata -------
 
@@ -92,17 +112,17 @@
   fgfr_tmb$test <-
     map2(fgfr_tmb$data,
          fgfr_tmb$variables,
-         ~compare_variables(.x,
-                            variables = .y,
-                            split_factor = 'FGFR3_mutation',
-                            what = 'eff_size',
-                            types = 'wilcoxon_r',
-                            ci = FALSE,
-                            exact = FALSE,
-                            pub_styled = TRUE,
-                            adj_method = 'BH')) %>%
+         ~f_wilcox_test(.x[.y],
+                        f = .x$FGFR3_mutation,
+                        exact = FALSE,
+                        as_data_frame = TRUE,
+                        safely = TRUE,
+                        adj_method = 'BH')) %>%
+    map(re_adjust) %>%
     map(mutate,
-        plot_cap = paste(eff_size, significance, sep = ', '))
+        eff_size = paste('r =', signif(biserial_r, 2)),
+        plot_cap = paste(eff_size, significance, sep = ', ')) %>%
+    map(as_tibble)
 
 # Plotting ------
 
