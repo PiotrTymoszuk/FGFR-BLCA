@@ -1334,7 +1334,7 @@
               caption = paste('Proposed scheme of FGFR signaling',
                               'in urothelial cancers.'),
               w = 180,
-              h = 1352/2648)
+              h = 1352/2648 * 180)
 
 # Saving on the disc ------
 
