@@ -55,7 +55,7 @@ set_flextable_defaults(font.family = "Cambria",
 
 * The primary goal of the current project was to characterize frequency, co-occurrence, and clinical implications of genetic alterations and differential expression of FGF-, FGFR-, and FGF binding protein (FGFBP) coding genes (__Table \@ref(tab:tab-genes)__) [@Korc2009; @Turati2022; @Bennett1995; @Gubbiotti2016; @Mundhenke2002; @Midorikawa2003; @Leali2012; @Xie2020; @Hagihara2000; @Pan2021; @Mohammadi2005; @Hu2009a] in large publicly available cohorts of urothelial cancers. The secondary goal was an attempt to establish subsets of urothelial cancer specimens based on differences in their profiles of somatic mutations and gene copy number variants.
 
-* Five collectives of urothelial cancer patients were evaluated: the GENIE BLCA cohort, an urothelial carcinoma subset of the large GENIE project (n = `r nrow(genie$clinic)`) [@Sweeney2017], the predominantly muscle-invasive MSK IMPACT cohort (`r nrow(msk$clinic)`) [@Clinton2022], the muscle-invasive TCGA BLCA collective (n = `r nrow(tcga$clinic)`) [@Liu2018; @Robertson2017], the IMvigor cohort of late stage, platinum-refractory cancers subjected to an anti-PD-L1 treatment (`r nrow(imvigor$clinic)`) [@Balar2017], and the BCAN cohort of metastatic urothelial cancers [@Damrauer2022]. Detailed information on somatic mutations and their effects on protein sequence was provided for the GENIE BLCA, MSK IMPACT, TCGA BLCA, and BLCA cohorts. Binarized indexes of presence/absence of somatic mutations in selected genes were available for the IMvigor cohort. Binarized data on gene amplifications and deletions were obtained for the GENIE BLCA, MSK IMPACT, and TCGA BLCA collectives. Gene expression quantification by RNA sequencing and assignment to consensus molecular classes [@Kamoun2020] were retrieved for the TCGA BLCA, IMvigor, and BCAN cohorts. Overall survival information was available for the MSK IMPACT, TCGA BLCA, IMvigor, and BCAN cohorts; data on disease-specific and relapse-free survival was provided for the TCGA BLCA collective. Approximate overall survival was calculated for the GENIE BLCA project participants based on age at enrollment in years and follow-up time in days. Characteristic of the investigated collectives is presented in __Table \@ref(tab:tab-cohorts)__.
+* Five genetic and transcrional collectives of urothelial cancer patients were evaluated: the GENIE BLCA cohort, an urothelial carcinoma subset of the large GENIE project (n = `r nrow(genie$clinic)`) [@Sweeney2017], the predominantly muscle-invasive MSK IMPACT cohort (n = `r nrow(msk$clinic)`) [@Clinton2022], the muscle-invasive TCGA BLCA collective (n = `r nrow(tcga$clinic)`) [@Liu2018; @Robertson2017], the IMvigor cohort of late stage, platinum-refractory cancers subjected to an anti-PD-L1 treatment (n = `r nrow(imvigor$clinic)`) [@Balar2017], and the BCAN cohort of metastatic urothelial cancers (n = `r nrow(bcan$clinic)`) [@Damrauer2022]. Detailed information on somatic mutations and their effects on protein sequence was provided for the GENIE BLCA, MSK IMPACT, TCGA BLCA, and BCAN cohorts. Binarized indexes of presence/absence of somatic mutations in selected genes were available for the IMvigor cohort. Binarized data on gene amplifications and deletions were obtained for the GENIE BLCA, MSK IMPACT, and TCGA BLCA collectives. Gene expression quantification by RNA sequencing and assignment to consensus molecular classes [@Kamoun2020] were retrieved for the TCGA BLCA, IMvigor, and BCAN cohorts. Overall survival information was available for the MSK IMPACT, TCGA BLCA, IMvigor, and BCAN cohorts; data on disease-specific and relapse-free survival was provided for the TCGA BLCA collective. Approximate overall survival was calculated for the GENIE BLCA project participants based on age at enrollment in years and follow-up time in days. Validation of expression of the genes of interest was done with immunohistochemistry data retrieved from the [Human Protein Atlas](https://www.proteinatlas.org/). Characteristic of the investigated collectives is presented in __Table \@ref(tab:tab-cohorts)__.
 
 * Somatic mutations of _FGFR3_ belonged to the most common genetic features of urothelial cancers and were found in `r expl_genet$stats$mutation %>% filter(variable == 'FGFR3') %>% .$percent %>% range %>% signif(2) %>% paste(collapse = ' to ')`% of cancer samples. Somatic mutations of the remaining _FGFR1_, _FGFR2_, and _FGFR4_ receptor genes were less frequent (`r expl_genet$stats$mutation %>% filter(variable %in% c('FGFR1', 'FGFR2', 'FGFR4')) %>% .$percent %>% range %>% signif(2) %>% paste(collapse = ' to ')`% of cancer samples). Amplifications of the _FGF3_, _FGF4_, and _FGF19_ genes in urothelial cancers result from multiplication of the _11q13_ chromosome region, which codes also for an essential oncogene _CCDN1_. Amplifications of _FGF3_, _FGF4_, and _FGF19_ were detected in `r expl_genet$stats$amplification %>% filter(variable %in% c('FGF3', 'FGF4', 'FGF19')) %>% .$percent %>% range %>% signif(2) %>% paste(collapse = ' to ')`% of specimens (__Figure \@ref(fig:fig-general-freq)__ and __\@ref(fig:fig-fgfr-freq)__, __Table \@ref(tab:tab-genetics)__ and __\@ref(tab:tab-fgf-genetics)__).
 
@@ -64,6 +64,8 @@ __ - __\@ref(fig:fig-fgfr4-position)__, __Table \@ref(tab:tab-fgfr-class)__). It
 
 * Co-occurrence and exclusivity of genetic features was investigated by analysis of pairwise Jacquard similarity coefficients for pairs of genetic alterations in urothelial cancer samples. Such analysis revealed little overlap between somatic mutations of _FGFR3_ and other common alterations such as _TP53_ and _RB1_ mutations, amplification of the 11q13 chromosome region hallmarked by copy number variants of _FGF3/4/19_ and _CCND1_, as well as deletion of the 9p21 chromosome region with the _MTAP_, _CDKN2A_, and _CDKN2A_ genes (__Figures \@ref(fig:fig-genetic-mds)
 __ - __Figure \@ref(fig:fig-fgfr-cont-hm)__). 
+
+* At mRNA level, _FGFR3_, _TGFBR3_, and _FGFR1_ were the strongest expressed receptor genes. _FGF7_, _FGF11_, followed by _FGF2_ were the most abundant ligand transcripts; _HSPG2_, _SDC1_, and _CD44_ were the binding protein genes with the highest mRNA counts in the urothelial cancer tissue. Out of `r globals[c("receptors", "ligands", "binding_proteins")] %>% reduce(union) %>% length` genes of interest, `r ncol(hpa$ihc_score) - 1` proteins were quantified by immunohistochemistry (IHC) in the Human Protein Atlas (HPA). The protein quantities were expressed as IHC scores defined as products of staining intensity (1: negative to 4: strong) and quantity of positive cells (1: none to 4: >75%). In the HPA data set, `r `r sum(colMedians(hpa$ihc_score[-1]) > 1)` FGFR, FGF, and FGFBP proteins had median IHC scores $\geq$ 2, and were hence detectable in cancer specimens. At the protein/IHC level, FGFR1, FGFR3, FGFRL1, and FGFR4 were the most abundant receptors. FGF7, FGF10, FGF3, FGF19, and FGF17 were the strongest expressed ligand proteins. SDC2, SDC1, GPC4, CD44, and SDC4 were the most abundant FGFBP proteins (__Figures \@ref(fig:fig-expression)__ - __\@ref(fig:fig-ihc-fgfbp)__, __Table \@ref(tab:tab-expression)__).
 
 * Co-expression of FGFR-, FGF-, and FGFBP-coding genes was explored by correlation and network analyses, which revealed a high degree co-regulation of the ligands, receptors, and binding proteins in the urothelial cancer tissue (__Figure \@ref(fig:fig-fgfr-correlation)__ and __Figure \@ref(fig:fig-fgfr-networks)__). Especially the network analyses point towards strong co-regulation of expression of _FGFR1_ with genes of its ligands (_FGF2_, _FGF7_, _FGF10_), and co-receptors such as _SDC2_, _DCN_ or _HSPG2_. Importantly, _FGFR1_ (hub score: `r expl_exnet$stats %>% map(filter, name == 'FGFR1') %>% map_dbl(~.x$hub_score) %>% range %>% signif(2) %>% paste(collapse = ' to ')`, general correlation strength with maximum of 1, degree: `r expl_exnet$stats %>% map(filter, name == 'FGFR1') %>% map_dbl(~.x$degree) %>% range %>% signif(2) %>% paste(collapse = ' to ')`), _FGF2_ (hub score: `r expl_exnet$stats %>% map(filter, name == 'FGF2') %>% map_dbl(~.x$hub_score) %>% range %>% signif(2) %>% paste(collapse = ' to ')`, degree: `r expl_exnet$stats %>% map(filter, name == 'FGF2') %>% map_dbl(~.x$degree) %>% range %>% signif(2) %>% min`), _FGF7_ (hub score: `r expl_exnet$stats %>% map(filter, name == 'FGF7') %>% map_dbl(~.x$hub_score) %>% range %>% signif(2) %>% paste(collapse = ' to ')`, degree: `r expl_exnet$stats %>% map(filter, name == 'FGF7') %>% map_dbl(~.x$degree) %>% range %>% signif(2) %>% paste(collapse = ' to ')`), and _FGF10_ (hub score: `r expl_exnet$stats %>% map(filter, name == 'FGF10') %>% map_dbl(~.x$hub_score) %>% range %>% signif(2) %>% paste(collapse = ' to ')`, degree: `r expl_exnet$stats %>% map(filter, name == 'FGF10') %>% map_dbl(~.x$degree) %>% range %>% signif(2) %>% paste(collapse = ' to ')`) were identified as candidate highly connected hubs of the co-expression networks, which suggests that FGFR1 signaling as a critical player in urothelial cancer biology. In turn, _FGFR2_ was found to be weakly co-regulated with the non-canonical FGF receptor gene, _TGFBR3_. _FGFR3_ levels correlated weakly with levels of _SDC1_ and _GPC1_ transcripts that code for proteoglycan FGF binding proteins.
 
@@ -119,8 +121,9 @@ flextable::flextable(rep_tabs$genes) %>%
 ```{r tab-cohorts, tab.cap = "Characteristic of the investigated cohorts. Numeric features are presented as medians with interquartile ranges and ranges. Qualitative variables are shown as percentages and observation counts of the categories."}
 
 flextable::flextable(rep_tabs$cohorts) %>% 
-    set_widths(c(2.5, rep(2.7, 5), 2.3, 2.2)) %>% 
-  footnote(1, 7:8, 
+  set_widths(c(2.5, rep(2.3, 6), 2, 2)) %>% 
+  fontsize(j = 1:9, size = 9, part = 'all') %>% 
+  footnote(1, 8:9, 
            value = as_paragraph('Numeric variables: Kruskal-Wallis test with \u03B7\u00B2 effect size statistic. Categorical variables: \u03C7\u00B2 test with Cramer V effect size statistic.'), 
            part = 'header', 
            ref_symbols = 'a') %>% 
@@ -332,7 +335,84 @@ _Frequencies of samples with and without genetic alterations are visualized as h
 
 \newpage
 
-## Co-regulation of genes coding for FGFR, FGF, and FGFBP proteins
+## Expression and co-regulation of genes coding for FGFR, FGF, and FGFBP proteins
+
+```{r fig-expression, fig.width = figur::convert(rep_figs$expression, to = 'in')$w, fig.height = figur::convert(rep_figs$expression, to = 'in')$h, fig.cap = 'Expression of genes coding FGFR, FGF, and FGFBP at mRNA and protein level.'}
+
+rep_figs$expression$plot
+
+```
+
+__Figure \@ref(fig:fig-expression). Expression of genes coding FGFR, FGF, and FGFBP at mRNA and protein level.__ 
+
+_(A) Transcript levels of FGFR-, FGF-, and FGFBP-coding genes were determined in cancer tissue samples in the `r globals$cohort_labs[c("tcga", "imvigor", "bcan")] %>% collapse_and` by RNA sequencing and published as $log_2$ gene counts (`r globals$cohort_labs[c("tcga", "imvigor")] %>% collapse_and`) or Z-scores of $log_2$ gene counts (`r globals$cohort_labs["bcan"]`). Median Z-scores of $log_2$ mRNA expression are shown in a heat map. Each tile represents median expression Z-score of a gene in one cohort. Numbers of cancer samples are indicated in the X axis. White tiles represent genes not detected in a given cohort._
+
+_(B) Protein expression of FGFR-, FGF-, and FGFBP-coding genes `r ncol(hpa$intensity) - 1` FGFR-, FGF-, and FGFBP-coding genes in the Human Protein Atlas (HPA) repository was quantified by immunohistochemistry (IHC). The protein expression is shown as IHC scores defined as a product of intensity (1: negative, 4: strong) and quantity of positive cells (1: none to 4: >75%). Median IHC scores with interquartile ranges are visualized as boxes with whiskers spanning over 150% of the interquartile ranges. Single IHC specimens are visualized as points. Numbers of IHC samples are indicated in the Y axis._
+
+\newpage
+
+```{r fig-ihc-receptors, fig.width = figur::convert(rep_figs$ihc_receptors, to = 'in')$w, fig.height = figur::convert(rep_figs$ihc_receptors, to = 'in')$h, fig.cap = 'Representative immunohistochemistry staining images for FGFR proteins retrieved from the Human Protein Atlas.'}
+
+list.files('C:/Users/piotr/Desktop/BLCA FGFR/report/figures', 
+           pattern = 'ihc_receptor') %>% 
+  paste0('C:/Users/piotr/Desktop/BLCA FGFR/report/figures/', .) %>% 
+  include_graphics(rel_path = FALSE)
+
+```
+
+__Figure \@ref(fig:fig-ihc-receptors). Representative immunohistochemistry staining images for FGFR proteins retrieved from the Human Protein Atlas.__ 
+
+_Images of immunohistochemistry (IHC) staining for FGFR, FGF, and FGFBP in urothelial cancer samples were retrieved from the Human Protein Atlas (HPA). The staining was quantified by the IHC score which was defined as a product of intensity (1: negative, 4: strong) and quantity of positive cells (1: none to 4: >75%)._
+_For each protein, representative images of immunohistochemistry (IHC) staining were selected; the left image corresponds to the minimum IHC score, the middle image shows the staining close to the median IHC score, the right image corresponds to the maximal IHC score._
+_The images are labeled with HPA patient identifiers (ID) and IHC scores._
+
+\newpage
+
+```{r fig-ihc-ligands, fig.width = figur::convert(rep_figs$ihc_ligands, to = 'in')$w, fig.height = figur::convert(rep_figs$ihc_ligands, to = 'in')$h, fig.cap = 'Representative immunohistochemistry staining images for FGF proteins retrieved from the Human Protein Atlas.'}
+
+list.files('C:/Users/piotr/Desktop/BLCA FGFR/report/figures', 
+           pattern = 'ihc_ligand') %>% 
+  paste0('C:/Users/piotr/Desktop/BLCA FGFR/report/figures/', .) %>% 
+  include_graphics(rel_path = FALSE)
+
+```
+
+__Figure \@ref(fig:fig-ihc-ligands). Representative immunohistochemistry staining images for FGF proteins retrieved from the Human Protein Atlas.__ 
+
+_Images of immunohistochemistry (IHC) staining for FGFR, FGF, and FGFBP in urothelial cancer samples were retrieved from the Human Protein Atlas (HPA). The staining was quantified by the IHC score which was defined as a product of intensity (1: negative, 4: strong) and quantity of positive cells (1: none to 4: >75%)._
+_For each protein, representative images of immunohistochemistry (IHC) staining were selected; the left image corresponds to the minimum IHC score, the middle image shows the staining close to the median IHC score, the right image corresponds to the maximal IHC score._
+_The images are labeled with HPA patient identifiers (ID) and IHC scores._
+
+\newpage
+
+```{r fig-ihc-fgfbp, fig.width = figur::convert(rep_figs$ihc_fgfbp, to = 'in')$w, fig.height = figur::convert(rep_figs$ihc_fgfbp, to = 'in')$h, fig.cap = 'Representative immunohistochemistry staining images for FGFBP proteins retrieved from the Human Protein Atlas.'}
+
+list.files('C:/Users/piotr/Desktop/BLCA FGFR/report/figures', 
+           pattern = 'ihc_fgfbp') %>% 
+  paste0('C:/Users/piotr/Desktop/BLCA FGFR/report/figures/', .) %>% 
+  include_graphics(rel_path = FALSE)
+
+```
+
+__Figure \@ref(fig:fig-ihc-fgfbp). Representative immunohistochemistry staining images for FGFBP proteins retrieved from the Human Protein Atlas.__ 
+
+_Images of immunohistochemistry (IHC) staining for FGFR, FGF, and FGFBP in urothelial cancer samples were retrieved from the Human Protein Atlas (HPA). The staining was quantified by the IHC score which was defined as a product of intensity (1: negative, 4: strong) and quantity of positive cells (1: none to 4: >75%)._
+_For each protein, representative images of immunohistochemistry (IHC) staining were selected; the left image corresponds to the minimum IHC score, the middle image shows the staining close to the median IHC score, the right image corresponds to the maximal IHC score._
+_The images are labeled with HPA patient identifiers (ID) and IHC scores._
+
+\newpage
+
+```{r tab-expression, tab.cap = "Expression of FGFR-, FGF-, and FGFBP-coding genes at mRNA level was quantified in the TCGA BLCA, IMvigor, and BCAN cohort by RNA sequencing. The mRNA amounts were provided as log2-transformed gene counts (TCGA BLCA and IMvigor) or Z-scores of log2 gene counts (BCAN). Protein expression of the genes of interest was measured in the Human Protein Atlas (HPA) by immunohistochemistry (IHC). The protein amounts are metered by the IHC score defined as a product of staining intensity and quantity of positive cells. Median mRNA and protein amounts with interquartile ranges, ranges, and numbers of cancer samples are listed. The table is available as a supplementary Excel file."}
+
+rep_tabs$expression[1, 1] %>% 
+  mutate(Variable = '') %>% 
+  set_names(' ') %>% 
+  flextable %>% 
+  set_widths(18)
+
+```
+
+\newpage
 
 ```{r fig-fgfr-correlation, fig.width = figur::convert(rep_figs$fgfr_correlation, to = 'in')$w, fig.height = figur::convert(rep_figs$fgfr_correlation, to = 'in')$h, fig.cap = 'Correlation of mRNA levels of FGFR-, FGF-, and FGFBP-coding genes.'}
 
@@ -1083,7 +1163,7 @@ R packages specific for particular analysis and visualization steps are referenc
 
 ## Data sources
 
-Five collectives of urothelial carcinoma patients were evaluated in the current report: 
+Five genomic and transcriptomic collectives of urothelial carcinoma patients were evaluated in the current report: 
 the urothelial cancer subset of the GENIE cohort referred to as GENIE BLCA [@Sweeney2017], 
 the MSK IMPACT collective [@Clinton2022], 
 the bladder cancer TCGA collective of muscle-invasive urothelial cancers referred to as TCGA BLCA [@Liu2018; @Robertson2017], 
@@ -1124,7 +1204,7 @@ For molecular subset assignment and machine learning modeling tasks, $log_2$-tra
 
 Assignment of the TCGA BLCA, IMvigor, and BCAN cancer samples to consensus molecular classes was done with the nearest centroid algorithm fed with ComBat-normalized whole-genome log_2 mRNA or Z-score expression levels (R package _consensusMIBC_) [@Kamoun2020]. 
 
-The following genes coding for FGF, FGFR and FGFBP (FGF-binding proteins) were investigated in the current report [@Korc2009; @Turati2022; @Bennett1995; @Gubbiotti2016; @Mundhenke2002; @Midorikawa2003; @Leali2012; @Xie2020; @Hagihara2000; @Pan2021; @Mohammadi2005; @Hu2009a]: 
+The following genes coding for FGFR, FGFF, and FGFBP (FGF-binding proteins) were investigated in the current report [@Korc2009; @Turati2022; @Bennett1995; @Gubbiotti2016; @Mundhenke2002; @Midorikawa2003; @Leali2012; @Xie2020; @Hagihara2000; @Pan2021; @Mohammadi2005; @Hu2009a]: 
 
 * FGF genes: `r globals$ligands %>% map_chr(~paste0('_', .x, '_')) %>% collapse_and`
 
@@ -1135,6 +1215,10 @@ The following genes coding for FGF, FGFR and FGFBP (FGF-binding proteins) were i
 Those genes were returned by a systematic search of literature at [PubMed](https://pubmed.ncbi.nlm.nih.gov/) as well as a screening of physical interaction partners of FGFR and FGF proteins at [UniProt](https://www.uniprot.org/), [STRING](https://string-db.org), [BioGRID](https://thebiogrid.org), and [IntAct](https://www.ebi.ac.uk/intact).
 
 JSON files with domain structures of FGFR1 (ID: P11362), FGFR2 (ID: P21802), FGFR3 (ID: P22607), and FGFR4 (ID: P22455) proteins were downloaded from [UniProt](https://www.uniprot.org) and processed with the _jsonlite_ package [@Ooms2023]. 
+
+For verification of expression of the FGFR-, FGF-, and FGFBP-coding genes at protein level, we resorted to the [Human Protein Atlas (HPA) repository](https://www.proteinatlas.org/), which stores results of immunohistochemical (IHC) staining. 
+Entries of the HPA database were retrieved as XML documents, from which patient information, staining quantification, and URLs to IHC images for the genes of interest was retrieved (R package _xml2_) [@Wickham2023]. 
+Protein expression in the IHC samples was expressed as the IHC score defined as a product of staining (1: negative to 4: high), staining intensity (1: negative to 4: strong), and quantity of positive cells (1: none to 4: >75%). 
 
 ## Descriptive statistics, statistical inference, and effect size
 
