@@ -216,10 +216,11 @@
            cust_theme = globals$common_theme +
              theme(plot.title = element_markdown(),
                    axis.title.x = element_markdown(),
+                   axis.title.y = element_markdown(),
                    legend.position = 'none'),
            x_n_labs = TRUE,
            x_lab = html_italic('FGFR3'),
-           y_lab = expression('log'[2] * ' expression')) %>%
+           y_lab = globals$cohort_axis_labs[[i]]) %>%
       map(~.x +
             scale_fill_manual(values = globals$mut_status_color)) %>%
       set_names(expl_dge$test$FGFR3_mut[[i]]$variable)

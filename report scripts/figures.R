@@ -306,6 +306,56 @@
     pmap(as_figure,
          w = 180)
 
+# Expression of FGF, FGFR, and FGFBP genes ---------
+
+  insert_msg('Expression of genes and proteins')
+
+  rep_figs$expression <-
+    plot_grid(expl_expr$hm_plot +
+                labs(title = 'RNA expression') +
+                theme(legend.position = 'none'),
+              plot_grid(expl_expr$plots$hpa +
+                          labs(title = 'IHC, HPA') +
+                          theme(plot.subtitle = element_blank(),
+                                legend.position = 'none'),
+                        get_legend(expl_expr$hm_plot),
+                        nrow = 2,
+                        rel_heights = c(2, 1)),
+              ncol = 2,
+              rel_widths = c(1, 1.3),
+              labels = LETTERS,
+              label_size = 10) %>%
+    as_figure(label = 'expression_fgfr_fgf_fgfbp',
+              ref_name = 'expression',
+              caption = paste('Expression of genes coding FGFR, FGF, and',
+                              'FGFBP at mRNA and protein level.'),
+              w = 180,
+              h = 210)
+
+# Representative images, IHC --------
+
+  insert_msg('Representative images')
+
+  rep_figs[c('ihc_receptors', 'ihc_ligands', 'ihc_fgfbp')] <-
+    list(expl_ihc$panels[c("FGFR1", "FGFR2", "FGFR3", "FGFR4")],
+         expl_ihc$panels[c("FGF7", "FGF10")],
+         expl_ihc$panels[c("SDC2", "GPC4", "CD44", "FGFBP1")]) %>%
+    map(map, eval) %>%
+    map(~plot_grid(plotlist = .,
+                   ncol = 1))
+  rep_figs[c('ihc_receptors', 'ihc_ligands', 'ihc_fgfbp')] <-
+    rep_figs[c('ihc_receptors', 'ihc_ligands', 'ihc_fgfbp')] %>%
+    list(x = .,
+         label = names(.),
+         ref_name = names(.),
+         caption = paste('Representative immunohistochemistry staining images',
+                         'for',
+                         c('FGFR proteins', 'FGF proteins', 'FGFBP proteins'),
+                         'retrieved from the Human Protein Atlas.'),
+         h = c(160, 80, 160)) %>%
+    pmap(as_figure,
+         w = 120)
+
 # Correlation of FGF, FGFR, FGFBP gene expression --------
 
   insert_msg('Correlation of FGF, FGFR, and FGFBP gene expression')
@@ -666,7 +716,7 @@
                 axis.text.x = element_text(size = 7),
                 axis.text.y = element_text(size = 7),
                 axis.title.x = element_blank(),
-                axis.title.y = element_text(size = 7))) %>%
+                axis.title.y = element_markdown(size = 7))) %>%
     map(~plot_grid(plotlist = .x,
                    ncol = 3,
                    align = 'hv',
@@ -1340,13 +1390,33 @@
 
   insert_msg('Saving figures on the disc')
 
-  rep_figs %>%
-    number_figures %>%
-    walk(pickle,
-         path = './report/figures',
-         format = 'pdf',
-         device = cairo_pdf)
+  fig_tmp <- number_figures(rep_figs)
+
+  for(i in names(fig_tmp)) {
+
+    if(stri_detect(i, fixed = 'ihc')) {
+
+      pickle(fig_tmp[[i]],
+             format = 'png',
+             path = './report/figures')
+
+      pickle(fig_tmp[[i]],
+             format = 'png',
+             path = './report/markdown')
+
+    } else {
+
+      pickle(fig_tmp[[i]],
+             format = 'pdf',
+             device = cairo_pdf,
+             path = './report/figures')
+
+    }
+
+  }
 
 # END ----
+
+  rm(fig_tmp)
 
   insert_tail()

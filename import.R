@@ -21,6 +21,7 @@
 
   library(IMvigor210CoreBiologies)
   library(cbioportalR)
+  library(xml2)
 
   library(AnnotationDbi)
   library(org.Hs.eg.db)
@@ -28,6 +29,8 @@
   library(htGLMNET)
   library(consensusMIBC)
   library(impute)
+
+  library(furrr)
 
   library(soucer)
 
@@ -73,6 +76,14 @@
 
   c('./import scripts/subtypes.R') %>%
     source_all(message = TRUE, crash = TRUE)
+
+# Import of IHC scores for Human Protein Atlas -------
+
+  insert_msg('Import of HPA data')
+
+  access_cache(cache_path = './data/hpa.RData',
+               script_path = './import scripts/hpa.R',
+               message = paste('Cached Human Protein Atlas data'))
 
 # END ------
 

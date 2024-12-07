@@ -195,9 +195,10 @@
            cust_theme = globals$common_theme,
            x_n_labs = TRUE,
            x_lab = 'MIBC consensus class',
-           y_lab = expression('log'[2] * ' expression')) %>%
+           y_lab = globals$cohort_axis_labs[[i]]) %>%
       map(~.x +
-            theme(plot.title = element_markdown()) +
+            theme(plot.title = element_markdown(),
+                  axis.title.y = element_markdown()) +
             scale_fill_manual(values = globals$sub_colors)) %>%
       set_names(sub_dge$anova[[i]]$variable)
 

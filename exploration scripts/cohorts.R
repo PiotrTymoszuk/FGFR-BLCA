@@ -14,6 +14,7 @@
 
   expl_cohorts$data <- globals$cohort_expr %>%
     eval %>%
+    c(list(hpa = hpa)) %>%
     map(~.x$clinic)
 
   expl_cohorts$data$bcan <- expl_cohorts$data$bcan %>%

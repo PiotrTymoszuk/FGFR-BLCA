@@ -104,7 +104,7 @@
 
   fgfr_os$km_plots <-
     list(x = fgfr_os$km_plots,
-         y = c(globals$cohort_labs,
+         y = c(globals$cohort_labs[c("genie", "msk", "tcga", "imvigor", "bcan")],
                paste(globals$cohort_labs[c("msk", "tcga", "bcan")],
                      'without pT4 cancers')),
          w = fgfr_os$n_captions,

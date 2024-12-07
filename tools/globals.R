@@ -57,7 +57,8 @@
                            msk = 'MSK IMPACT',
                            tcga = 'TCGA BLCA',
                            imvigor = 'IMvigor',
-                           bcan = 'BCAN')
+                           bcan = 'BCAN',
+                           hpa = 'HPA')
 
   globals$cohort_colors <- c(genie = 'indianred3',
                              msk = 'darkolivegreen4',
@@ -77,13 +78,23 @@
   ## this expression includes only the studies passing the gene number
   ## criterion
 
-  globals$analysis_cohorts <- names(globals$cohort_labs)
+  globals$analysis_cohorts <-
+    globals$cohort_labs[names(globals$cohort_labs) != 'hpa'] %>%
+    names
 
   globals$cohort_expr <- globals$analysis_cohorts %>%
     map_chr(~paste(.x, .x, sep = ' = ')) %>%
     paste(collapse = ', ') %>%
     paste0('list(', ., ')') %>%
     parse_expr
+
+  ## common units
+
+  globals$cohort_axis_labs <-
+    c(tcga = 'log<sub>2</sub> gene count',
+      imvigor = 'log<sub>2</sub> gene count',
+      bcan = 'Z-score',
+      hpa = 'IHC score')
 
 # Genes of interest -------
 

@@ -7,7 +7,8 @@
 # 3) Differences in survival between the cohorts.
 #
 # 4) General frequency of mutations and copy number alterations. Details for
-# mutations and CNA of the FGFR genes.
+# mutations and CNA of the FGFR genes. Expression levels of the genes and
+# proteins of interest
 #
 # 5) Characteristic of the mutation types and location for the FGFR genes.
 #
@@ -36,6 +37,7 @@
   library(graphExtra)
 
   library(jsonlite)
+  library(cowplot)
 
   library(microViz)
 
@@ -76,10 +78,13 @@
     source_all(message = TRUE, crash = TRUE) %>%
     print
 
+  ## overall expression levels of the features of interest: RNA and IHC
   ## co-expression and differential gene expression
   ## co-occurrence of alterations in the FGF and FGFR genes
 
-  c('./exploration scripts/coexpression.R',
+  c('./exploration scripts/expression.R',
+    './exploration scripts/ihc_representative.R',
+    './exploration scripts/coexpression.R',
     './exploration scripts/dge.R') %>%
     source_all(message = TRUE)
 

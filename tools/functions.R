@@ -23,6 +23,9 @@
   library(ggrepel)
   library(ggtext)
 
+  library(xml2)
+  library(curl)
+
   set_rownames <- trafo::set_rownames
 
 # data import ------
@@ -39,6 +42,145 @@
       mutate(gene_symbol = unlist(gene_symbol)) %>%
       filter(gene_symbol != '') %>%
       filter(complete.cases(.))
+
+  }
+
+# import of the HPA data -------
+
+  download_hpa <- function(url, file, ...) {
+
+    ## manages downloads from HPA
+
+    idx <- try(download_xml(url = url, file = file, ...),
+               silent = TRUE)
+
+    if(inherits(idx, 'try-error')) message(paste('Failed for:', url))
+
+  }
+
+  extract_patients <- function(xml_obj) {
+
+    ## extracts the nodes with patient/sample staining information
+
+    as_list(xml_find_all(xml_obj, './/patient'))
+
+  }
+
+  cancer_search <- function(x, regex = '(U|u)rothe') {
+
+    ## extracts elements of a branched list with HPA
+    ## patient's data, that are matched by a regular expression
+    ## applied to the sample/snomedParameters node
+
+    snomeds <- x %>%
+      map(~.x$sample$snomedParameters) %>%
+      map(map, attr, 'tissueDescription') %>%
+      map(unlist)
+
+    lgl_vec <- snomeds %>%
+      map(stri_detect, regex = regex) %>%
+      map_lgl(any)
+
+    x[lgl_vec]
+
+  }
+
+  cancer_format <- function(x) {
+
+    ## coerces the branched list with patient's information and IHC
+    ## staining scores into a handy table
+
+    ## removal of patients with incomplete information,
+    ## unique names for the list elements
+
+    required_names <-
+      c('sex', 'age', 'patientId', 'level', 'quantity', 'location', 'sample')
+
+    complete_patients <- x %>%
+      map(names) %>%
+      map(~required_names %in% .x) %>%
+      map_lgl(all)
+
+    x <- x[complete_patients]
+
+    ## stripping the most essential information
+
+    x <- x %>%
+      map(~.x[1:8]) %>%
+      map(set_names,
+          c('sex', 'age', 'patient_id',
+            'staining', 'intensity', 'quantity', 'location',
+            'sample'))
+
+    patient_tbl <- x %>%
+      map_dfr(as_tibble)
+
+    ## plain data frame
+    ## for each patient, we just need an entry
+    ## with the snomed pathology description.
+    ## It is an empty list with attributes.
+    ## We also need information with image URLs stored in the non-empty
+    ## elements
+
+    patient_tbl[1:7] <- patient_tbl[1:7] %>%
+      map_dfc(map_chr, ~.x[[1]])
+
+    patient_tbl[[8]] <- patient_tbl[[8]] %>%
+      map(~.x[1][[1]])
+
+    empty_lst <- patient_tbl[[8]] %>%
+      map_dbl(length)
+
+    empty_lst <- empty_lst == 0
+
+    ## extraction of image URLS
+
+    image_tbl <- patient_tbl[!empty_lst, c('patient_id', 'sample')] %>%
+      set_names(c('patient_id', 'image_url'))
+
+    image_tbl[[2]] <- image_tbl[[2]] %>%
+      map_chr(~unlist(.x[[1]]))
+
+    ## appending the table with tissue descriptions
+
+    patient_tbl <- patient_tbl[empty_lst, ]
+
+    patient_tbl[[8]] <- patient_tbl[[8]] %>%
+      map_chr(attr, 'tissueDescription')
+
+    left_join(patient_tbl,
+              image_tbl,
+              by = 'patient_id')
+
+  }
+
+  process_hpa_entry <- function(xml_obj,
+                                regex = '(U|u)rothe') {
+
+    ## executes the complete extraction, cancer sample search, and
+    ## formatting procedure for a HPA entry downloaded as a XML document
+
+    xml_obj %>%
+      extract_patients %>%
+      cancer_search(regex = regex) %>%
+      cancer_format
+
+  }
+
+  download_image <- function(url, file, ...) {
+
+    ## fetches an image from HPA
+
+    idx <- try(curl_download(url = url, destfile = file, ...),
+               silent = TRUE)
+
+    if(inherits(idx, 'try-error')) {
+
+      message(paste('Failed for:', url))
+
+      print(idx)
+
+    }
 
   }
 
@@ -1283,6 +1425,108 @@
            y = y_lab)
 
     return(cal_plot)
+
+  }
+
+# Representative HPA images -------
+
+  choose_representative <- function(x,
+                                    probs = c(0, 0.5, 1),
+                                    break_ties = TRUE) {
+
+    ## chooses indexes of a vector that correspond to values as close as possible
+    ## to quantiles specified by probs argument
+
+    ## naming the vector with its original numbers
+
+    x <- set_names(x, 1:length(x))
+
+    ## vectors of absolute differences; finding its minima
+    ## and the corresponding values
+
+    quants <- quantile(x, probs, na.rm = TRUE)
+
+    diff_lst <- quants %>%
+      map(~abs(x - .x))
+
+    diff_min <- diff_lst %>%
+      map_dbl(min)
+
+    diff_selection <-
+      map2(diff_lst, diff_min, ~.x[.x == .y]) %>%
+      map(names) %>%
+      map(as.numeric)
+
+    if(!break_ties) return(diff_selection)
+
+    ## tie breaking ------
+
+    diff_single <- diff_selection %>%
+      map_dbl(function(x) if(length(x) == 1) x else sample(x, 1))
+
+    attempts <- 1
+
+    while((length(unique(diff_single)) < length(diff_single)) & attempts < 10) {
+
+      diff_single <- diff_selection %>%
+        map_dbl(function(x) if(length(x) == 1) x else sample(x, 1))
+
+      attempts <- attempts + 1
+
+    }
+
+    diff_single
+
+  }
+
+  stitch_hpa_images <- function(lexicon,
+                                caption_type = c('none', 'full', 'short'),
+                                txt_size = 7,
+                                gene_size = 8,
+                                y_pos = c(0, 0.9)) {
+
+    ## stitches an image panel
+
+    caption_type <- match.arg(caption_type[1],
+                              c('none', 'full', 'short'))
+
+    caps <-
+      switch(caption_type,
+             none = NULL,
+             full = lexicon$caption,
+             short = lexicon$caption_short)
+
+    image_lst <-
+      list(x = lexicon$image_path,
+           y = paste('IHC:', lexicon$ihc_score),
+           z = paste('ID:', lexicon$patient_id)) %>%
+      pmap(function(x, y, z) ggdraw() +
+             draw_image(x) +
+             draw_text(y,
+                       x = 0.05,
+                       y = y_pos[2],
+                       size = txt_size,
+                       hjust = 0, vjust = 0) +
+             draw_text(z,
+                       x = 0.05,
+                       y = y_pos[1],
+                       size = txt_size,
+                       hjust = 0, vjust = 0))
+
+    plot_panel <- image_lst %>%
+      plot_grid(plotlist = .,
+                ncol = nrow(lexicon),
+                labels = caps,
+                label_size = 8) %>%
+      plot_grid(ggdraw() +
+                  draw_text(lexicon$gene_symbol[[1]],
+                            size = gene_size,
+                            angle = 90),
+                .,
+                ncol = 2,
+                rel_widths = c(0.1, 0.9))
+
+    plot_panel
 
   }
 

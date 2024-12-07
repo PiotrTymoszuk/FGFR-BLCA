@@ -37,7 +37,7 @@
     set_names(c('Variable',
                 globals$cohort_labs[c("genie", "msk",
                                       "tcga", "imvigor",
-                                      "bcan")],
+                                      "bcan", "hpa")],
                 'Significance',
                 'Effect size')) %>%
     mdtable(label = 'cohort_characteristic',
@@ -119,6 +119,32 @@
                             'The table is available as a supplementary',
                             'Excel file.'))
 
+# Expression of genes and proteins -------
+
+  insert_msg('Expression, genes and proteins')
+
+  rep_tabs$expression <- expl_expr$stats %>%
+    set_names(c('Variable', globals$cohort_labs[names(expl_expr$stats)[-1]])) %>%
+    as_mdtable(label = 'expression',
+               ref_name = 'expression',
+               caption = paste('Expression of FGFR-, FGF-, and FGFBP-coding',
+                               'genes at mRNA level was quantified in the',
+                               'TCGA BLCA, IMvigor, and BCAN cohort by',
+                               'RNA sequencing. The mRNA amounts were',
+                               'provided as log2-transformed gene counts',
+                               '(TCGA BLCA and IMvigor) or Z-scores of log2',
+                               'gene counts (BCAN).',
+                               'Protein expression of the genes of interest was',
+                               'measured in the Human Protein Atlas (HPA) by',
+                               'immunohistochemistry (IHC).',
+                               'The protein amounts are metered by the IHC score',
+                               'defined as a product of staining',
+                               'intensity and quantity of positive cells.',
+                               'Median mRNA and protein amounts with',
+                               'interquartile ranges, ranges, and numbers of',
+                               'cancer samples are listed.',
+                               'The table is available as a supplementary Excel',
+                               'file.'))
 
 # Differential gene expression, FGFR3 WT and FGFR3 mutated -------
 
