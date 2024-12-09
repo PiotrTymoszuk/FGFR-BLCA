@@ -25,8 +25,9 @@ Results of differential analyses of genetic alterations and gene expression let 
 
 By means of machine learning models trained with levels of 38 FGFR-, FGF-, and FGFBP-coding transcript, we could reproduce nearly completely the consensus molecular classification scheme by Kamoun et al [^7]. This suggests that FGFR signaling with its various activation and modulaton mechanisms is the central driver of phynotypic variability of urothelial cancers.
 
-Figures with the analysis results are available [here](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/figures).
-Analysis report is available [in the repository](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report).
+Figures with the analysis results are available [__here__](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/figures).
+Analysis report is available [__as a downloadable docx file__](https://github.com/PiotrTymoszuk/FGFR-BLCA/blob/main/report/report.docx). 
+Tables as provided [__as an Excel file__](https://github.com/PiotrTymoszuk/FGFR-BLCA/blob/main/report/tables.xlsx).
 
 ## Usage
 
