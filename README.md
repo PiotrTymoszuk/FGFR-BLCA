@@ -21,7 +21,7 @@ Results of differential analyses of genetic alterations and gene expression let 
 2. In stroma-rich cancers, FGFR signaling is driven by overexpression of FGFR1, its ligands (FGF2, FGF7, FGF9, FGF10), and co-activating molecules (ANOS1, TGFBR3, HSPG)
 3. In basal/squamous cancers, FGFR1 signaling is mediated by overexpression of FGF5 and the binding proteins FGFBP1
 
-![FGFR_signaling_blca](https://github.com/user-attachments/assets/afd3887b-792b-42e4-83d0-8437b93a2f67)
+![FGFR_signaling_blca](https://github.com/user-attachments/assets/b87b6e82-b0af-4ac7-b496-3fc325ab2176)
 
 By means of machine learning models trained with levels of 38 FGFR-, FGF-, and FGFBP-coding transcript, we could reproduce nearly completely the consensus molecular classification scheme by Kamoun et al [^7]. This suggests that FGFR signaling with its various activation and modulaton mechanisms is the central driver of phynotypic variability of urothelial cancers.
 
