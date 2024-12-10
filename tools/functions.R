@@ -12,6 +12,7 @@
   library(clustTools)
   library(jaccard)
   library(expm)
+  library(zoo)
 
   library(glmnet)
   library(DescTools)
@@ -574,6 +575,267 @@
               rel_heights = rel_heights,
               align = align,
               axis = 'tblr', ...)
+
+  }
+
+  plot_hot_spot <- function(data,
+                            color_variable = 'protein_domain',
+                            color_palette = globals$domain_colors,
+                            hot_cutoff = NULL,
+                            plot_title = NULL,
+                            plot_subtitle = NULL,
+                            x_lab = 'Protein position',
+                            y_lab = '% of cancer samples',
+                            color_lab = 'protein\ndomain',
+                            point_size = 2,
+                            point_alpha = 1,
+                            point_hjitter = 0.5,
+                            point_shape = 21,
+                            txt_size = 2.5,
+                            txt_color = NULL, ...) {
+
+    ## plot of percentages of mutations of particular protein positions
+
+    ## plotting data and meta-data -------
+
+    if(!is.null(hot_cutoff)) {
+
+      data <- data %>%
+        mutate(hot_label = ifelse(percent >= hot_cutoff,
+                                  paste0(signif(percent, 2), '%\n',
+                                         protein_change),
+                                  NA),
+               highlight = ifelse(percent >= hot_cutoff, 'yes', 'no'))
+
+    }
+
+    cohort_labeller <- data %>%
+      filter(!duplicated(cohort))
+
+    cohort_labeller <-
+      paste(globals$cohort_labs[as.character(cohort_labeller$cohort)],
+            cohort_labeller$n_total,
+            sep = '\nn = ') %>%
+      set_names(as.character(cohort_labeller$cohort))
+
+    ## plotting ---------
+
+    hot_plot <- data %>%
+      ggplot(aes(x = protein_start_position,
+                 y = percent,
+                 color = .data[[color_variable]],
+                 fill = .data[[color_variable]])) +
+      geom_hline(yintercept = 0,
+                 color = 'gray60',
+                 linewidth = 0.25) +
+      facet_grid(cohort ~ .,
+                 labeller = as_labeller(cohort_labeller))
+
+    if(is.null(hot_cutoff)) {
+
+      if(point_shape %in% 21:25) {
+
+        hot_plot <- hot_plot +
+          geom_point(shape = point_shape,
+                     size = point_size,
+                     alpha = point_alpha,
+                     color = 'black',
+                     position = position_jitter(width = 0,
+                                                height = point_hjitter))
+
+      } else {
+
+        hot_plot <- hot_plot +
+          geom_point(shape = point_shape,
+                     size = point_size,
+                     alpha = point_alpha,
+                     position = position_jitter(width = 0,
+                                                height = point_hjitter))
+
+      }
+
+    } else {
+
+      segment_data <- data %>%
+        filter(highlight == 'yes')
+
+      hot_plot <- hot_plot +
+        geom_segment(aes(x = protein_start_position,
+                         y = 0,
+                         xend = protein_start_position,
+                         yend = percent),
+                     linewidth = 0.5) +
+        scale_size_manual(values = c(no = 1,
+                                     yes = point_size),
+                          name = 'hotspot')
+
+      if(point_shape %in% 21:25) {
+
+        hot_plot <- hot_plot +
+          geom_point(aes(size = highlight),
+                     shape = point_shape,
+                     alpha = point_alpha,
+                     color = 'black',
+                     position = position_jitter(width = 0,
+                                                height = point_hjitter))
+
+      } else {
+
+        hot_plot <- hot_plot +
+          geom_point(aes(size = highlight),
+                     shape = point_shape,
+                     alpha = point_alpha,
+                     position = position_jitter(width = 0,
+                                                height = point_hjitter))
+
+      }
+
+    }
+
+    if(!is.null(hot_cutoff)) {
+
+      if(is.null(txt_color)) {
+
+        hot_plot <- hot_plot +
+          geom_text_repel(aes(label = hot_label),
+                          size = txt_size,
+                          show.legend = FALSE, ...)
+
+      } else {
+
+        hot_plot <- hot_plot +
+          geom_text_repel(aes(label = hot_label),
+                          size = txt_size,
+                          color = txt_color,
+                          show.legend = FALSE, ...)
+
+      }
+
+    }
+
+    hot_plot <- hot_plot +
+      scale_color_manual(values = color_palette,
+                         name = color_lab) +
+      scale_fill_manual(values = color_palette,
+                        name = color_lab) +
+      globals$common_theme +
+      labs(title = plot_title,
+           subtitle = plot_subtitle,
+           x = x_lab,
+           y = y_lab)
+
+    hot_plot
+
+  }
+
+  slide_window_density <- function(data,
+                                   stat = c('mean', 'sum'),
+                                   k = 5,
+                                   from = 1,
+                                   to = max(data$protein_start_position),
+                                   padding = 2 * k,
+                                   n_total = NULL) {
+
+    ## takes a numeric vector of positions of a protein with mutations
+    ## and counts mutations within a sliding window of width specified
+    ## by k
+
+    ## position data frame
+
+    stat <- match.arg(stat[1], c('mean', 'sum'))
+
+    event_counts <- count(data, protein_start_position)
+
+    pos_df <-
+      left_join(tibble(protein_start_position = from:to),
+                event_counts,
+                by = 'protein_start_position') %>%
+      mutate(n = ifelse(is.na(n), 0, n))
+
+    pos_df <- rbind(tibble(protein_start_position = rep(0, padding),
+                           n = rep(0, padding)),
+                    pos_df,
+                    tibble(protein_start_position = rep(0, padding),
+                           n = rep(0, padding)))
+
+    if(stat == 'mean') {
+
+      pos_df$density <- pos_df$n %>%
+        rollmean(k = k, fill = NA)
+
+    } else {
+
+      pos_df$density <- pos_df$n %>%
+        rollsum(k = k, fill = NA)
+
+    }
+
+    if(!is.null(n_total)) {
+
+      pos_df$percent <- pos_df$density/n_total * 100
+
+    }
+
+    pos_df %>%
+      filter(protein_start_position >= from,
+             protein_start_position <= to)
+
+
+
+
+  }
+
+
+  plot_hot_density <- function(data,
+                               plot_variable = c('percent', 'density'),
+                               color_palette = globals$domain_colors,
+                               color_lab = 'protein\ndomain',
+                               plot_title = NULL,
+                               plot_subtitle = NULL,
+                               x_lab = 'Protein position',
+                               y_lab = 'density, % of cancer samples',
+                               point_size = 1,
+                               line_color = 'gray80') {
+
+
+    ## plots mutation density: raw or percent-scaled
+
+    ## plotting data and metadata -------
+
+    cohort_labeller <- data %>%
+      filter(!duplicated(cohort))
+
+    cohort_labeller <-
+      paste(globals$cohort_labs[as.character(cohort_labeller$cohort)],
+            cohort_labeller$n_total,
+            sep = '\nn = ') %>%
+      set_names(as.character(cohort_labeller$cohort))
+
+    plot_variable <- match.arg(plot_variable[1], c('percent', 'density'))
+
+    ## plot -------
+
+    dens_plot <- data %>%
+      ggplot(aes(x = protein_start_position,
+                 y = .data[[plot_variable]])) +
+      facet_grid(cohort ~ .,
+                 labeller = as_labeller(cohort_labeller)) +
+      geom_hline(yintercept = 0,
+                 linewidth = 0.25,
+                 color = 'gray60') +
+      geom_path(color = line_color) +
+      geom_point(aes(color = protein_domain),
+                 shape = 16,
+                 size = 1) +
+      scale_color_manual(values = color_palette,
+                         name = color_lab) +
+      globals$common_theme +
+      labs(title = plot_title,
+           subtitle = plot_subtitle,
+           x = x_lab,
+           y = y_lab)
+
+    dens_plot
 
   }
 

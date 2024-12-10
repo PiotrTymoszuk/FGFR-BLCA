@@ -190,7 +190,7 @@
       'Ig-like C2-type 2' = 'steelblue3',
       'Ig-like C2-type 3' = 'steelblue4',
       'Protein kinase' = 'orangered3',
-      'not assigned' = 'gray70')
+      'not assigned' = 'gray40')
 
 # mutation, amplification and deletion status colors -------
 

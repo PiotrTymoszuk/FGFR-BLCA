@@ -183,6 +183,31 @@
          w = 180,
          h = 230)
 
+# Mutational hotspots of FGFR3 ---------
+
+  insert_msg('Mutational hotspots of FGFR3')
+
+  ## density plot and detailed plot
+
+  rep_figs$fgfr3_hotspots <-
+    plot_grid(expl_hot$domain_density_plots$FGFR3,
+              expl_hot$domain_percentage_plots$protein_domain$FGFR3,
+              ncol = 2,
+              align = 'hv',
+              axis = 'tblr',
+              labels = LETTERS,
+              label_size = 10) %>%
+    plot_grid(get_legend(expl_fgfr$domain_plots$FGFR3 +
+                           theme(legend.position = 'bottom',
+                                 legend.text = element_text(margin = ggplot2::margin(r = 10)))),
+              nrow = 2,
+              rel_heights = c(0.9, 0.1)) %>%
+    as_figure(label = 'fgfr3_mutation_hotspots',
+              ref_name = 'fgfr3_hotspots',
+              caption = 'Mutational hot spots of the FGFR3 gene.',
+              w = 190,
+              h = 160)
+
 # Co-occurrence of the most common gene alterations --------
 
   insert_msg('Co-occurrence of the most common genetic features')
@@ -1386,9 +1411,9 @@
               w = 180,
               h = 1352/2648 * 180)
 
-# Saving on the disc ------
+# Saving on the disc, PDF ------
 
-  insert_msg('Saving figures on the disc')
+  insert_msg('Saving figures on the disc, PDF files')
 
   fig_tmp <- number_figures(rep_figs)
 
@@ -1414,6 +1439,16 @@
     }
 
   }
+
+# Saving on the disc, PNG -------
+
+  insert_msg('Saving on the disc as PNG')
+
+  walk(number_figures(rep_figs),
+       pickle,
+       format = 'png',
+       path = './report/PNG figures',
+       dpi = 600)
 
 # END ----
 
