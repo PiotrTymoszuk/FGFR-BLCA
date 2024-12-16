@@ -8,6 +8,10 @@
 # 2) Total mutation burden, an therapy response in the mutation strata
 #
 # 3) Relapse-free, disease-specific and overall survival in the mutation strata
+#
+# 4) Effects of amplification of the FGF3/4/19 genes on expression of genes
+# coding for FGFR, FGF, and FGFBP proteins
+
 
 # tools -------
 

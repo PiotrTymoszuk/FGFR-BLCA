@@ -1233,18 +1233,31 @@
 
     ranger_args <-
       best_tune[!names(best_tune) %in% c(c('mse_oob',
-                                          'rsq_oob',
-                                          'class_error_oob',
-                                          'model_id'))]
+                                           'rsq_oob',
+                                           'class_error_oob',
+                                           'model_id'))]
 
-    best_model <- call2(.fn = 'ranger',
-                        x = x,
-                        y = y,
-                        probability = TRUE,
-                        !!!ranger_args,
-                        ...) %>%
-      eval
+    if(tune_stat == 'prediction.error') {
 
+      best_model <- call2(.fn = 'ranger',
+                          x = x,
+                          y = y,
+                          probability = TRUE,
+                          !!!ranger_args,
+                          ...)
+
+    } else {
+
+      best_model <- call2(.fn = 'ranger',
+                          x = x,
+                          y = y,
+                          !!!ranger_args,
+                          ...) %>%
+        eval
+
+    }
+
+    best_model <- eval(best_model)
 
     ## output -------
 
@@ -1687,6 +1700,77 @@
            y = y_lab)
 
     return(cal_plot)
+
+  }
+
+  predict_loocv <- function(caret_model) {
+
+    ## extracts the observed outcome,
+    ## and predictions in the training data set and resamples
+    ## from a caret model
+
+    ## observed outcome and sample identifiers
+
+    obs <- caret_model$trainingData$.outcome
+    sample_ids <- rownames(caret_model$trainingData)
+
+    ## predictions for the training data
+
+    train_preds <- data.frame(sample_id = sample_ids,
+                              obs = obs,
+                              pred = unname(predict(caret_model)))
+
+    ## predictions for the resamples
+
+    cv_preds <- caret_model$pred %>%
+      mutate(sample_id = sample_ids[as.numeric(rowIndex)]) %>%
+      select(sample_id, obs, pred)
+
+
+    list(training = train_preds,
+         cv = cv_preds)
+
+  }
+
+  ml_summary_loocv <- function(pred_lst) {
+
+    ## computes performance stats for regression models:
+    ## training data set and OOF predictions in LOOCV
+
+    caret_stats <- pred_lst %>%
+      map(~postResample(.x$pred, .x$obs)) %>%
+      map(matrix, nrow = 1) %>%
+      map(set_colnames, c('rmse', 'caret_rsq', 'mae')) %>%
+      map(as_tibble) %>%
+      compress(names_to = 'data_set')
+
+    ## correlation coefficients between the predicted and observed
+    ## outcome
+
+    corr_stats <- pred_lst %>%
+      map(~tibble(pearson = cor(.x[['pred']], .x[['obs']]),
+                  spearman = cor(.x[['pred']], .x[['obs']],
+                                 method = 'spearman'))) %>%
+      compress(names_to = 'data_set')
+
+    ## pseudo-R-square
+
+    variances <- pred_lst %>%
+      map(~.x$obs) %>%
+      map(~(.x - mean(.x))^2)
+
+    mse <- pred_lst %>%
+      map(~(.x$obs - .x$pred)^2)
+
+    rsq <- map2(mse, variances,
+                ~1 - sum(.x)/sum(.y)) %>%
+      map_dbl(~ifelse(.x < 0, 0, .x))
+
+
+    left_join(caret_stats,
+              corr_stats,
+              by = 'data_set') %>%
+      mutate(rsq = rsq)
 
   }
 

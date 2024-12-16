@@ -85,6 +85,17 @@
                script_path = './import scripts/hpa.R',
                message = paste('Cached Human Protein Atlas data'))
 
+# Import of GDSC drug screening information -------
+
+  insert_msg('Import of GDSC data')
+
+  access_cache(cache_path = './data/depmap.RData',
+               script_path = './import scripts/cells.R',
+               message = 'Cached GDSC data')
+
+  depmap$raw_expression <- NULL
+  depmap <- compact(depmap)
+
 # END ------
 
   insert_tail()

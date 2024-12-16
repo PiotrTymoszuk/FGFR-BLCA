@@ -1,5 +1,7 @@
 # Expression of FGFR, FGF, and FGFBP genes and proteins.
-# The later are investigated by IHC in the Human Protein Atlas.
+# The transcripts are explored in the TCGA, IMvigor and BCAN bulk cancer
+# data sets, and in DepMap cell lines.
+# The proteins are investigated by IHC in the Human Protein Atlas.
 
   insert_head()
 
@@ -25,7 +27,8 @@
   expl_expr$data <- globals$cohort_expr %>%
     eval %>%
     map(~.x$expression) %>%
-    c(list(hpa = hpa$ihc_score)) %>%
+    c(list(depmap = depmap$expression,
+           hpa = hpa$ihc_score)) %>%
     compact
 
   expl_expr$data <- expl_expr$data %>%
@@ -40,6 +43,7 @@
     c(tcga = 'log\u2082 gene count',
       imvigor = 'log\u2082 gene count',
       bcan = 'Z-score',
+      depmap = 'log\u2082 gene count',
       hpa = 'IHC score')
 
   ## plotting data in a long format:
@@ -75,8 +79,8 @@
 
   ## in the RNA seq data sets, all entries are complete
 
-  expl_expr$stats[, c("tcga", "imvigor", "bcan")] <-
-    expl_expr$stats[, c("tcga", "imvigor", "bcan")] %>%
+  expl_expr$stats[, c("tcga", "imvigor", "bcan", "depmap")] <-
+    expl_expr$stats[, c("tcga", "imvigor", "bcan", "depmap")] %>%
     map_dfc(stri_replace, regex = '\\ncomplete.*', replacement = '')
 
   ## appending with the unit
@@ -106,12 +110,13 @@
 
   expl_expr$plots <-
     list(x = expl_expr$plot_data,
-         u = c('gray60', 'gray60', 'gray60', 'black'),
-         t = c(0.5, 0.5, 0.5, 1),
+         u = c('gray60', 'gray60', 'gray60', 'gray60', 'black'),
+         t = c(0.5, 0.5, 0.5, 0.5, 1),
+         q = c(0, 0, 0, 0, 0.2),
          y = globals$cohort_labs[names(expl_expr$plot_data)],
          z = map_dbl(expl_expr$data, nrow),
          w = globals$cohort_axis_labs[names(expl_expr$plot_data)]) %>%
-    pmap(function(x, u, t, y, z, w) x %>%
+    pmap(function(x, u, t, q, y, z, w) x %>%
            ggplot(aes(x = exp_level,
                       y = reorder(variable,
                                   exp_level,
@@ -128,11 +133,11 @@
            geom_point(shape = 16,
                       size = t,
                       alpha = 0.5,
-                      position = position_jitter(width = 0.2,
+                      position = position_jitter(width = q,
                                                  height = 0.1),
                       color = u,
                       show.legend = FALSE) +
-           scale_fill_manual(values = c('indianred3', 'plum4', 'aquamarine4'),
+           scale_fill_manual(values = globals$protein_colors,
                              name = 'protein\ntype') +
            globals$common_theme +
            theme(axis.title.y = element_blank(),
@@ -143,8 +148,8 @@
 
   ## additional styling
 
-  expl_expr$plots[c("tcga", "imvigor", "bcan")] <-
-    expl_expr$plots[c("tcga", "imvigor", "bcan")] %>%
+  expl_expr$plots[c("tcga", "imvigor", "bcan", "depmap")] <-
+    expl_expr$plots[c("tcga", "imvigor", "bcan", "depmap")] %>%
     map(~.x + theme(axis.text.y = element_text(face = 'italic')))
 
   expl_expr$plots$hpa <- expl_expr$plots$hpa +
@@ -156,7 +161,8 @@
 
   ## plotting data: expression medians and X axis labels with sample numbers
 
-  expl_expr$hm_data <- expl_expr$plot_data[c("tcga", "imvigor", "bcan")] %>%
+  expl_expr$hm_data <-
+    expl_expr$plot_data[c("tcga", "imvigor", "bcan", "depmap")] %>%
     map(group_by, variable, protein_type) %>%
     map(summarise,
         z_score = median(z_score, na.rm = TRUE)) %>%
@@ -189,7 +195,7 @@
                          mid = 'black',
                          high = 'firebrick',
                          midpoint = 0,
-                         #limits = c(-2, 2),
+                         limits = c(-2, 2),
                          oob = scales::squish,
                          name = 'Z-score') +
     scale_x_discrete(labels = expl_expr$hm_axis_labs) +

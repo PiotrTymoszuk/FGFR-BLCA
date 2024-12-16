@@ -15,9 +15,9 @@
     map(column_to_rownames, 'sample_id') %>%
     map(t)
 
-# Assignment to the subtypes -------
+# Assignment of bulk cancer samples to the subtypes -------
 
-  insert_msg('Assignment to the subtypes')
+  insert_msg('Assignment of bulk cancer samples to the subtypes')
 
   subtypes$assignment <- subtypes$data %>%
     map(getConsensusClass,

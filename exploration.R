@@ -12,14 +12,20 @@
 #
 # 5) Characteristic of the mutation types and location for the FGFR genes.
 #
-# 6) Co-expression of FGF and FGFR gene mRNA in the cancer tissue: correlation
+# 6) Expression of mRNA and proteins of FGFR-, FGF-, and FGFBP-coding genes.
+#
+# 7) Co-expression of FGF and FGFR gene mRNA in the cancer tissue: correlation
 # and network analysis.
 #
-# 7) Differential expression of FGFR and FGF genes in cancer samples with and
+# 8) Differential expression of FGFR and FGF genes in cancer samples with and
 # without mutations in the FGFR1 - 4.
 #
-# 8) Co-occurrence of alterations in FGF and FGFR genes: multi-dimensional
+# 9) Co-occurrence of alterations in FGF and FGFR genes: multi-dimensional
 # scaling and a network analysis.
+#
+# 10) Characteristic and distribution tests for urothelial cancer cell lines
+# in the GDSC experiment, choice of the modeling features,
+# correlation of the expression variables.
 
 # tools -------
 
@@ -59,6 +65,13 @@
     './tools/functions.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
+# Analysis globals -------
+
+  insert_msg('Analysis globals')
+
+  c('./exploration scripts/globals.R') %>%
+    source_all(message = TRUE, crash = TRUE)
+
 # Scripts for the exploratory data analysis --------
 
   insert_msg('Analysis scripts')
@@ -71,10 +84,12 @@
     source_all(message = TRUE, crash = TRUE) %>%
     print
 
-  ## mutations and copy number alterations
+  ## mutations and copy number alterations, identification
+  ## of mutational hot spots in the FGFR genes
 
   c('./exploration scripts/genetics.R',
-    './exploration scripts/details.R') %>%
+    './exploration scripts/details.R',
+    './exploration scripts/mutation_hotspots.R') %>%
     source_all(message = TRUE, crash = TRUE) %>%
     print
 
@@ -94,8 +109,21 @@
 
   ## network analyses
 
-  c('./exploration scripts/co_expression_networks.R',
+  c('./exploration scripts/coexpression_networks.R',
     './exploration scripts/alteration_networks.R') %>%
+    source_all(message = TRUE, crash = TRUE)
+
+
+  ## cell lines: characteristic, distribution tests,
+  ## choice of the modeling features, co-expression networks,
+  ## and analyses of distribution/background of CRISPR and RNAi gene effects
+  ## and drug resistance
+
+  c('./exploration scripts/cells.R',
+    './exploration scripts/network_cells.R',
+    './exploration scripts/crispr.R',
+    './exploration scripts/resistance.R',
+    './exploration scripts/rnai.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
 # END -----

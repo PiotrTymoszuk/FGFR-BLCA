@@ -58,7 +58,8 @@
                            tcga = 'TCGA BLCA',
                            imvigor = 'IMvigor',
                            bcan = 'BCAN',
-                           hpa = 'HPA')
+                           hpa = 'HPA',
+                           depmap = 'DepMap cell lines')
 
   globals$cohort_colors <- c(genie = 'indianred3',
                              msk = 'darkolivegreen4',
@@ -79,7 +80,7 @@
   ## criterion
 
   globals$analysis_cohorts <-
-    globals$cohort_labs[names(globals$cohort_labs) != 'hpa'] %>%
+    globals$cohort_labs[!names(globals$cohort_labs) %in% c('hpa', 'depmap')] %>%
     names
 
   globals$cohort_expr <- globals$analysis_cohorts %>%
@@ -94,7 +95,8 @@
     c(tcga = 'log<sub>2</sub> gene count',
       imvigor = 'log<sub>2</sub> gene count',
       bcan = 'Z-score',
-      hpa = 'IHC score')
+      hpa = 'IHC score',
+      depmap = 'log<sub>2</sub> gene count')
 
 # Genes of interest -------
 
@@ -121,6 +123,17 @@
       FGFR2 = 821,
       FGFR3 = 806,
       FGFR4 = 802)
+
+  ## protein type colors
+
+  globals$protein_colors <-
+    c(receptor = 'indianred3',
+      ligand = 'plum4',
+      binding_protein = 'aquamarine4',
+      receptors = 'indianred3',
+      ligands = 'plum4',
+      binding_proteins = 'aquamarine4',
+      background = 'azure2')
 
 # Consensus subtype colors -------
 

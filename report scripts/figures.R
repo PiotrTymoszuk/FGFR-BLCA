@@ -337,6 +337,7 @@
 
   rep_figs$expression <-
     plot_grid(expl_expr$hm_plot +
+                guides(x = guide_axis(angle = 45)) +
                 labs(title = 'RNA expression') +
                 theme(legend.position = 'none'),
               plot_grid(expl_expr$plots$hpa +
@@ -390,21 +391,24 @@
           guides(x = guide_axis(angle = 90)) +
           theme(legend.position = 'none',
                 axis.text = element_text(size = 7))) %>%
-    c(list(get_legend(expl_corr$bubble_plots[[1]]))) %>%
     plot_grid(plotlist = .,
               nrow = 2,
               align = 'hv',
               axis = 'tblr') %>%
+    plot_grid(get_legend(expl_corr$bubble_plots[[1]] +
+                           theme(legend.position = 'bottom')),
+              nrow = 2,
+              rel_heights = c(0.9, 0.1)) %>%
     as_figure(label = 'fgfr_fgf_expression_correlation',
               ref_name = 'fgfr_correlation',
               caption = paste('Correlation of mRNA levels of FGF-,',
                               'FGFR-, and FGFBP coding genes.'),
-              w = 190,
-              h = 230)
+              w = 160,
+              h = 200)
 
-# Co-expression networks of FGF, FGFR, and FGFBP genes -------
+# Co-expression networks of FGF, FGFR, and FGFBP genes, cancer tissue -------
 
-  insert_msg('Co-expression networks of FGF, FGFR, and FGFBP genes')
+  insert_msg('Co-expression networks of FGF, FGFR, and FGFBP genes, cancer tissue')
 
   rep_figs$fgfr_networks <- expl_exnet$plots %>%
     map(~.x +
@@ -420,9 +424,102 @@
     as_figure(label = 'fgfr_fgf_coexpression_networks',
               ref_name = 'fgfr_networks',
               caption = paste('Co-expression networks of',
-                              'FGF-, FGFR-, and FGFBP-coding genes.'),
+                              'FGF-, FGFR-, and FGFBP-coding genes:',
+                              'cancer tissue.'),
               w = 190,
               h = 190)
+
+# Co-expression network, cell lines --------
+
+  insert_msg('Co-expression networks, cancer tissue')
+
+  rep_figs$cell_networks <-
+    plot_grid(expl_celnet$plots$communities +
+                guides(alpha = 'none',
+                       size = 'none',
+                       color = 'none',
+                       linewidth = 'none') +
+                theme(plot.subtitle = element_blank(),
+                      legend.position = 'right'),
+              expl_celnet$plots$hubs +
+                guides(shape = 'none') +
+                theme(plot.subtitle = element_blank(),
+                      legend.position = 'right'),
+              nrow = 2,
+              align = 'hv',
+              labels = LETTERS,
+              label_size = 10) %>%
+    as_figure(label = 'fgfr_fgf_coexpression_networks_cell_lines',
+              ref_name = 'cell_networks',
+              caption = paste('Co-expression networks of',
+                              'FGF-, FGFR-, and FGFBP-coding genes:',
+                              'DepMap cell lines.'),
+              w = 180,
+              h = 230)
+
+# CRISPR and RNAi screening results for the cell lines --------
+
+  insert_msg('CRISPR and RNAi screening results for the cell lines')
+
+  ## for the receptors
+
+  rep_figs$crispr_rnai <- list(expl_crispr, expl_rnai) %>%
+    map(~.x$box_plots$receptors) %>%
+    map2(.,
+         paste('FGFR genes,',
+               c('CRISPR screening',
+                 'RNAi screening')),
+         ~.x +
+           labs(title = .y,
+                x = 'gene effect') +
+           theme(legend.position = 'none',
+                 plot.subtitle = element_blank())) %>%
+    plot_grid(plotlist = .,
+              ncol = 2,
+              align = 'hv',
+              axis = 'tblr',
+              labels = LETTERS,
+              label_size = 10) %>%
+    plot_grid(get_legend(expl_crispr$box_plots$receptors +
+                           theme(legend.position = 'bottom')),
+              nrow = 2,
+              rel_heights = c(0.9, 0.1)) %>%
+    as_figure(label = 'fgfr_dependency_cell_line_crispr_rnai',
+              ref_name = 'crispri',
+              caption = paste('CRISPR and RNA interference screening results',
+                              'for genes coding for FGF receptors in DepMap',
+                              'urothelial cancer cell lines.'),
+              w = 180,
+              h = 140)
+
+# RNA inhibitors in the cell lines ---------
+
+  insert_msg('RNA inhibitors in the cell lines')
+
+  rep_figs$resistance <-
+    list(x = expl_res$box_plots[c("gdsc", "prism")],
+         y = list(element_rect(), element_blank()),
+         z = list(element_text(), element_blank())) %>%
+    pmap(function(x, y, z) x +
+           theme(legend.position = 'none',
+                 strip.background.y = y,
+                 strip.text.y = z)) %>%
+    plot_grid(plotlist = .,
+              nrow = 2,
+              rel_heights = c(7, 5),
+              align = 'hv',
+              axis = 'tblr',
+              labels = LETTERS,
+              label_size = 10) %>%
+    plot_grid(get_legend(expl_res$box_plots[[1]]),
+              ncol = 2,
+              rel_widths = c(0.85, 0.15)) %>%
+    as_figure(label = 'fgfr_pan_inhibitors_reistance_cell_lines',
+              ref_name = 'resistance',
+              caption = paste('Resistance and sensitivity to pan-FGFR',
+                              'inhibitors of DepMap urothelial cell lines.'),
+              w = 180,
+              h = 180)
 
 # Differential gene expression in tumors with and without FGFR3 mutations ------
 
@@ -1424,10 +1521,6 @@
       pickle(fig_tmp[[i]],
              format = 'png',
              path = './report/figures')
-
-      pickle(fig_tmp[[i]],
-             format = 'png',
-             path = './report/markdown')
 
     } else {
 
