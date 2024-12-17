@@ -1268,6 +1268,7 @@ The IMvigor data sets were obtained from the R package _IMvigor210CoreBiologies_
 The BCAN study information was extracted from [cBioportal](https://www.cbioportal.org/) and consisted of demographic and clinical information, staging of primary tumors, overall and disease-specific survival, RNA sequencing expression Z scores of bulk cancer samples, as well as detailed somatic mutation data of bulk cancer specimens. 
 This collective consisted of metastatic cancers, treated in most patients by systemic chemotherapy. 
 The biological material was collected both in urogenital tract and at distant metastatic sites. 
+Missing values in the Z-score expression data set of the BCAN cohort were imputed with the 9-nearest neighbor algorithm implemented by function `impute.knn()` from _impute_ package [@Hastie2023].
 
 For molecular subset assignment and machine learning modeling tasks, $log_2$-transformed gene expression levels were processed by ComBat (R package _sva_ and [_htGLMNET_](https://github.com/PiotrTymoszuk/htGLMNET)) [@Leek2012] to correct for the inter-cohort variability. 
 
@@ -1362,7 +1363,9 @@ Co-occurrence analysis was done with [_clustTools_](https://github.com/PiotrTymo
 
 Co-expression networks of the FGF-, FGFR-, and FGFBP-coding genes were constructed in form of weighted graphs for pairwise correlations of the expression levels with Spearman's $\rho \geq$ 0.3 (function `as_iGraph()`, package [_graphExtra_](https://github.com/PiotrTymoszuk/graphExtra) with wrapper tools for _igraph_) [@Csardi2006]. 
 Isolated vertices were removed with `prune_degree()` function. 
-The following vertex importance statistics [@Csardi2006] were computed with `summary()` method called for the network objects: 
+Communities of co-regulated genes in the co-expression network in the DepMap urothelial cancer cell line collective were identified with the Leiden algorithm (loss function: modularity, resolution: $\gamma$ = 0.5, iterations: n = 100, function `cluster_leiden()`, _igraph_ package) [@Csardi2006; @Traag2019]. 
+
+The following vertex importance statistics [@Csardi2006] were computed with `summary()` method called for entire network objects (bulk cancer cohorts) or gene community sub-networks (DepMap cell lines): 
 degree (number of directly connected neighbor nodes), 
 hub score (eigenvector of the affinity matrix, i.e. an overall strength of correlations), and 
 betweenness (number of the shortest paths between all pairs of vertices that pass through the vertex). 
