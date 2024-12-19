@@ -87,7 +87,9 @@ __ - __Figure \@ref(fig:fig-fgfr-cont-hm)__).
 
 * Encouraged by the profound and widespread differences in expression of FGFR-, FGF-, and FGFBP-coding genes, we asked if and to which extent expression of those genes can explain or emulate the consensus molecular subsets proposed by Kamoun and colleagues [@Kamoun2020]. To answer this intricate question, we resorted to machine learning with two unrelated algorithms, Elastic Net regularized linear regression [@Friedman2010; @Zou2005] and Random Forest tree ensemble [@Wright2017; @Breiman2001]. The models were trained in a synthetic data set of ComBat-processed $log_2$-transformed gene expression derived from the TCGA BLCA cohort. To improve identification of the minority molecular classes, LumU and stroma-rich cancers, their observations were amplified (over-sampled) in the training data set with the SMOTE algorithm [@Torgo2014; @Chawla2002; @Torgo2016]. Performance and calibration of the machine learning models was evaluated by comparison of the model-predicted with the actual consensus molecular classes computed by a classification tool of _consensusMIBC_ R package (ground truth) [@Kamoun2020] in the unmodified TCBA BLCA data set and the independent validation IMvigor and BCAN cohorts.
 
-* As presented in __Figure \@ref(fig:fig-sub-elnet)A__ and __Table \@ref(tab:tab-ml-eval)__, the machine learning models predicted the molecular class assignment with very high accuracy, independently of the algorithm. Notably, fractions of correctly predicted cancer samples were lower for the luminal unstable class as compared with the remaining molecular classes (__Figure \@ref(fig:fig-sub-elnet)B__). Slightly worse reliability of the models at predicting luminal unstable and stroma-rich samples in the validation cohorts was also evident in results of the calibration analyses (__Figure \@ref(fig:fig-sub-cal-elnet)__ and __\@ref(fig:fig-sub-cal-ranger)__). __Collectively, the machine learning data suggests that the consensus molecular classification by Kamoun et al. can be reproduced by differences in expression of `r length(ml_globals$variables)` genes coding for FGFR, FGF, and FGFBP proteins.__ Notably, the classification tool developed by Kamoun and colleagues and distributed via _consensusMIBC_ R package employs `r consensusMIBC::centroids %>% nrow` gene variables. Among them, only `r intersect(consensusMIBC::centroids$hgnc_symbol, ml_globals$variables) %>% map_chr(~paste0('_', .x, '_')) %>% collapse_and` were shared with our machine learning models. The most influential genes for prediction of consensus molecular subtypes in our machine learning approach are presented in __Figure \@ref(fig:fig-sub-imp)__, and __Tables \@ref(tab:tab-ml-imp-elnet)__ - __\@ref(tab:tab-ml-imp-ranger)__.
+* As presented in __Figure \@ref(fig:fig-sub-elnet)A__ and __Table \@ref(tab:tab-ml-eval)__, the machine learning models predicted the molecular class assignment with very high accuracy, independently of the algorithm. Notably, fractions of correctly predicted cancer samples were lower for the luminal unstable class as compared with the remaining molecular classes (__Figure \@ref(fig:fig-sub-elnet)B__). Slightly worse reliability of the models at predicting luminal unstable and stroma-rich samples in the validation cohorts was also evident in results of the calibration analyses (__Figure \@ref(fig:fig-sub-cal-elnet)__ and __\@ref(fig:fig-sub-cal-ranger)__). __Collectively, the machine learning data suggests that the consensus molecular classification by Kamoun et al. can be reproduced by differences in expression of `r length(ml_globals$variables)` genes coding for FGFR, FGF, and FGFBP proteins.__ Notably, the classification tool developed by Kamoun and colleagues and distributed via _consensusMIBC_ R package employs `r consensusMIBC::centroids %>% nrow` gene variables. Among them, only `r intersect(consensusMIBC::centroids$hgnc_symbol, ml_globals$variables) %>% map_chr(~paste0('_', .x, '_')) %>% collapse_and` were shared with our machine learning models.
+
+* The most influential genes for prediction of consensus molecular subtypes by our machine learning approach were identified with SHAP algorithm (Shapley additive explanations) [@Lundberg2017; @Covert2020] (__Table \@ref(tab:tab-shap)__). In such analysis for the Elastic Net model, increasing expression levels of _TGFBR3_ and _FGFR3_, and decreasing expression of _FGF7_ and _TNFAIP6_, were associated with LumP class assignment. Analogically, _FGFR4_ and _TNFAI_ were proposed as positive, while _CD44_ and _GPC1_ as negative predictors of the LumU class. _FGF7_ and _FGFR1_ were proposed as top positive predictors of stroma-rich cancers; high levels of _FGFBP1_, _CD44_, and _ANOS1_ transcripts were associated with prediction of basal/squamous class by the Elastic Net model (__Figure \@ref(fig:fig-sub-imp-elnet)__). For the Random Forest model, increasing levels of _TGFBR3_, _FGFR3_, and _FGFBP3_ were associated with predictions of LumP class. High expression of _FGFR1_, _FGFR4_, _TGFBR3_, and _KL_ predicted LumU cancers. High levels of _DCN_, _FGF7_, _TGFBR3_, and _FGFR1_ were identified as positive predictors of stroma-rich cancers, while _CD44_, _FGFBP1_, _TNFAIP6_, and _FGF5_ were associated with forecasts of basal/squamous tumors by the Random Forest classifier (__Figure \@ref(fig:fig-sub-imp-ranger)__). 
 
 * Furthermore, we asked about prognostic significance of differences in FGFR, FGF, and FGFBP gene expression. To answer it, we constructed a multi-parameter Elastic Net Cox model [@Zou2005; @Friedman2010] in the TCGA BLCA cohort (__Table \@ref(tab:tab-surv-eval)__ and __\@ref(tab:tab-surv-imp)__). ComBat-adjusted $log_2$-transformed expression levels were fed into the model as first- and second-order terms. Among them, `r rep_tabs$surv_imp %>% filter(.data[['Coefficient beta']] != 0, !duplicated(.data[['Gene symbol']])) %>% nrow` genes had non-zero coefficients, i.e. contributed substantially to prediction of overall survival (__Figure \@ref(fig:fig-surv-ml)A__). The model delivered reliable predictions in the TCGA BLCA training collective and in the IMvigor validation cohort, but not in the BCAN data set (__Figure \@ref(fig:fig-surv-ml)BC__). In an univariable, model-free screening of the genes of interest as potential prognostic markers, we found reproducibly shorter overall survival of patients with high expression of _TNFAIP6_, _GPC1_, _FIBP_, _FGF11_, and _FGFBP1_ in the tumor tissue as compared with low expressors (__Figure \@ref(fig:fig-surv-km1)__ and __\@ref(fig:fig-surv-km2)__, __Table \@ref(tab:tab-surv-km)__). Taken together, the FGFR, FGF, and FGFBP transcriptome bears some potential for prediction of overall survival in urothelial cancer, but the models and standalone markers need additional validation, especially with inclusion of confounders such as age, gender, and staging.
 
@@ -679,7 +681,7 @@ __Figure \@ref(fig:fig-sub-fgfr-dge). Differential expression of FGFR-, FGF-, an
 
 _Assignment of cancer samples from the `r globals$cohort_labs[c("tcga", "imvigor", "bcan")] %>% collapse_and` to the consensus molecular classes was presented in Figure \@ref(fig:fig-fgfr-subtypes). Differences in log2-transformed mRNA levels of FGFR-, FGF-, and FGFBP-coding genes between the consensus molecular classes were assessed by one-way ANOVA with $\eta^2$ effect size statistic. Differences in $log_2$-transformed gene expression between a subset and luminal papillary subset (LumP) were investigated by two-tailed T test. P values were corrected for multiple testing with the false discovery rate method (FDR). Significantly differentially regulated genes were defined by p(ANOVA) < 0.05, $\eta^2 \geq$ 0.06, pFDR(T test) < 0.05, and at least 1.25-fold up- or downregulation in a subset as compared with LumP cancers._
 
-_Z-scores of $log_2$ expression levels of significantly differentially regulated genes shared by at least two cohorts are displayed in heat maps. Significant genes are labelled with bold font in the Y axes. Numbers of cancer samples in the consensus subtypes are indicated in the plot caption. Note: samples without reliable assignment to the consensus subtypes are not presented in the heat maps._
+_Z-scores of $log_2$ expression levels of significantly differentially regulated genes shared by at least two cohorts are displayed in heat maps. Significant genes are labelled with bold font in the Y axes. Numbers of cancer samples in the consensus subtypes are indicated in the plot caption. Note: few NE-like samples (up to n = `r sub_dge$test %>% map(filter, consensusClass == 'NE-like') %>% map_dbl(~.x$n2[1]) %>% max(na.rm = TRUE)`) are removed from the plots._
 
 _LumP: luminal papillary; LumU: luminal genetically unstable; LumNS: luminal non-specified; Stroma-rich: luminal stroma-rich; Ba/Sq: basal/squamous-like; NE-like: neuroendocrine-like._
 
@@ -818,17 +820,31 @@ _Additionally, calibration of the Random Forest model was investigated by modeli
 
 \newpage
 
-```{r fig-sub-imp, fig.width = figur::convert(rep_figs$sub_imp, to = 'in')$w, fig.height = figur::convert(rep_figs$sub_imp, to = 'in')$h, fig.cap = 'Importance of explanatory variables in the Elastic Net model of molecular consensus classes of urothelial cancers.'}
+```{r fig-sub-imp-elnet, fig.width = figur::convert(rep_figs$sub_imp_elnet, to = 'in')$w, fig.height = figur::convert(rep_figs$sub_imp_elnet, to = 'in')$h, fig.cap = 'Importance of explanatory variables in the Elastic Net model of molecular consensus classes of urothelial cancers assessed by the SHAP algorithm'}
 
-rep_figs$sub_imp$plot
+rep_figs$sub_imp_elnet$plot
 
 ```
 
-__Figure \@ref(fig:fig-sub-imp). Importance of explanatory variables in the Elastic Net model of molecular consensus classes of urothelial cancers.__ 
+__Figure \@ref(fig:fig-sub-imp-elnet). Importance of explanatory variables in the Elastic Net model of molecular consensus classes of urothelial cancers assessed by the SHAP algorithm__ 
 
-_The machine learning models of consensus molecular subsets with expression of FGFR-, FGF, and FGFBP genes as the sole explanatory factors were trained in a `r globals$cohort_labs["tcga"]`-derived data set as presented in Figure \@ref(fig:fig-sub-elnet)._ 
-_In the Elastic Net model, absolute values of the coefficient's $\beta$ translate directly to variable importance measure; high $abs(\beta)$ is expected for a highly influential variable for prediction of a subset. $\beta$ values for the top 15 most influential explanatory variables in the Elastic Net model are presented as bar plots in (A)._
-_For the Random Forest model, permutation importance of explanatory variables was computed as difference in out-of-bag classification errors between the genuine model and a model with the variable of interest re-shuffled at random. The differences in classification errors for the top 15 most influential explanatory variables of the Random Forest model are presented in a bar plot in (B)._ 
+_Contributions of the explanatory variables, i.e. the FGFR-, FGF-, and FGFBP-coding genes, to prediction of luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous (Ba/sq) consensus molecular classes were estimated with the SHAP algorithm (Shapley additive explanations)._ 
+
+_SHAP values for single highly influential genes (top 15 highest mean absolute SHAP) and observations are visualized in violin/swarm plots. Each point represents a single observation, point color codes for the minimum/maximum-scaled $log_2$-transformed expression of the gene. The corresponding mean absolute SHAP values as metrics of overall gene importance are presented in bar plots. Colors of the bars code for the sign of association of SHAP values and gene expression (red: positive, blue: negative)._
+
+\newpage
+
+```{r fig-sub-imp-ranger, fig.width = figur::convert(rep_figs$sub_imp_ranger, to = 'in')$w, fig.height = figur::convert(rep_figs$sub_imp_ranger, to = 'in')$h, fig.cap = 'Importance of explanatory variables in the Random Forest model of molecular consensus classes of urothelial cancers assessed by the SHAP algorithm'}
+
+rep_figs$sub_imp_ranger$plot
+
+```
+
+__Figure \@ref(fig:fig-sub-imp-ranger). Importance of explanatory variables in the Random Forest model of molecular consensus classes of urothelial cancers assessed by the SHAP algorithm__ 
+
+_Contributions of the explanatory variables, i.e. the FGFR-, FGF-, and FGFBP-coding genes, to prediction of luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous (Ba/sq) consensus molecular classes were estimated with the SHAP algorithm (Shapley additive explanations)._ 
+
+_SHAP values for single highly influential genes (top 15 highest mean absolute SHAP) and observations are visualized in violin/swarm plots. Each point represents a single observation, point color codes for the minimum/maximum-scaled $log_2$-transformed expression of the gene. The corresponding mean absolute SHAP values as metrics of overall gene importance are presented in bar plots. Colors of the bars code for the sign of association of SHAP values and gene expression (red: positive, blue: negative)._
 
 \newpage
 
@@ -870,12 +886,13 @@ flextable::flextable(rep_tabs$ml_imp_elnet) %>%
 
 \newpage
 
-```{r tab-ml-imp-ranger, tab.cap = "Permutation variable importance of the Random Forest model of consensus molecular classes of urothelial cancers. The Random Forest model was developed in the TCGA BLCA cohort with expression values of genes coding for FGFR, FGF, and FGFBP proteins as the sole explanatory factors. Permutation importance was computed as differences of errors of the genuine model and models, in which the explanatory variables were re-shuffled at random."}
+```{r tab-shap, tab.cap = "Importance of explanatory variables for the Elastic Net and Random Forest models of consensus molecular classes of urothelial cancers estimated by the SHAP algorithm. Contribution of the FGFR-, FGF-, and FGFBP-coding genes to prediction of consensus molecular classes was assessed by mean absolute values of SHAP metrics (Shapley additive explanations). The table is available as a supplementary Excel file."}
 
-flextable::flextable(rep_tabs$ml_imp_ranger) %>% 
-  italic(j = 1) %>% 
-  set_widths(c(3, 3)) %>% 
-  theme_vanilla
+rep_tabs$shap[1, 1] %>% 
+  mutate(Algorithm = '') %>% 
+  set_names(' ') %>% 
+  flextable %>% 
+  set_widths(18)
 
 ```
 
@@ -1375,9 +1392,9 @@ The networks were visualized with Fruchterman - Reingold algorithm by calling `p
 
 To check if and how differences in expression of the FGFR-, FGF-, and FGFBP-coding genes of interest emulate the consensus molecular classification proposed by Kamoun and colleagues [@Kamoun2020], we resorted to machine learning modeling with two independent algorithms, multinomial regularized Elastic Net regression [@Friedman2010; @Zou2005] and Random Forest tree ensemble [@Wright2017; @Breiman2001]. 
 
-The models were developed in a data set derived from the TCGA BLCA collective; the consensus molecular class assignment by the nearest centroid classifier of _consensusMIBC_ R package served as the modeling response. 
+The models were developed in a data set derived from the TCGA BLCA collective; assignment to luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous (Ba/Sq) consensus molecular classes by the nearest centroid classifier of _consensusMIBC_ R package served as the modeling response. 
 ComBat-processed $log_2$ expression levels of the genes of interest were used as the sole explanatory factors. 
-In order to improve recognition of the minority consensus classes, the LumU (luminal unstable) and Stroma-rich subsets, we amplified their observations by over-sampling with the SMOTE algorithm (function `smote()`, package _performanceEstimation_) [@Torgo2014; @Chawla2002; @Torgo2016]. 
+In order to improve recognition of the minority consensus classes, the LumU and Stroma-rich subsets, we amplified their observations by over-sampling with the SMOTE algorithm (function `smote()`, package _performanceEstimation_) [@Torgo2014; @Chawla2002; @Torgo2016]. 
 The Elastic Net model of consensus molecular classes was optimized (tuned) and trained in the SMOTE-amplified training data set with a wrapper around functions `cv.glmnet()` and `glmnet()` from _glmnet_ package [@Friedman2010]. The optimal values of the regularization parameter $\lambda$ = `r ml_train$tune_obj$elnet$best_tune$lambda %>% signif(3)` was found by minimizing the Elastic Net model's deviance in 200 repeats 10-fold cross-validation. 
 The Random Forest model of consensus molecular subsets was tuned and trained inn the SMOTE-amplified training data set with a wrapper around `ranger()` function from _ranger_ package [@Wright2017]. 
 The optimal set of parameters that control behavior of the Random Forest model, mtry = `r ml_train$tune_obj$ranger$best_tune$mtry` (number of randomly chosen variables per tree learner), minimal node size = `r ml_train$tune_obj$ranger$best_tune$min.node.size`, and `r ml_train$tune_obj$ranger$best_tune$splitrule %>% stri_capitalize_first` splitting rule was found by minimizing the out-of-bag classification error [@Breiman2001]. 
@@ -1396,6 +1413,13 @@ Additionally, accuracy of prediction for single consensus molecular classes was 
 Calibration of the machine learning models at predictions of particular consensus molecular classes was assessed with two approaches. 
 First, we compared squares of differences between the predicted class assignment probabilities and the binarized actual class assignment (1: the class of interest, 0: any other consensus molecular class) or 'Brier squares' between the consensus molecular classes. 
 Second, we modeled and visualized logistic relationship between the mean predicted class assignment probability and the actual fraction of observations in the class with tools from _CalibrationCurves_ R package [@Campo2023]. 
+
+Importance of the explanatory variables, i.e. FGFR-, FGF-, and FGFBP-coding transcripts, and their positive and negative association with predictions of LumP, LumU, stroma-rich, and Ba/Sq classes by the machine learning models were assessed with the SHAP algorithm (Shapley additive explanations) [@Lundberg2017; @Covert2020]. 
+To this end, we re-fitted the Elastic Net and Random Forest models of consensus molecular classes in the unmodified TCGA BLCA data set with the optimal set of the tuning parameters. 
+Matrices of SHAP metrics for the genes and observations were computed for the models with `kernelshap()` function from _kernelshap_ package [@Mayer2023; @Mayer2023a]. 
+As the background for the SHAP procedure, we used randomly selected 30% of observations of the TCGA BLCA data set. 
+Mean absolute SHAP value served as a measure of gene importance (__Table \@ref(tab:tab-shap)__). 
+SHAP metrics for single observations and the mean absolute SHAP values were visualized as violin/swarm and bar plots (__Figure \@ref(fig:fig-sub-imp-elnet)__ and __\@ref(fig:fig-sub-imp-ranger)__) with tools of _shapviz_ package [@Mayer2023] and in-house developed R functions.
 
 For the Elastic Net model, absolute $\beta$ values of the model coefficients serve as direct variable importance metrics; they were extracted from the model with `coef()` method. 
 For the Random Forest model, permutation variable importance proposed by Breiman [@Breiman2001] was computed as the difference in out-of-bag classification error of the genuine model and a model with the particular explanatory variable re-shuffled at random (function `importance()`, package _ranger_).
