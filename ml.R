@@ -23,6 +23,10 @@
   library(caret)
   library(ranger)
   library(performanceEstimation)
+  library(exda)
+
+  library(kernelshap)
+  library(shapviz)
 
   library(furrr)
 
@@ -51,14 +55,17 @@
 
   insert_msg('Analysis scripts')
 
-  ## model tuning and training
+  ## model tuning and training, SHAP importance
 
   list(cache_path = c('./cache/ml_train.RData',
-                      './cache/ml_ens.RData'),
+                      './cache/ml_ens.RData',
+                      './cache/ml_shap.RData'),
        script_path = c('./ml scripts/development.R',
-                       './ml scripts/ensemble.R'),
+                       './ml scripts/ensemble.R',
+                       './ml scripts/shap.R'),
        message = c('Cached model tuning and training results',
-                   'Cached ensemble tuning and training results')) %>%
+                   'Cached ensemble tuning and training results',
+                   'Cached SHAP variable importance')) %>%
     pwalk(access_cache)
 
 
@@ -66,7 +73,8 @@
 
   c('./ml scripts/predictions.R',
     './ml scripts/evaluation.R',
-    './ml scripts/importance.R') %>%
+    './ml scripts/importance.R',
+    './ml scripts/shap_plots.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
 # END --------

@@ -287,27 +287,32 @@
                                'the sole explanatory factors.',
                                'Values of beta of the coefficients are listed.'))
 
-# Permutation variable importance of the Random Forest model --------
+# SHAP variable importance -------
 
-  insert_msg('Permutation importance for the Random Forest model')
+  insert_msg('SHAP variable importance')
 
-  rep_tabs$ml_imp_ranger <- ml_imp$ranger_importance %>%
-    arrange(-importance) %>%
-    mutate(importance = as.character(signif(importance, 2))) %>%
-    set_names(c('Varaible', 'Permutation importance')) %>%
-    as_mdtable(label = 'ml_imp_ranger',
-               ref_name = 'ml_imp_ranger',
-               caption = paste('Permutation variable importance of the',
-                               'Random Forest model of consensus molecular',
-                               'classes of urothelial cancers.',
-                               'The Random Forest model was developed in the',
-                               'TCGA BLCA cohort with expression values of genes',
-                               'coding for FGFR, FGF, and FGFBP proteins as',
-                               'the sole explanatory factors.',
-                               'Permutation importance was computed as',
-                               'differences of errors of the genuine model',
-                               'and models, in which the explanatory variables',
-                               'were re-shuffled at random.'))
+  rep_tabs$shap <- ml_splots$stats %>%
+    compress(names_to = 'algorithm') %>%
+    transmute(Algorithm = car::recode(algorithm,
+                                      "'elnet' = 'Elastic Net';
+                                      'ranger' = 'Random Forest'"),
+              `Consensus class` = class,
+              `Gene symbol` = variable,
+              `Importance, mean absolute SHAP` = signif(importance, 2)) %>%
+    as_mdtable(label = 'shap',
+               ref_name = 'shap',
+               caption = paste('Importance of explanatory variables for the',
+                               'Elastic Net and Random Forest models of',
+                               'consensus molecular classes of urothelial',
+                               'cancers estimated by the SHAP algorithm.',
+                               'Contribution of the FGFR-, FGF-, and',
+                               'FGFBP-coding genes to prediction of consensus',
+                               'molecular classes was assessed by mean absolute',
+                               'values of SHAP metrics (Shapley additive',
+                               'explanations).',
+                               'The table is available as a supplementary',
+                               'Excel file.'))
+
 
 # Evaluation of the Elastic Net Cox model of overall survival --------
 

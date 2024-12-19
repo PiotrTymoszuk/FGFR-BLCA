@@ -1774,6 +1774,258 @@
 
   }
 
+  my_shap_bee <- function(shapviz_obj,
+                          top_variables = 10,
+                          title_suffix = NULL,
+                          point_size = 2,
+                          point_alpha = 0.75,
+                          point_jitter = 0.1,
+                          show_violin = TRUE,
+                          violin_alpha = 0.25,
+                          violin_fill = 'cornsilk',
+                          panels = FALSE,
+                          rel_widths = c(0.65, 0.35),
+                          add_legend = TRUE,
+                          rel_heights = c(0.85, 0.15)) {
+
+    ## a customized bee-swarm plot of SHAP values as a function of feature
+    ## value (min/max) for multinomial classification models
+
+    class_levels <- names(shapviz_obj)
+
+    plot_titles <- class_levels
+
+    if(!is.null(title_suffix)) {
+
+      plot_titles <- paste(plot_titles, title_suffix, sep = ', ')
+
+    }
+
+    ## plotting data: min/max-normalized feature values and SHAP --------
+
+    plot_data <- list()
+
+    plot_data$ft <- get_feature_values(shapviz_obj) %>%
+      map(min_max)
+
+    plot_data$shap <- get_shap_values(shapviz_obj)
+
+    plot_data$shap <-
+      map2(plot_data$shap,
+           plot_data$ft,
+           ~set_rownames(.x, rownames(.y)))
+
+    ft_names <- plot_data$ft %>%
+      map(colnames)
+
+    ## mean absolute values of SHAP per feature as a variable importance metric -------
+
+    ## the correlation of SHAP and value will be used to classify the
+    ## explanatory factors as variables that associate positively and negatively
+    ## with the outcome
+
+    shap_imp <- list()
+
+    shap_imp$absmean <- plot_data$shap %>%
+      map(abs) %>%
+      map(colMeans) %>%
+      map(compress,
+          names_to = 'variable',
+          values_to = 'meanabs_shap')
+
+    shap_imp$corr <-
+      map2(plot_data$ft,
+           plot_data$shap,
+           function(x, y) map2_dbl(as.data.frame(x),
+                                   as.data.frame(y),
+                                   cor,
+                                   method = 'spearman')) %>%
+      map(compress,
+          names_to = 'variable',
+          values_to = 'corr')
+
+    shap_imp <- shap_imp %>%
+      map(compress, names_to = 'class') %>%
+      reduce(left_join, by = c('class', 'variable')) %>%
+      mutate(sign = ifelse(corr < 0, 'negative',
+                           ifelse(corr > 0, 'positive', 'ns')),
+             sign = factor(sign, c('positive', 'negative', 'ns')),
+             class = factor(class, class_levels)) %>%
+      blast(class)
+
+    ## top most influential variables to be shown in the plots ------
+
+    ## per class, by mean(abs(shap))
+
+    top_vars <- shap_imp %>%
+      map(slice_max, meanabs_shap, n = top_variables) %>%
+      map(~.x$variable)
+
+    plot_data <- plot_data %>%
+      transpose %>%
+      map(map, as.data.frame) %>%
+      map(map, rownames_to_column, 'sample_id') %>%
+      map2(., top_vars,
+           ~.x %>%
+             map(select, sample_id, all_of(.y))) %>%
+      map(map, as_tibble)
+
+    shap_imp <-
+      map2(shap_imp,
+           top_vars,
+           function(x, y) x %>%
+             filter(variable %in% y) %>%
+             mutate(variable = factor(variable, rev(y))))
+
+    ## long format of the plotting data, variable order, association sign ---------
+
+    plot_data <- plot_data %>%
+      map(function(class) map2(class,
+                               c('value', 'shap'),
+                               ~pivot_longer(.x,
+                                             cols = all_of(names(.x)[-1]),
+                                             values_to = .y,
+                                             names_to = 'variable'))) %>%
+      map(reduce, left_join, by = c('sample_id', 'variable'))
+
+    plot_data <-
+      map2(plot_data, top_vars,
+           ~mutate(.x,
+                   variable = factor(variable, rev(.y))))
+
+    plot_data <-
+      map2(plot_data,
+           map(shap_imp, ~.x[c('variable', 'sign')]),
+           left_join, by = 'variable')
+
+    ## common plotting ranges for the plots
+
+    bee_range <- plot_data %>%
+      map(~.x$shap) %>%
+      reduce(c) %>%
+      range
+
+    imp_range <- shap_imp %>%
+      map(~.x$meanabs_shap) %>%
+      reduce(c) %>%
+      range
+
+    ## bee-swarm plots --------
+
+    bee_plots <-
+      list(x = plot_data,
+           y = plot_titles) %>%
+      pmap(function(x, y) x %>%
+             ggplot(aes(x = shap,
+                        y = variable,
+                        color = value)) +
+             facet_grid(sign ~ .,
+                        space = 'free',
+                        scales = 'free') +
+             labs(title = y,
+                  x = 'SHAP value'))
+
+    if(show_violin) {
+
+      bee_plots <- bee_plots %>%
+        map(~.x +
+              geom_violin(scale = 'width',
+                          fill = violin_fill,
+                          alpha = violin_alpha,
+                          color = 'black',
+                          trim = FALSE))
+
+    }
+
+    bee_plots <- bee_plots %>%
+      map(~.x +
+            geom_vline(xintercept = 0, linetype = 'dashed') +
+            geom_point(shape = 16,
+                       size = point_size,
+                       alpha = point_alpha,
+                       position = position_jitter(width = 0,
+                                                  height = point_jitter)) +
+            globals$common_theme +
+            theme(axis.title.y = element_blank(),
+                  axis.text.y = element_text(face = 'italic')) +
+            scale_x_continuous(limits = bee_range) +
+            scale_color_gradient2(low = 'steelblue',
+                                  mid = 'gray80',
+                                  high = 'firebrick',
+                                  limits = c(0, 1),
+                                  midpoint = 0.5,
+                                  name = 'min/max scaled\nfeature value'))
+
+    ## bar plots of mean absolute variable importance --------
+
+    imp_plots <-
+      list(x = shap_imp,
+           y = plot_titles) %>%
+      pmap(function(x, y) x %>%
+             ggplot(aes(x = meanabs_shap,
+                        y = variable,
+                        fill = sign)) +
+             facet_grid(sign ~ .,
+                        scales = 'free',
+                        space = 'free') +
+             geom_bar(color = 'white',
+                      stat = 'identity') +
+             geom_vline(xintercept = 0,
+                        linetype = 'dashed') +
+             scale_x_continuous(limits = c(0, imp_range[[2]])) +
+             scale_fill_manual(values = c(positive = 'firebrick',
+                                          negative = 'steelblue',
+                                          ns = 'gray60'),
+                               name = 'association\nwith response') +
+             globals$common_theme +
+             theme(axis.title.y = element_blank(),
+                   axis.text.y = element_text(face = 'italic')) +
+             labs(title = y,
+                  x = 'mean |SHAP value|'))
+
+    ## optional: plot panels --------
+
+    if(!panels) return(list(bee = bee_plots,
+                            bar = imp_plots))
+
+    panels <-
+      map2(bee_plots,
+           imp_plots,
+           ~plot_grid(.x +
+                        theme(legend.position = 'none',
+                              strip.background.y = element_blank(),
+                              strip.text.y = element_blank()),
+                      .y +
+                        labs(title = '') +
+                        theme(legend.position = 'none',
+                              axis.text.y = element_blank(),
+                              strip.background.y = element_blank(),
+                              strip.text.y = element_blank()),
+                      ncol = 2,
+                      align = 'h',
+                      axis = 'tblr',
+                      rel_widths = rel_widths))
+
+    legend_grob <-
+      get_legend(bee_plots[[1]] + theme(legend.position = 'bottom'))
+
+    if(add_legend) {
+
+      panels <- panels %>%
+        map(~.x %>%
+              plot_grid(legend_grob,
+                        nrow = 2,
+                        rel_heights = rel_heights))
+
+      return(panels)
+
+    }
+
+    return(list(panels = panels,
+                legend = legend_grob))
+
+  }
+
 # Representative HPA images -------
 
   choose_representative <- function(x,

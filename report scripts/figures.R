@@ -769,7 +769,7 @@
   insert_msg('Molecular subtypes and expression of FGF, FGFR, FGFBP genes')
 
   ## heat map plots are presented:
-  ## not-assigned, NE-like, and LumNS samples are removed
+  ## not-assigned, NE-like samples are removed
 
   rep_figs$sub_fgfr_dge <- sub_dge$hm_plots %>%
     map(~.x +
@@ -786,7 +786,7 @@
 
     rep_figs$sub_fgfr_dge[[i]]$data <-
       rep_figs$sub_fgfr_dge[[i]]$data %>%
-      filter(!consensusClass %in% c('not assigned', 'LumNS', 'NE-like'))
+      filter(!consensusClass %in% c('not assigned', 'NE-like'))
 
   }
 
@@ -983,24 +983,30 @@
 
   insert_msg('Elastic Net model, variable importance')
 
-  rep_figs$sub_imp <- ml_imp$coef_plots %>%
-    map(~.x + theme(legend.position = 'none')) %>%
-    c(list(get_legend(ml_imp$coef_plots[[1]])),
-      list(ml_imp$ranger_plot)) %>%
-    plot_grid(plotlist = .,
-              ncol = 3,
-              align = 'hv',
-              axis = 'tblr',
-              labels = c('A', '', '',
-                         '', '', 'B'),
-              label_size = 10) %>%
-    as_figure(label = 'consensus_subset_prediction_key_genes',
-              ref_name = 'sub_imp',
-              caption = paste('Importance of explanatory variables in the',
-                              'Elastic Net model of molecular consensus',
-                              'classes of urothelial cancers.'),
-              w = 190,
-              h = 160)
+  rep_figs[c('sub_imp_elnet', 'sub_imp_ranger')] <-
+    ml_splots$plots %>%
+    map(function(x) plot_grid(plotlist = x$panels,
+                              ncol = 2,
+                              align = 'hv',
+                              axis = 'tblr') %>%
+          plot_grid(x$legend,
+                    nrow = 2,
+                    rel_heights = c(0.92, 0.08)))
+
+  rep_figs[c('sub_imp_elnet', 'sub_imp_ranger')] <-
+    rep_figs[c('sub_imp_elnet', 'sub_imp_ranger')] %>%
+    list(x = .,
+         label = paste0('consensus_subset_prediction_key_genes',
+                        c('_elastic_net', '_random_forest')),
+         ref_name = names(.),
+         caption = paste('Importance of explanatory variables in the',
+                         c('Elastic Net', 'Random Forest'),
+                         'model of molecular consensus',
+                         'classes of urothelial cancers assessed by the',
+                         'SHAP algorithm')) %>%
+    pmap(as_figure,
+         w = 190,
+         h = 220)
 
 # Modeling of overall survival with FGFR, FGF, and FGFBP gene expression --------
 
