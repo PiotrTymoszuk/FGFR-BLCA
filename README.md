@@ -34,7 +34,7 @@ Tables as provided [__as an Excel file__](https://github.com/PiotrTymoszuk/FGFR-
 
 ## Manuscript parts
 
-Parts/panels of Figure 1 of the manuscript are available as [PDF files](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/paper%20figure%201) and [PNG files](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/paper%20PNG%20figure%201).
+Parts/panels of Figure 1 of the manuscript are available as [__PDF files__](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/paper%20figure%201) and [__PNG files__](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/paper%20PNG%20figure%201).
 
 ## Usage
 
