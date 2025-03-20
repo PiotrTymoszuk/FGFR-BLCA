@@ -36,6 +36,7 @@ Tables as provided [__as an Excel file__](https://github.com/PiotrTymoszuk/FGFR-
 
 Parts/panels of Figure 1 of the manuscript are available as [__PDF files__](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/paper%20figure%201) and [__PNG files__](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/paper%20PNG%20figure%201). 
 Legend of Figure 1 is available as a [__Word file__](https://github.com/PiotrTymoszuk/FGFR-BLCA/blob/main/report/figure1_legend.docx). 
+Rebuttal Letter is provided as a [__Word file__](https://github.com/PiotrTymoszuk/FGFR-BLCA/blob/main/report/rebuttal_letter.docx). 
 
 ## Usage
 
