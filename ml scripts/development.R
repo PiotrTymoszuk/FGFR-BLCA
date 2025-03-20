@@ -16,8 +16,9 @@
 
   ml_train$cv_folds <- ml_globals$cv_folds
   ml_train$ranger_grid <- ml_globals$ranger_grid
+  ml_train$gbm_grid <- ml_globals$gbm_grid
 
-# tuning of the lambda --------
+# tuning of the models --------
 
   insert_msg('Tuning')
 

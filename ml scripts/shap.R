@@ -1,5 +1,5 @@
 # SHAP variable importance for the Elastic Net and Random Forest models in
-# the TCGA data set.
+# the test portion of the TCGA data set.
 #
 # The background: a randomly chosen 30% of the TCGA gene expression data
 # set.
@@ -16,13 +16,13 @@
   insert_msg('Analysis globals')
 
   ## matrix of explanatory factors,
-  ## and responses in the TCGA training cohort
+  ## and responses in the test portions
 
-  ml_shap$data <- ml_globals$data$tcga %>%
+  ml_shap$data <- ml_globals$data$tcga_test %>%
     column_to_rownames('sample_id')
 
-  ml_shap$x <- ml_globals$x$tcga
-  ml_shap$y <- ml_globals$y$tcga
+  ml_shap$x <- ml_globals$x$tcga_test
+  ml_shap$y <- ml_globals$y$tcga_test
 
   ## background matrix
 

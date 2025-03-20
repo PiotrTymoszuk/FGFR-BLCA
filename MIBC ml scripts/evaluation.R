@@ -1,11 +1,11 @@
 # Evaluation of performance of the ML models of consensus classes that
-# use FGFR, FGF, and FGFBP genes as explanatory factors.
+# use the full predictor set by Kamoun et al.
 
   insert_head()
 
 # container --------
 
-  ml_eval <- list()
+  mibc_eval <- list()
 
 # analysis globals -------
 
@@ -13,14 +13,7 @@
 
   ## predictions
 
-  ml_eval$predictions <- ml_pred$predictions
-
-  ## algorithm labels
-
-  globals$algo_labs <-
-    c(elnet = 'Elastic Net',
-      ranger = 'Random Forest',
-      ensemble = 'Ensemble')
+  mibc_eval$predictions <- mibc_pred$predictions
 
 # Performance stats --------
 
@@ -28,7 +21,7 @@
 
   ## global performance stats: ROC stats, accuracy, kappa, and Brier scores
 
-  ml_eval$stats <- ml_eval$predictions %>%
+  mibc_eval$stats <- mibc_eval$predictions %>%
     map(map, ml_summary) %>%
     map(compress, names_to = 'cohort') %>%
     compress(names_to = 'algorithm') %>%
@@ -39,7 +32,7 @@
 
   ## dot plot
 
-  ml_eval$stat_plot <- ml_eval$stats %>%
+  mibc_eval$stat_plot <- mibc_eval$stats %>%
     filter(cohort != 'tcga') %>%
     ggplot(aes(x = Kappa,
                y = 2 - brier_score,
@@ -49,9 +42,9 @@
     facet_grid(. ~ algorithm,
                labeller = as_labeller(globals$algo_labs)) +
     geom_rect(aes(xmin = -Inf,
-                  ymin = 2 - min(ml_eval$stats$brier_reference),
+                  ymin = 2 - min(mibc_eval$stats$brier_reference),
                   xmax = Inf,
-                  ymax = 2 - max(ml_eval$stats$brier_reference)),
+                  ymax = 2 - max(mibc_eval$stats$brier_reference)),
               fill = 'gray80',
               color = NA,
               alpha = 0.5,
@@ -89,18 +82,18 @@
 
   ## confusion matrices
 
-  ml_eval$confusion_mtx <- ml_eval$predictions %>%
+  mibc_eval$confusion_mtx <- mibc_eval$predictions %>%
     map(map,
         ~table(obs = .x$obs,
                pred = .x$pred))
 
   ## heat map representations
 
-  for(i in names(ml_eval$confusion_mtx)) {
+  for(i in names(mibc_eval$confusion_mtx)) {
 
-    ml_eval$confusion_plots[[i]] <-
-      list(mtx = ml_eval$confusion_mtx[[i]],
-           plot_title = globals$cohort_labs[names(ml_eval$confusion_mtx[[i]])] %>%
+    mibc_eval$confusion_plots[[i]] <-
+      list(mtx = mibc_eval$confusion_mtx[[i]],
+           plot_title = globals$cohort_labs[names(mibc_eval$confusion_mtx[[i]])] %>%
              paste(globals$algo_labs[[i]], sep = ', ')) %>%
       pmap(plot_confusion) %>%
       map(~.x +
@@ -120,15 +113,15 @@
 
   insert_msg('Plots of Brier squares')
 
-  for(i in names(ml_eval$predictions)) {
+  for(i in names(mibc_eval$predictions)) {
 
     ## box plots
 
-    ml_eval$brier_square_plots[[i]] <-
-      map2(ml_eval$predictions[[i]] %>%
+    mibc_eval$brier_square_plots[[i]] <-
+      map2(mibc_eval$predictions[[i]] %>%
              map(mutate,
                  square_inv = 2 - square_dist),
-           globals$cohort_labs[names(ml_eval$predictions[[i]])] %>%
+           globals$cohort_labs[names(mibc_eval$predictions[[i]])] %>%
              paste(globals$algo_labs[[i]], sep = ', '),
            function(x, y) x %>%
              plot_variable(variable = 'square_inv',
@@ -144,9 +137,9 @@
 
     ## styling: colors and squares expected for a nonsense model
 
-    ml_eval$brier_square_plots[[i]] <-
-      list(x = ml_eval$brier_square_plots[[i]],
-           y = ml_eval$stats %>%
+    mibc_eval$brier_square_plots[[i]] <-
+      list(x = mibc_eval$brier_square_plots[[i]],
+           y = mibc_eval$stats %>%
              filter(algorithm == i) %>%
              .$brier_reference) %>%
       pmap(function(x, y) x +
@@ -161,11 +154,11 @@
 
   insert_msg('Calibration curves')
 
-  for(i in names(ml_eval$predictions)) {
+  for(i in names(mibc_eval$predictions)) {
 
-    ml_eval$calibration_plots[[i]] <-
-      list(prediction = ml_eval$predictions[[i]],
-           plot_title = globals$cohort_labs[names(ml_eval$predictions[[i]])] %>%
+    mibc_eval$calibration_plots[[i]] <-
+      list(prediction = mibc_eval$predictions[[i]],
+           plot_title = globals$cohort_labs[names(mibc_eval$predictions[[i]])] %>%
              paste(globals$algo_labs[[i]], sep = ', ')) %>%
       pmap(plot_calibration,
            discrete = FALSE,
@@ -179,8 +172,8 @@
 
   rm(i)
 
-  ml_eval <-
-    ml_eval[c("stats", "stat_plot",
+  mibc_eval <-
+    mibc_eval[c("stats", "stat_plot",
               "confusion_mtx", "confusion_plots",
               "brier_square_plots", "calibration_plots")]
 
