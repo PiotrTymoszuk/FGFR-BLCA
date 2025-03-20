@@ -1,0 +1,234 @@
+---
+title: "FGFR1/3 Signaling as Achilles’ Heel of Phenotypic Diversity in Urothelial Carcinoma"
+subtitle: "Rebuttal Letter"
+author: "Department of Urology, Medical University of Innsbruck"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+
+output: 
+  bookdown::html_document2:
+    css: "style.css"
+    
+bibliography: blca.bib
+
+csl: frontiers_medical.csl
+
+header-includes:
+  \usepackage{longtable}
+  \usepackage{tabu}
+  \usepackage{caption}
+  \usepackage{makecell}
+  \usepackage{pdflscape}
+  \usepackage{array}
+  \usepackage{booktabs}
+  \usepackage{threeparttable}
+  \usepackage{threeparttablex}
+  \usepackage{wrapfig}
+  \usepackage{multirow}
+  \usepackage[normalem]{ulem}
+  \usepackage{colortbl}
+  \usepackage{xcolor}
+  \usepackage{float} \floatplacement{figure}{H} \floatplacement{table}{H}
+
+---
+
+```{r, setup, include = FALSE}
+
+library(Cairo)
+
+opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      dev = "cairo_pdf", 
+                      dpi = 600)
+
+set_flextable_defaults(font.family = "Cambria", 
+                       font.size = 10)
+
+
+```
+
+\newpage
+
+# Reviewer 1
+
+## Point 1
+
+### Issue 
+
+In some of the cohorts, there are patients with NMIBC (i.e. prior MSK IMPACT study with 20 - 25% NMIBC) and upper tract disease (i.e. IMvigor). 
+There are prior studies suggesting genomic landscapes differ widely among NMIBC vs. MIBC and upper tract vs. bladder cancers. 
+Therefore, it seems it would be beneficial to look at each of these groups separately (MIBC, NMIBC, and upper tract) rather than lump them all together. 
+Can the authors provide more justification about why they have included NMIBC and upper tract disease in this manuscript instead of focusing just on MIBC?
+
+### Response
+
+Thanks for this constructive comment. 
+We agree that urothelial tumors with different anatomical locations but also NMIBC and MIBC differ in their transcriptomic landscapes. 
+Because of the brief report format of our manuscript, we decided against separate analyses of upper/lower tract malignancies and comparison of NMIBC and MIBC, and will consider them in our future works. 
+Instead, we constrained the analyzed data sets to patient with MIBC of the bladder. 
+If no NMIBC/MIBC information was provided, we restricted the cancer samples to T2 - T4 stage tumors. 
+Please note that because of the very rudimentary clinical information for the GENIE cohort, we were not able to filter the samples by anatomical location and invasiveness. 
+Yet, as evident from __Figure 1B__, there were no substantial differences in location and density of mutations of _FGFR3_ between the unfiltered GENIE cohort and the MSK IMPACT, TCGA BLCA and BCAN cohorts restricted to bladder-only MIBC. 
+
+The final numbers of investigated cancer samples were: 
+n = `r length(genie$analysis_ids)` in the GENIE cohort, 
+n = `r length(msk$analysis_ids)` in the MCK IMPACT cohort, 
+n = `r length(tcga$analysis_ids)` in the TCGA BLCA cohort, 
+n = `r length(imvigor$analysis_ids)` in the IMvigor, and 
+n = `r length(bcan$analysis_ids)` in the BCAN collective. 
+
+## Point 2
+
+### Issue 
+
+Were any of the samples pre-treated in the five cohorts used? 
+What about for the drug screens, were any of those samples pre-treated? 
+
+### Response
+
+This is certainly an important point. 
+
+Samples in the bulk cancer transcriptome cohorts were indeed obtained from patients with diverse treatment history. 
+In __Supplementary Table S1__ of the revised manuscript, we present frequencies of patients with non-invasive intra-vesical treatment, surgery and distribution of surgery types, neoadjuvant treatment, adjuvant systemic treatment, systemic chemo- and immunotherapy, and radiation. 
+For most of the bulk cancer data sets (GENIE, MSK IMPACT, IMvigor, BCAN), this information was published along with the molecular data or extracted from the original publications. 
+For the TCGA BLCA cohort, the treatment information was derived from papers by Robertson et al. [@Robertson2017] and Moiso [@Moiso2021]. 
+
+Concerning the cell lines, we extracted demographic and clinical information of the donors from the DepMap portal [@DepMap2024] and present it in __Reviewer Table \@ref(tab:tab-cell-lines)__. 
+Unfortunately for none of the analyzed cell lines, treatment information was available. 
+
+## Point 3
+
+### Issue 
+
+While the authors show they can accurately predict the consensus classifier with FGF/FGFR pathway genes - the next step is what to do with the consensus classifier information? Currently we do not make any therapeutic recommendations based on the groups, so its a bit unclear how helpful this is moving forward.
+
+### Response
+
+We are completely aware that, at the moment, there are no recommendations on diagnostic and treatment of the MIBC consensus classes. 
+Following your suggestion, we predicted metrics of drug resistance (IC50 and AUC) for the bulk cancers in the TCGA BLCA, IMvigor, and BCAN cohorts with RIDGE linear models trained with drug response and transcriptome data of epithelial pan-cancer cell lines in the GDSC, CTRP2, and PRISM in vitro drug screening experiments [@Yang2013; @Seashore-Ludlow2015; @Corsello2020]. 
+Of note, this machine learning strategy employed our development package [_htGLMNET_](https://github.com/PiotrTymoszuk/htGLMNET) and regularized linear modeling approach to drug resistance prediction proposed by Geeleher at al. [@Geeleher2014] and successfully employed in our recent publication on testicular cancer [@Torzsok2025]. 
+Subsequently, we compared the predicted IC50 and AUC resistance metrics between the MIBC consensus classes (__Supplementary Figure XXX___). 
+These new data shows that for most of pan-FGFR inhibitors (AZD4547, FGFR3831, FGFR0939, erdafitinib), good sensitivity was predicted for the LumP class, the predicted response was highly heterogeneous in the renaming subsets. 
+In^particular, for Ba/Sq cancers resistance was forecasted, while stroma-rich were put forward as erdafitinib-responsive malignancies. 
+We also compared the resistance metrics of FGFR-targeting drugs for cancers with and without mutation of _FGFR3_ (__Supplementary Figure XXX__); in this case, no differences in predicted response between WT and mutant specimens were observed.
+
+## Point 4
+
+### Issue 
+
+Does Kamoun et al. provide SHAP values for the 857 genes in their classifier? 
+If so, would be interesting to know the value for FGF/FGFR genes. 
+What about any of the other consensus classifiers? 
+
+### Response
+
+We appreciate this point a lot. 
+Unfortunately, were were not able to find SHAP variable importance measures for the nearest centroid classification tool by Kamoun and colleagues. 
+As a workaround, we trained Elastic Net and Random Forest machine learning models of MIBC consensus classes in a training subset of two-thirds of observations of the TCGA BLCA cohort with the following explanatory factors: 
+
+* ComBat-adjusted $log_2$ expression levels of `r length(ml_globals$variables)` FGFR/FGF/FGFBP-related genes as outlined in the initial version of the manuscript
+
+* Combat-adjusted $log_2$ expression levels of `r length(mibc_globals$variables)` MIBC class-defining genes proposed by Kamoun et al [@Kamoun2020] and shared by the TCGA BLCA, IMvigor, and BCAN expression data sets
+
+In evaluation of model performance, the MIBC consensus class assignment by the genuine nearest centroid tool by Kamoun et al. served as the ground truth. 
+As presented in __Supplementary Figure YYY__ predictions of consensus classes by the models with the full set of predictors by Kamoun et al. were emulated the original classification tool with very high accuracy (test collectives, accuracy: `r mibc_comp$stats %>% filter(model == 'mibc_genes', !cohort %in% c('tcga', 'tcga_train'), algorithm != 'ensemble') %>% .$Accuracy %>% signif(2) %>% range %>% paste(collapse = ' to ')`, Cohen's $\kappa$: `r mibc_comp$stats %>% filter(model == 'mibc_genes', !cohort %in% c('tcga', 'tcga_train'), algorithm != 'ensemble') %>% .$Kappa %>% signif(2) %>% range %>% paste(collapse = ' to ')`). 
+Their performance was generally better that accuracy of the models employing solely the FGFR/FGF/FGFBP-related genes (test collectives, accuracy: `r mibc_comp$stats %>% filter(model == 'fgfr_genes', !cohort %in% c('tcga', 'tcga_train'), algorithm != 'ensemble') %>% .$Accuracy %>% signif(2) %>% range %>% paste(collapse = ' to ')`, Cohen's $\kappa$: `r mibc_comp$stats %>% filter(model == 'fgfr_genes', !cohort %in% c('tcga', 'tcga_train'), algorithm != 'ensemble') %>% .$Kappa %>% signif(2) %>% range %>% paste(collapse = ' to ')`), especially when it comes to assignment of cancer samples to LumU class. 
+Please note, that this later observation corroborates findings presented in the initial manuscript, that, except of _KL_ gene, there are no good FGFR/FGF/FGFBP-related markers of LumU cancers. 
+
+For the Elastic Net and Random Forest models of the consensus MIBC classes using the full gene set by Kamoun et al. SHAP importance measures of the explanatory variables were computed. 
+As shown in __Supplementary Figure ZZZZ__, except of _CD44_ whose levels were highly predictive for Ba/Sq cancers, none of the FGFR/FGF/FGFBP-related genes present in the genuine consensus class signature (`r intersect(ml_globals$variables, mibc_globals$variables) %>% map_chr(~paste0('_', .x, '_')) %>% collapse_and`) was found to be highly influential for the MIBC consensus class forecasts. 
+
+## Point 5
+
+### Issue 
+
+For the doses used for the cell culture experiments, do we know which concentration corresponds to a level that we would see in patients when using erdafitinib?
+
+### Response
+
+Thank you for this important comment. 
+In in vitro experiments we used 0 to 10 µM erdafitinib, which corresponds to around 0 to 4.5 mg/L erdafitinib. 
+The recommended dose for urothelial carcinoma patients with susceptible genetic alterations in the FGFR is 8 mg orally once daily [@FDA2024]. 
+Treating 2D cell lines cannot be compared directly to administration in humans due to the complex differences in pharmacokinetics. 
+Therefore, more research, in particular in pre-clinical animal models, is needed that can translate our findings to the clinical setting. 
+However, the erdafitinib concentration range in our study is commonly used in in vitro drug screenings, and has also been used in multiple reports on erdafitinib in urothelial cancer [@Ohtsu2022; @Li2023; @Zhong2024; @Zhong2024]. 
+
+## Point 6
+
+### Issue
+
+Isn't it plausible there is something co-expressed with the FGFR pathways that could be the true oncogenic driver? 
+Or be the real cause of the different phenotypes seen? 
+I'm not sure this study can prove that is not the case so this may need to be acknowledged as a limitation.
+
+### Response
+
+We agree with you. 
+By means of statistical inference and modeling, we cannot prove causality, i.e. unequivocally demonstrate that FGFR signaling drives bladder cancer in general. 
+For this reason, we re-formulated carefully the title, abstract, and conclusions of the manuscript and abstain from the 'driver' term. 
+Instead, we underline diversity of activation mechanisms of FGFR signaling in urothelial cancers and which lets us advocate for a broader use of FGFR blockers, independently of _FGFR3_ mutations. 
+
+Nevertheless, inspired by you comment, we sought to carefully gauge activity of FGFR signaling by comparison of scores [@Hanzelmann2013] of `r length(sub_sig$variables)` FGFR-related gene signatures from MSig database between the consensus classes of MIBC. 
+Please note, that most of those signatures included ligand and co-receptor genes, and may be hence regarded as a proxy of ligand- and co-receptor-dependent FGFR signaling. 
+Interestingly, `r sub_sig$hm_plots$tcga$data %>% filter(variable_subset == 'Stroma-rich', !duplicated(variable)) %>% nrow` of those signatures were found to be significantly upregulated in stroma-rich cancers in at least two out of TCGA BLCA, IMvigor, and BCAN cohorts (__Supplementary Figure VVV__, __Supplementary Table VVV__). 
+
+## Point 7
+
+### Issue 
+
+I understand this is a brief correspondence, but there is no mention of the limitations of this work in the manuscript. 
+
+### Response
+
+To address this point, we have added the limitation section to the manuscript. 
+As the limitations we list: 
+
+* incompleteness of the clinical and multi-omics data for the GENIE and MSK IMPACT cohorts (lacking transcriptome data), which precluded analyses of transcriptome, gene signatures, and drug response predictions
+
+* observational character of our study based on bioinformatic analyses, which require validation in a real-world clinical setting
+
+# Reviewer 2
+
+## Point 8
+
+### Issue
+
+As a small suggestion, Authors should only briefly describe and further discuss the significant clinical impact of FGFR inhibitors in the current clinical practice.
+
+### Response
+
+Thanks for this constructive suggestion. 
+We appended the introduction with a section on clinical relevance and important ongoing studies on FGFR inhibitors in urothelial carcinoma.
+We also discuss that there is already compelling evidence that also patients without FGFR alterations may benefit from treatment with FGFR inhibitors. 
+
+# Reviewer 3
+
+## Point 9
+
+### Issue 
+
+Limitations: could the Authors add possible limitations of this study?
+
+### Response
+
+Following your and Reviewer 1 suggestion we included a listing of the following limitations in the final part of the text: 
+
+* incompleteness of the clinical and multi-omics data for the GENIE and MSK IMPACT cohorts (lacking transcriptome data), which precluded analyses of transcriptome, gene signatures, and drug response predictions
+
+* observational character of our study based on bioinformatic analyses, which require validation in a real-world clinical setting
+
+\newpage
+
+# Tables for Reviewers
+
+```{r tab-cell-lines, tab.cap = "Demographic, clinical, and pathological characteristic of donors of the DepMap urothelial cancer cell lines. Numeric variables are presented as medians with interquartile ranges and ranges. Qualitative variables are shown as percentages of the categories."}
+
+flextable::flextable(rev_tabs$cell_lines) %>% 
+  set_widths(c(4.5, 5.5)) %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+# References

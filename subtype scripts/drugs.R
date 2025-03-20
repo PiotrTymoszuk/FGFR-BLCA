@@ -310,7 +310,7 @@
          ~.x +
            scale_y_discrete(labels = set_names(.y$hm_label, .y$variable)))
 
-  sub_drugs$hm_plots$sub_drugs <-
+  sub_drugs$hm_plots$fgfr_drugs <-
     map2(sub_drugs$hm_plots$fgfr_drugs,
          sub_drugs$kruskal,
          ~.x +
@@ -355,7 +355,7 @@
 
   sub_drugs$result_tbl <-
     map2(sub_drugs$stats,
-         sub_drugs$test %>%
+         sub_drugs$kruskal %>%
            map(~.x[c('variable', 'title_label', 'significance', 'eff_size')]),
          left_join, by = 'variable') %>%
     compress(names_to = 'cohort') %>%
