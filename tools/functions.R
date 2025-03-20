@@ -241,6 +241,9 @@
               replacement = '') %>%
       map_dfc(stri_replace,
               regex = '^\\n',
+              replacement = '') %>%
+      map_dfc(stri_replace,
+              regex = '^yes:\\s{1}',
               replacement = '')
 
     if(!remove_complete) return(df)
@@ -569,8 +572,10 @@
 
     plot_grid(domain_plot,
               position_plot +
+                cust_theme +
                 theme(plot.title = element_blank(),
-                      plot.subtitle = element_blank()),
+                      plot.subtitle = element_blank(),
+                      legend.position = 'none'),
               nrow = 2,
               rel_heights = rel_heights,
               align = align,
@@ -1232,10 +1237,10 @@
     ## the best-performing model
 
     ranger_args <-
-      best_tune[!names(best_tune) %in% c(c('mse_oob',
+      best_tune[!names(best_tune) %in% c('mse_oob',
                                            'rsq_oob',
                                            'class_error_oob',
-                                           'model_id'))]
+                                           'model_id')]
 
     if(tune_stat == 'prediction.error') {
 
@@ -1775,6 +1780,7 @@
   }
 
   my_shap_bee <- function(shapviz_obj,
+                          variables = NULL,
                           top_variables = 10,
                           title_suffix = NULL,
                           point_size = 2,
@@ -1786,7 +1792,9 @@
                           panels = FALSE,
                           rel_widths = c(0.65, 0.35),
                           add_legend = TRUE,
-                          rel_heights = c(0.85, 0.15)) {
+                          rel_heights = c(0.85, 0.15),
+                          n_breaks = NULL,
+                          cust_theme = globals$common_theme) {
 
     ## a customized bee-swarm plot of SHAP values as a function of feature
     ## value (min/max) for multinomial classification models
@@ -1814,6 +1822,13 @@
       map2(plot_data$shap,
            plot_data$ft,
            ~set_rownames(.x, rownames(.y)))
+
+    if(!is.null(variables)) {
+
+      plot_data$shap <- plot_data$shap %>%
+        map(~.x[, variables])
+
+    }
 
     ft_names <- plot_data$ft %>%
       map(colnames)
@@ -1945,7 +1960,7 @@
                        alpha = point_alpha,
                        position = position_jitter(width = 0,
                                                   height = point_jitter)) +
-            globals$common_theme +
+            cust_theme +
             theme(axis.title.y = element_blank(),
                   axis.text.y = element_text(face = 'italic')) +
             scale_x_continuous(limits = bee_range) +
@@ -1972,12 +1987,13 @@
                       stat = 'identity') +
              geom_vline(xintercept = 0,
                         linetype = 'dashed') +
-             scale_x_continuous(limits = c(0, imp_range[[2]])) +
+             scale_x_continuous(limits = c(0, imp_range[[2]]),
+                                n.breaks = n_breaks) +
              scale_fill_manual(values = c(positive = 'firebrick',
                                           negative = 'steelblue',
                                           ns = 'gray60'),
                                name = 'association\nwith response') +
-             globals$common_theme +
+             cust_theme +
              theme(axis.title.y = element_blank(),
                    axis.text.y = element_text(face = 'italic')) +
              labs(title = y,
@@ -2125,6 +2141,346 @@
                 rel_widths = c(0.1, 0.9))
 
     plot_panel
+
+  }
+
+# Drug resistance analyses --------
+
+  classify_moa <- function(x) {
+
+    # creates a simplified classification of drugs based on
+    # mechanism of action and molecular targets
+
+    ## classification criteria
+
+    class_lst <-
+      list('DNA' = c('DNA', 'Genome', 'genome', 'replication', 'nucleo',
+                     'topoisomerase', 'helicase', 'telomerase', 'pyrimidine',
+                     'Nelarabine', 'platin', 'mitomycin', 'NAMPT', 'Ara-'),
+           'cytoskeleton' = c('Cytoskeleton', 'cytoskeleton', 'microtubule',
+                              'Microtubulin', 'kinesin', 'Kinesin', 'tubulin',
+                              'Tubulin', 'Vincristine', 'vincristine',
+                              'PACLITAX', 'paclitax',
+                              'docetax'),
+           'GF signaling' = c('RTK', 'kit', 'KIT', 'Abl', 'ABL',
+                              'ABL', 'IGF1R', 'ephrin', 'IRAK', 'PAK',
+                              'Ephrin', 'EPH', 'FGFR', 'PI3K', 'mTOR', 'MTOR',
+                              'RAF', 'RAS', 'PKC', 'Bruton', 'FLT', 'flt', 'MET',
+                              'STAT3', 'SRC', 'WNT', 'focal\\s{1}adhes',
+                              'insulin', 'rho', 'exportin', 'BTK', 'FYN', 'LCK',
+                              'TAK', 'NIK', 'PIM', 'AKT'),
+           'MAPK' = c('MAPK', 'ERK', 'MEK', 'p38', 'JNK', 'Jnk'),
+           'EGFR/ERBB' = c('EGFR', 'Egfr', 'ERBB', 'Erbb', 'HER'),
+           'VEGFR/PDGFR' = c('VEGF', 'PDGFR', 'KDR'),
+           'cell cycle' = c('cell\\s{1}cycle', 'Cell\\s{1}cycle',
+                            'aurora', 'Aurora', 'CDK', 'PARP',
+                            'Mitosis', 'mitosis', 'cyclin', 'Cyclin',
+                            'polo-like', 'PLK', 'p53', 'TP53', 'AURK', 'MDM2',
+                            'ADP-ribose', 'GADD34'),
+           'cell death' = c('apoptosis', 'Apoptosis',
+                            'Bcl', 'BCL', 'Bid', 'BID', 'Bax', 'BAX',
+                            'SMAC', 'Smac', 'Caspase', 'caspase', 'DIABLO',
+                            'Mcl', 'MCL', 'IAP', 'Iap'),
+           'epigenetics' = c('chromatin', 'Chromatin', 'histone', 'Histone',
+                             'HDAC', 'DNMT', 'methyltransf', 'acetylase', 'BRD',
+                             'Bromo', 'bromo'),
+           'protein' = c('Protein\\s{1}stability',
+                         'protein\\s{1}stability', 'HSP', 'proteasom',
+                         'protein\\s{1}translation', 'ubiquitin',
+                         'eEF2K', 'farnesyl'),
+           'hormones' = c('Hormone', 'hormone', 'aromatase', 'progesterone',
+                          'estrogen', 'androgen', 'ESR', 'AR'),
+           'metabolism' = c('metabolism', 'Metabolism', 'HMG-CoA', 'anhydrase',
+                            'fatty', 'ATP\\s{1}synthase', 'hydroxyphenylpyruvate',
+                            'Dihydrorotenone', 'CYP3A4')) %>%
+      map(paste, collapse = '|')
+
+    ## classification
+
+    x$moa_short <- NA
+
+    x <- x %>%
+      mutate(targets_tmp = map_chr(targets, paste, collapse = ', '))
+
+    for(i in seq_along(class_lst)) {
+
+      x <- x %>%
+        mutate(moa_short = ifelse(stri_detect(variable, regex = class_lst[[i]]),
+                                  names(class_lst)[[i]], moa_short)) %>%
+        mutate(moa_short = ifelse(stri_detect(drug_name, regex = class_lst[[i]]),
+                                  names(class_lst)[[i]], moa_short)) %>%
+        mutate(moa_short = ifelse(stri_detect(moa, regex = class_lst[[i]]),
+                                  names(class_lst)[[i]], moa_short)) %>%
+        mutate(moa_short = ifelse(stri_detect(targets_tmp, regex = class_lst[[i]]),
+                                  names(class_lst)[[i]], moa_short))
+
+    }
+
+    x <- x %>%
+      mutate(moa_short = ifelse(drug_name == 'Vincristine',
+                                'cytoskeleton', moa_short),
+             moa_short = ifelse(is.na(moa_short), 'other', moa_short),
+             moa_short = factor(moa_short),
+             moa_short = fct_relevel(moa_short,
+                                     'other',
+                                     after = Inf))
+
+    return(x)
+
+  }
+
+  make_target_dict <- function(x) {
+
+    ## generates a list of drug variable vectors: each element represents
+    ## one molecular target
+
+    ## target replacement: DNA and cytoskeleton --------
+
+    x$targets <-
+      map2(x$moa_short,
+           x$targets,
+           function(x, y) {
+
+             if(stri_detect(x, fixed = 'cytoskel')) {
+
+               return(c(y, 'cytoskeleton'))
+
+             }
+
+             return(y)
+
+           })
+
+    x$targets <-
+      map2(x$moa_short,
+           x$targets,
+           function(x, y) {
+
+             if(stri_detect(x, fixed = 'DNA')) {
+
+               return(c(y, 'DNA'))
+
+             }
+
+             return(y)
+
+           })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = '(m|M)icrotub'))) {
+
+          return(c(x, 'microtubule'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = '(KDR|VEGF)'))) {
+
+          return(c(x, 'VEGFR'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = 'DNA'))) {
+
+          return(c(x, 'DNA'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = 'MEK(1|2)'))) {
+
+          return(stri_replace(x,
+                              fixed = 'MEK',
+                              replacement = 'MAP2K'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = '^c\\-'))) {
+
+          return(stri_replace(x,
+                              regex = '^c\\-',
+                              replacement = ''))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = 'RAS'))) {
+
+          return(c(x, 'RAS'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = 'mTOR'))) {
+
+          return(stri_replace(x,
+                              fixed = 'mTOR',
+                              replacement = 'MTOR'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = '^HDAC'))) {
+
+          return(c(x, 'HDAC'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = 'Alkylating agent'))) {
+
+          return(c(x, 'DNA alkylating agent'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = '(Anti\\-meta|Antimeta)'))) {
+
+          return(c(x, 'Antimetabolite'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = 'PARP'))) {
+
+          return(c(x, 'PARP'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = 'PI3K|PI\\-3K'))) {
+
+          return(c(x, 'PI3K'))
+
+        }
+
+        return(x)
+
+      })
+
+    x$targets <- x$targets %>%
+      map(function(x) {
+
+        if(all(is.na(x))) return(x)
+
+        if(any(stri_detect(na.omit(x), regex = '^IAP'))) {
+
+          return(stri_replace(x,
+                              regex = '^IAP',
+                              replacement = 'XIAP'))
+
+        }
+
+        return(x)
+
+      })
+
+    ## dictionary list --------
+
+    all_targets <- na.omit(unique(unlist(x$targets)))
+
+    dict <- all_targets %>%
+      set_names(all_targets) %>%
+      map(~safely(reglook)(x[, c('variable', 'targets')], .x)) %>%
+      map(~.x$result)
+
+    dict %>%
+      compact %>%
+      map(~.x$variable)
 
   }
 

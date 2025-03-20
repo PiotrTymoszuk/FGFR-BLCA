@@ -19,7 +19,7 @@
 
   combat$genes <- combat$raw_expression %>%
     map(names) %>%
-    map(~.x[!.x %in% c('sample_id', 'patient_id', 'tissue')]) %>%
+    map(~.x[!.x %in% c('sample_id', 'patient_id', 'tissue', 'tisue_type')]) %>%
     reduce(intersect)
 
   combat$raw_expression <- combat$raw_expression %>%
@@ -44,7 +44,7 @@
     map(rownames_to_column, 'sample_id') %>%
     map(as_tibble)
 
-# Cachinig the results -------
+# Caching the results -------
 
   insert_msg('Caching')
 

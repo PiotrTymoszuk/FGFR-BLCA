@@ -111,7 +111,9 @@
   insert_msg('Result table')
 
   expl_cohorts$result_tbl <-
-    merge_stat_test(expl_cohorts$stats, expl_cohorts$test) %>%
+    merge_stat_test(expl_cohorts$stats,
+                    expl_cohorts$test %>%
+                      filter(!stri_detect(eff_size, fixed = 'Inf'))) %>%
     format_res_tbl(dict = expl_cohorts$lexicon,
                    value = 'table_label')
 

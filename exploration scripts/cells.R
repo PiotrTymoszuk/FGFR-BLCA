@@ -23,7 +23,7 @@
     blast(type) %>%
     map(~.x$variable)
 
-# descriptive stats -------
+# descriptive stats for the drug resistance -------
 
   insert_msg('Descriptive stats')
 

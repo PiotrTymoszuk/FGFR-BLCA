@@ -1,4 +1,10 @@
-# Import of the TCGA BLCA data set
+# Import of the TCGA BLCA data set: the cBioportal PanCancer
+# version by Liu et al. 2018
+#
+# Smoking and surgical treatment information is extracted from the seminal
+# TCGA BLCA paper by Robertson et al. (DOI: 10.1016/j.cell.2017.09.007).
+# Pharmacological treatment data is extracted from the paper by Moioso et al.
+# 2021 (DOI: 10.1101/2021.04.30.21251941 )
 
   insert_head()
 
@@ -122,10 +128,72 @@
               msi_score = as.numeric(MSI_SCORE_MANTIS),
               tmb_per_mb = as.numeric(TMB_NONSYNONYMOUS))
 
+  ## clinical data of interest extracted from the paper by Robertson et al.
+
+  tcga$clinic$robertson <-
+    read_xlsx('./data/TCGA PanCancer/NIHMS911030-supplement-8.xlsx',
+              sheet = 2)
+
+  tcga$clinic$robertson <- tcga$clinic$robertson %>%
+    transmute(patient_id = `Case ID`,
+              surgery_type = car::recode(`Method initial path dx`,
+                                         "'Endoscopic Biopsy' = 'endoscopic biopsy';
+                                         'Transurethral resection (TURBT)' = 'TURBT'"),
+              surgery_type = factor(surgery_type,
+                                    c('TURBT', 'endoscopic biopsy')),
+              surgery_other = car::recode(`Method initial path dx other`,
+                                          "'TURP' = 'TURBT'"),
+              surgery_other = ifelse(stri_detect(surgery_other,
+                                                 regex = 'Cyste|cyste|res|Resection|CT|Cystopro|cystopro'),
+                                     'cystectomy', 'other'),
+              surgery_type = ifelse(is.na(surgery_type),
+                                    surgery_other, as.character(surgery_type)),
+              surgery_type = factor(surgery_type,
+                                    c('cystectomy', 'TURBT',
+                                      'endoscopic biopsy', 'other')),
+              noninvasive_treatment = factor(tolower(`Noninvasive bladder history`),
+                                             c('no', 'yes')),
+              smoking_history = car::recode(`Tobacco smoking history`,
+                                            "'Lifelong Non-smoker' = 'no';
+                                            'ND' = NA"),
+              smoking_history = ifelse(!is.na(smoking_history) & smoking_history != 'no',
+                                       'yes', smoking_history),
+              smoking_history = factor(smoking_history, c('no', 'yes')))
+
+  ## pharmacological treatment data extracted from the paper by Moioso et al.
+  ## drug details available on request
+
+  tcga$clinic$moioso <- read_tsv('./data/TCGA PanCancer/Moioso_2021.tsv')
+
+  tcga$clinic$moioso <- tcga$clinic$moioso %>%
+    transmute(patient_id = toupper(patient_barcode),
+              therapy_type = therapy_type,
+              systemic_chemotherapy = ifelse(therapy_type == 'chemotherapy',
+                                             'yes', 'no'),
+              systemic_chemotherapy = factor(systemic_chemotherapy,
+                                             c('no', 'yes')),
+              therapy_type = factor(therapy_type)) %>%
+    filter(patient_id %in% tcga$clinic$patient$patient_id,
+           complete.cases(.)) %>%
+    filter(!duplicated(patient_id))
+
   ## a common frame with the clinical information
 
-  tcga$clinic <- tcga$clinic %>%
-    reduce(inner_join, by = 'patient_id')
+  tcga$clinic <- tcga$clinic[c('patient', 'sample')] %>%
+    reduce(inner_join, by = 'patient_id') %>%
+    left_join(tcga$clinic$robertson,
+              by = 'patient_id') %>%
+    left_join(tcga$clinic$moioso,
+              by = 'patient_id') %>%
+    mutate(systemic_chemotherapy = ifelse(is.na(systemic_chemotherapy),
+                                          'no', as.character(systemic_chemotherapy)),
+           systemic_chemotherapy = factor(systemic_chemotherapy,
+                                          c('no', 'yes')),
+           systemic_treatment = ifelse(!is.na(therapy_type), 'yes', 'no'),
+           systemic_treatment = factor(systemic_treatment),
+           immunotherapy = ifelse(therapy_type == 'immunotherapy', 'yes', 'no'),
+           immunotherapy = factor(immunotherapy, c('no', 'yes')),
+           intravesical_treatment = noninvasive_treatment)
 
 # Mutation data ------
 
@@ -174,14 +242,24 @@
     map(rownames_to_column, 'sample_id') %>%
     map(as_tibble)
 
-# Restricting the data sets to the patients with complete information ------
+# Restricting to MIBC bladder samples with complete information ------
 
   insert_msg('Complete cases')
+
+  ## analysis IDs
 
   tcga$complete_ids <-
     tcga[c("clinic", "expression", "mutation", "deletion", "amplification")] %>%
     map(~.x$sample_id) %>%
     reduce(intersect)
+
+  tcga$analysis_ids <- tcga$clinic %>%
+    filter(tissue == 'bladder',
+           invasiveness == 'muscle invasive') %>%
+    .$sample_id
+
+  tcga$analysis_ids <- intersect(tcga$complete_ids,
+                                 tcga$analysis_ids)
 
   tcga[c("clinic", "expression",
          "mutation", "mutation_detail",
@@ -189,7 +267,9 @@
     tcga[c("clinic", "expression",
            "mutation", "mutation_detail",
            "deletion", "amplification")] %>%
-    map(filter, sample_id %in% tcga$complete_ids)
+    map(filter, sample_id %in% tcga$analysis_ids)
+
+# Reading the treatment data from the genuine paper by
 
 # Caching the results -------
 
@@ -198,7 +278,8 @@
   tcga <- tcga[c("clinic",
                  "expression", "annotation",
                  "mutation_detail", "mutation",
-                 "deletion", "amplification")]
+                 "deletion", "amplification",
+                 "analysis_ids")]
 
   save(tcga, file = './data/tcga.RData')
 

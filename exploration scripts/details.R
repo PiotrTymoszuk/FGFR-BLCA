@@ -85,7 +85,7 @@
              names %>%
              html_italic %>%
              paste(globals$cohort_labs[[i]], sep = ', '),
-           protein_length = globals$receptor_lengths) %>%
+           protein_length = globals$receptor_lengths[names(expl_fgfr$position_data[[i]])]) %>%
       pmap(position_plot,
            fill_var = 'protein_domain',
            palette = globals$domain_colors[c("Ig-like C2-type 1",
@@ -95,12 +95,13 @@
              c('not assigned' = 'gray40'),
            y_limits = rev(c('missense',
                             'nonsense',
-                            'in−frame deletion',
-                            'in−frame insertion',
+                            'in-frame deletion',
+                            'in-frame insertion',
                             'frame shift deletion',
                             'frame shift insertion',
                             'splice region',
-                            'splice site')),
+                            'splice site',
+                            'stop loss')),
            point_shape = 16,
            point_size = 1,
            point_alpha = 1)%>%
@@ -117,7 +118,7 @@
   expl_fgfr$domain_plots <-
     list(domain_tbl = expl_fgfr$domain_lst,
          protein_name = names(expl_fgfr$domain_lst),
-         protein_length = globals$receptor_lengths) %>%
+         protein_length = globals$receptor_lengths[names(expl_fgfr$domain_lst)]) %>%
     pmap(plot_domains)
 
   ## adding the domain schemes to the position plots
@@ -126,9 +127,9 @@
 
     expl_fgfr$position_plots[[i]] <-
       list(position_plot = expl_fgfr$position_plots[[i]],
-           domain_tbl = expl_fgfr$domain_lst,
-           protein_name = names(expl_fgfr$domain_lst),
-           protein_length = globals$receptor_lengths) %>%
+           domain_tbl = expl_fgfr$domain_lst[names(expl_fgfr$position_plots[[i]])],
+           protein_name = names(expl_fgfr$position_plots[[i]]),
+           protein_length = globals$receptor_lengths[names(expl_fgfr$position_plots[[i]])]) %>%
       pmap(append_domain_scheme,
            align = 'v',
            rm_position_legend = TRUE,

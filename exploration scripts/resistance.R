@@ -143,18 +143,29 @@
                         color = 'black',
                         linewidth = 0.5,
                         fill = 'cornsilk') +
-           geom_point(aes(shape = FGFR3_mutation),
-                      size = 2,
+           geom_point(aes(shape = FGFR3_mutation,
+                          size = FGFR3_mutation,
+                          alpha = FGFR3_mutation,
+                          fill = status),
                       position = position_jitter(0, 0.1)) +
-           geom_text_repel(aes(label = name_lab),
-                           size = 2.3,
-                           show.legend = FALSE) +
-           scale_shape_manual(values = c(WT = 16,
-                                         mutated = 4),
+           #geom_text_repel(aes(label = name_lab),
+            #               size = 2.3,
+             #              show.legend = FALSE) +
+           scale_shape_manual(values = c(WT = 8,
+                                         mutated = 23),
+                              name = html_italic('FGFR3')) +
+           scale_size_manual(values = c(WT = 2,
+                                        mutated = 3),
+                             name = html_italic('FGFR3')) +
+           scale_alpha_manual(values = c(WT = 0.5,
+                                         mutated = 1),
                               name = html_italic('FGFR3')) +
            scale_color_manual(values = c(sensitive = 'steelblue',
                                          resistant = 'firebrick'),
                               name = '') +
+           scale_fill_manual(values = c(sensitive = 'steelblue',
+                                        resistant = 'firebrick'),
+                             name = '') +
            scale_x_continuous(trans = w) +
            globals$common_theme +
            theme(axis.title.y = element_blank(),

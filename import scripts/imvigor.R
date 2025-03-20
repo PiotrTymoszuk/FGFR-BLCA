@@ -38,9 +38,13 @@
               bcg_therapy = car::recode(as.character(`Intravesical BCG administered`),
                                         "'N' = 'no'; 'Y' = 'yes'"),
               bcg_therapy = factor(bcg_therapy, c('no', 'yes')),
+              intravesical_treatment = bcg_therapy,
               ecog_baseline = `Baseline ECOG Score`,
               smoking = factor(tolower(`Tobacco Use History`),
                                c('never', 'previous', 'current')),
+              smoking_history = ifelse(smoking %in% c('previous', 'current'),
+                                       'yes', 'no'),
+              smoking_history = factor(smoking_history, c('no', 'yes')),
               meta_site = car::recode(as.character(`Met Disease Status`),
                                       "'Liver' = 'liver';
                                       'LN Only' = 'LN';
@@ -55,6 +59,13 @@
                                          "'Y' = 'yes'; 'N' = 'no'"),
               neo_platinum = factor(neo_platinum, c('no', 'yes')),
               neoadjuvant = neo_platinum,
+              systemic_treatment = factor('yes', c('no', 'yes')), ## chemo-resistant tumors in the cohort
+              systemic_chemotherapy = ifelse(platinum == 'yes' |
+                                               neo_platinum == 'yes',
+                                             'yes', 'no'),
+              systemic_chemotherapy = factor(systemic_chemotherapy,
+                                             c('no', 'yes')),
+              immunotherapy = factor('yes', c('no', 'yes')), ## as per protocol
               neoag_per_mb = `Neoantigen burden per MB`,
               size_factor = sizeFactor,
               patient_id = ANONPT_ID,
@@ -195,9 +206,9 @@
                imvigor$mutation,
                by = 'sample_id')
 
-# Patients with the complete mutation and expression information ------
+# Samples with the complete mutation and expression information ------
 
-  insert_msg('Patients with complete mutation and expression data')
+  insert_msg('Samples with complete mutation and expression data')
 
   ## and removal of single duplicates
 
@@ -213,15 +224,29 @@
     map(mutate,
         sample_id = patient_id)
 
-# Simplifying the clinical information and caching -------
+# Simplifying the clinical information, MIBC bladder samples -------
 
-  insert_msg('Simplifying the clinical information and caching')
+  insert_msg('Simplifying the clinical information, selection of bladder MIBC')
 
   imvigor$clinic <- imvigor$mut_clinic
 
+  imvigor$analysis_ids <- imvigor$clinic %>%
+    filter(tissue == 'bladder',
+           invasiveness == 'muscle invasive') %>%
+    .$sample_id
+
+  imvigor[c("clinic", "expression", "mutation")] <-
+    imvigor[c("clinic", "expression", "mutation")] %>%
+    map(filter, sample_id %in% imvigor$analysis_ids)
+
+# Caching ------
+
+  insert_msg('Caching')
+
   imvigor <- imvigor[c("clinic",
                        "expression", "exp_annotation",
-                       "mutation", "mut_annotation")]
+                       "mutation", "mut_annotation",
+                       "analysis_ids")]
 
   save(imvigor, file = './data/imvigor.RData')
 

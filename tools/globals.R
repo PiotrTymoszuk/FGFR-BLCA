@@ -49,6 +49,38 @@
           legend.title = globals$common_text,
           plot.margin = globals$common_margin)
 
+  ## common theme for the paper figure
+
+  globals$figure_text <- element_text(size = 10 ,
+                                      face = 'plain',
+                                      color = 'black')
+
+  globals$figure_margin <- ggplot2::margin(t = 2,
+                                           l = 2,
+                                           r = 2,
+                                           unit = 'mm')
+
+  globals$figure_theme <- theme_classic() +
+    theme(axis.text = globals$figure_text,
+          axis.title = globals$figure_text,
+          plot.title = element_text(size = 10,
+                                    face = 'bold'),
+          plot.subtitle = globals$figure_text,
+          plot.tag = element_text(size = 10,
+                                  face = 'plain',
+                                  color = 'black',
+                                  hjust = 0,
+                                  vjust = 1),
+          plot.tag.position = 'bottom',
+          legend.text = globals$figure_text,
+          legend.title = globals$figure_text,
+          strip.text = globals$figure_text,
+          strip.background = element_rect(fill = 'gray95',
+                                          color = 'gray80'),
+          plot.margin = globals$common_margin,
+          panel.grid.major = element_line(color = 'gray90'))
+
+
 # cohort labs and colors ------
 
   insert_msg('Color labs and colors')
@@ -59,7 +91,9 @@
                            imvigor = 'IMvigor',
                            bcan = 'BCAN',
                            hpa = 'HPA',
-                           depmap = 'DepMap cell lines')
+                           depmap = 'DepMap cell lines',
+                           tcga_train = 'TCGA BLCA, training',
+                           tcga_test = 'TCGA BLCA, test')
 
   globals$cohort_colors <- c(genie = 'indianred3',
                              msk = 'darkolivegreen4',
@@ -80,7 +114,10 @@
   ## criterion
 
   globals$analysis_cohorts <-
-    globals$cohort_labs[!names(globals$cohort_labs) %in% c('hpa', 'depmap')] %>%
+    globals$cohort_labs[!names(globals$cohort_labs) %in% c('hpa',
+                                                           'depmap',
+                                                           'tcga_train',
+                                                           'tcga_test')] %>%
     names
 
   globals$cohort_expr <- globals$analysis_cohorts %>%
@@ -159,16 +196,24 @@
   insert_msg('Clinical variables')
 
   globals$clinic_lexicon <-
-    tibble(variable = c('age', 'sex',
+    tibble(variable = c('age', 'sex', 'smoking_history',
                         'tissue', 'invasiveness',
                         'pt_stage', 'pn_stage', 'pm_stage',
                         'tmb_per_mb',
-                        'bi_response', 'death'),
-           label = c('Age', 'Gender',
+                        'bi_response', 'death',
+                        'neoadjuvant', 'surgery_type',
+                        'intravesical_treatment', 'systemic_treatment',
+                        'systemic_chemotherapy', 'radiation',
+                        'immunotherapy'),
+           label = c('Age', 'Gender', 'Smoking history',
                      'Tissue', 'Invasiveness',
                      'pT stage', 'pN stage', 'pM stage',
                      'Mutation burden',
-                     'Best overall response', 'Mortality')) %>%
+                     'Best overall response', 'Mortality',
+                     'Neoadjuvant treatment', 'Surgical treatment',
+                     'Intravesical treatment', 'Systemic therapy',
+                     'Systemic chemotherapy', 'Radiation therapy',
+                     'Immunotherapy')) %>%
     mutate(format = ifelse(variable %in% c('age', 'tmb_per_mb'),
                            'numeric', 'factor'),
            unit = ifelse(variable == 'age', 'years',
@@ -218,13 +263,35 @@
 
 # genetic cluster colors ------
 
+  #globals$genet_colors <-
+    #c('mutRB1' = 'bisque3',
+     # 'hyperMut' = 'plum4',
+      #'mutFGFR3' = 'aquamarine3',
+      #'oligoMut' = 'orangered3',
+      #'ampMDM2' = 'firebrick',
+      #'del9p21' = 'steelblue')
+
   globals$genet_colors <-
-    c('mutRB1' = 'bisque3',
+    c('del9p21' = 'steelblue',
       'hyperMut' = 'plum4',
-      'mutFGFR3' = 'aquamarine3',
-      'oligoMut' = 'orangered3',
-      'ampMDM2' = 'firebrick',
-      'del9p21' = 'steelblue')
+      'amp11q13' = 'orangered3',
+      'mutRB1' = 'bisque3',
+      'mutFGFR3' = 'aquamarine3')
+
+# colors for drug screening experiments ------
+
+  globals$screen_colors <-
+    c('GDSC1' = 'plum4',
+      'GDSC2' = 'firebrick4',
+      'CTRP2' = 'darkolivegreen',
+      'PRISM' = 'steelblue3')
+
+# colors and labels for the algorithms --------
+
+  globals$algo_labs <-
+    c(elnet = 'Elastic Net',
+      ranger = 'Random Forest',
+      ensemble = 'Ensemble')
 
 # END -------
 

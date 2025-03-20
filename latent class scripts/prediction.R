@@ -27,17 +27,16 @@
 
 # The model of interest and predictions -------
 
-  insert_msg('6-class model and predictions')
+  insert_msg('5-class model and predictions')
 
-  lca_pred$model <- lca_dev$tune_object$models$class_6
+  lca_pred$model <- lca_dev$tune_object$models$class_5
 
   lca_pred$model$class_names <-
     c('del9p21',
-      'oligoMut',
-      'ampMDM2',
+      'hyperMut',
+      'amp11q13',
       'mutRB1',
-      'mutFGFR3',
-      'hyperMut')
+      'mutFGFR3')
 
   ## predictions
 

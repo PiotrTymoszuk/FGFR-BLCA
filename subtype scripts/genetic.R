@@ -56,6 +56,15 @@
 
   }
 
+  ## removal of the LumNS, NE-like, and not assigned subsets,
+  ## not enought cases for an analysis in the IMvigor and BCAN cohorts
+
+  sub_genet$data <- sub_genet$data %>%
+    map(filter,
+        !consensusClass %in% c('not assigned', 'LumNS', 'NE-like')) %>%
+    map(mutate,
+        consensusClass = droplevels(consensusClass))
+
   ## data set-specific variable vectors
 
   sub_genet$variables <- sub_genet$data %>%
@@ -104,7 +113,7 @@
                                 f = x[['consensusClass']],
                                 background = x[, -1],
                                 alternative = 'greater',
-                                n_iter = 10000,
+                                n_iter = 40000,
                                 as_data_frame = TRUE,
                                 compress = TRUE,
                                 adj_method = 'BH'))
@@ -159,23 +168,29 @@
   ## global testing results to be displayed in the plots
 
   sub_genet$stack_test <- sub_genet$test %>%
-    map(filter, !duplicated(variable))
+    map(filter, !duplicated(variable)) %>%
+    map(mutate,
+        alteration_short = car::recode(alteration,
+                                       "'mutation' = 'mut';
+                                       'deletion' = 'del';
+                                       'amplification' = 'amp'")) %>%
+    map(arrange, p_value)
 
 # Stack plots for single genetic features --------
 
   insert_msg('Stack plots')
 
-  ## plots
+  ## plots: top 5 significant effects
 
   for(i in names(sub_genet$data)) {
 
     sub_genet$plots[[i]] <-
-      list(variable = sub_genet$stack_test[[i]]$variable,
-           plot_title = sub_genet$stack_test[[i]]$gene_symbol %>%
+      list(variable = sub_genet$stack_test[[i]][1:5, ]$variable,
+           plot_title = sub_genet$stack_test[[i]][1:5, ]$gene_symbol %>%
              html_italic %>%
              paste(globals$cohort_labs[[i]], sep = ', '),
-           plot_subtitle = sub_genet$stack_test[[i]]$plot_cap) %>%
-      pmap(plot_variable,
+           plot_subtitle = sub_genet$stack_test[[i]][1:5, ]$plot_cap) %>%
+      future_pmap(plot_variable,
                   sub_genet$data[[i]],
                   split_factor = 'consensusClass',
                   type = 'stack',
@@ -184,8 +199,9 @@
                     theme(plot.title = element_markdown()),
                   x_n_labs = TRUE,
                   y_lab = '% of subset',
-                  x_lab = 'MIBC consesus subset') %>%
-      set_names(sub_genet$stack_test[[i]]$variable)
+                  x_lab = 'MIBC consesus subset',
+                  .options = furrr_options(seed = TRUE)) %>%
+      set_names(sub_genet$stack_test[[i]][1:5, ]$variable)
 
   }
 
@@ -295,7 +311,7 @@
          sub_genet$significant,
          ~mutate(.x,
                  axis_lab = paste(html_italic(gene_symbol),
-                                  alteration, sep = '<br>'),
+                                  alteration_short),
                  axis_lab = ifelse(variable %in% .y,
                                    html_bold(axis_lab), axis_lab))) %>%
     map(~set_names(.x$axis_lab, .x$variable))

@@ -31,6 +31,9 @@
                                    `current or previous` = 'Former Smoker',
                                    never = 'Never Smoker'),
               smoking = factor(smoking, c('never', 'current or previous')),
+              smoking_history = ifelse(smoking == 'never',
+                                       'no', 'yes'),
+              smoking_history = factor(smoking_history, c('no', 'yes')),
               baseline_ecog = factor(BASELINE_ECOG),
 
               ## anatomy
@@ -56,6 +59,12 @@
               turbt = ifelse(stri_detect(PRIMARY_SURGERY, regex = 'TURBT'),
                              'yes', 'no'),
               turbt = factor(turbt, c('no', 'yes')),
+              surgery_type = ifelse(turbt == 'yes',
+                                    'TURBT',
+                                    ifelse(cystectomy == 'yes',
+                                           'cystectomy',
+                                           ifelse(!is.na(PRIMARY_SURGERY),
+                                                  'other', NA))),
 
               ## stages are restricted to the main ones
 
@@ -239,6 +248,19 @@
            "mutation")] %>%
     map(filter, sample_id %in% bcan$expression$sample_id)
 
+# Selection of MIBC of the bladder --------
+
+  insert_msg('Selection of the bladder samples')
+
+  bcan$analysis_ids <-bcan$clinic %>%
+    filter(tissue == 'bladder',
+           invasiveness == 'muscle invasive') %>%
+    .$sample_id
+
+  bcan[c("clinic", "expression", "mutation", "mutation_detail")] <-
+    bcan[c("clinic", "expression", "mutation", "mutation_detail")] %>%
+    map(filter, sample_id %in% bcan$analysis_ids)
+
 # Caching --------
 
   insert_msg('Caching')
@@ -248,7 +270,8 @@
                  "annotation",
                  "expression",
                  "mutation",
-                 "mutation_detail")]
+                 "mutation_detail",
+                 "analysis_ids")]
 
   save(bcan, file = './data/bcan.RData')
 

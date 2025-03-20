@@ -90,7 +90,7 @@
 
   expl_hot$density <- expl_hot$data %>%
     map(blast, gene_symbol) %>%
-    map2(., expl_hot$n_totals$n_total,
+    map2(., expl_hot$n_totals$n_total[names(.)],
          function(x, y) list(data = x,
                              n_total = y) %>%
            pmap(slide_window_density, k = 20))
@@ -98,7 +98,7 @@
   ## appending with the domain information
 
   expl_hot$density <- expl_hot$density %>%
-    map(~map2(.x, expl_hot$domain_lst, append_domain_))
+    map(~map2(.x, expl_hot$domain_lst[names(.x)], append_domain_))
 
   ## merging the cohorts
 
@@ -182,11 +182,45 @@
          rel_heights = c(1, 4.5),
          rm_domain_legend = TRUE)
 
+# Versions of the plots for the paper figure (larger fonts) -------
+
+  insert_msg('Appending the plots with domain schemes, paper versions')
+
+  for(i in names(expl_hot$percentage_plots)) {
+
+    expl_hot$domain_percentage_plots_paper[[i]] <-
+      list(position_plot = expl_hot$percentage_plots[[i]],
+           domain_tbl = expl_hot$domain_lst,
+           protein_name = names(expl_hot$receptor_lengths),
+           protein_length = expl_hot$receptor_lengths) %>%
+      pmap(append_domain_scheme,
+           rel_heights = c(1, 4.5),
+           rm_domain_legend = TRUE,
+           cust_theme = globals$figure_theme +
+             theme(plot.title = element_markdown(size = 10),
+                   axis.title.x = element_blank()))
+
+  }
+
+  expl_hot$domain_density_plots_paper <-
+    list(position_plot = expl_hot$density_plots,
+         domain_tbl = expl_hot$domain_lst,
+         protein_name = names(expl_hot$receptor_lengths),
+         protein_length = expl_hot$receptor_lengths) %>%
+    pmap(append_domain_scheme,
+         rel_heights = c(1, 4.5),
+         rm_domain_legend = TRUE,
+         cust_theme = globals$figure_theme +
+           theme(plot.title = element_markdown(size = 10),
+                 axis.title.x = element_blank()))
+
 # END -------
 
   expl_hot <-
     expl_hot[c("frequency", "density",
                "percentage_plots", "density_plots",
-               "domain_percentage_plots", "domain_density_plots")]
+               "domain_percentage_plots", "domain_density_plots",
+               "domain_percentage_plots_paper",
+               "domain_density_plots_paper")]
 
   insert_tail()

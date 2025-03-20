@@ -40,7 +40,21 @@
                script_path = './subtype scripts/genetic.R',
                message = 'Cached results for genetic alterations')
 
-  c('./subtype scripts/dge.R') %>%
+  ## clinical characteristic of the consensus classes
+  ## differential expression of FGF/FGFR/FGFBP-related genes
+  ## co-expression networks for the genes of interest
+  ## differences in predicted drug resistance between the consensus classes,
+  ## enrichment analysis of mechanisms of action and molecular targets
+  ## for the common significant drugs.
+  ## differences in ssGSEA scores of FGFR-reated gene signatures between
+  ## consensus classes of MIBC
+
+  c('./subtype scripts/clinic.R',
+    './subtype scripts/dge.R',
+    './subtype scripts/coexpression_networks.R',
+    './subtype scripts/drugs.R',
+    './subtype scripts/moa_enrichment.R',
+    './subtype scripts/signatures.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
 # END ------

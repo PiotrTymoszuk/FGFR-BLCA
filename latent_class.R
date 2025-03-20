@@ -6,6 +6,8 @@
 # Clustering is by latent class modeling with poLCA/polcaExtra with the minimal
 # BIC as the model selection criterion.
 
+## Work on it, propably the five cluster solution is better!!!
+
 # tools -------
 
   library(tidyverse)

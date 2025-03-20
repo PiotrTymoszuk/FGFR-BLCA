@@ -26,6 +26,8 @@
 # 10) Characteristic and distribution tests for urothelial cancer cell lines
 # in the GDSC experiment, choice of the modeling features,
 # correlation of the expression variables.
+#
+# 11) Distribution tests for ssGSEA scores of FGFR-related gene signatues.
 
 # tools -------
 
@@ -107,23 +109,38 @@
                script_path = './exploration scripts/co_occurrence.R',
                message = 'Loading cached co-occurrence analysis results')
 
-  ## network analyses
+  ## network analyses for the bulk cancers:
+  ## FGFR/FGF-related transcripts and genetic alterations
 
   c('./exploration scripts/coexpression_networks.R',
     './exploration scripts/alteration_networks.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
+  ## predictions of drug resistance: distribution tests
+  ## PCA, correlation of predictions for drugs that target FGFRs,
+  ## key predictor genes for models of anti-FGFR drugs
+
+  c('./exploration scripts/drugs.R') %>%
+    source_all(message = TRUE, crash = TRUE)
+
+  rm(gdsct, ctrp2, prism)
 
   ## cell lines: characteristic, distribution tests,
   ## choice of the modeling features, co-expression networks,
   ## and analyses of distribution/background of CRISPR and RNAi gene effects
   ## and drug resistance
 
-  c('./exploration scripts/cells.R',
+  c('./exploration scripts/cells_clinic.R',
+    './exploration scripts/cells.R',
     './exploration scripts/network_cells.R',
     './exploration scripts/crispr.R',
     './exploration scripts/resistance.R',
     './exploration scripts/rnai.R') %>%
+    source_all(message = TRUE, crash = TRUE)
+
+  ## distribution tests for the ssGSEA scores of FGFR-related gene signatures
+
+  c('./exploration scripts/signatures.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
 # END -----

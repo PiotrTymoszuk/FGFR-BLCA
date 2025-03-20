@@ -155,14 +155,21 @@
     map(rownames_to_column, 'sample_id') %>%
     map(as_tibble)
 
-# Complete cases -------
+# Complete cases and bladder cancers only selected for the analysis -------
 
-  insert_msg('Complete cases')
+  insert_msg('Complete cases: molecular information and bladder carcinoma')
 
   genie$complete_ids <-
     genie[c("clinic", "mutation", "deletion", "amplification")] %>%
     map(~.x$sample_id) %>%
     reduce(intersect)
+
+  genie$analysis_ids <- genie$clinic %>%
+    filter(oncotree == 'BLCA') %>%
+    .$sample_id
+
+  genie$analysis_ids <- intersect(genie$analysis_ids,
+                                  genie$complete_ids)
 
   genie[c("clinic",
           "mutation", "mutation_detail",
@@ -170,7 +177,7 @@
     genie[c("clinic",
             "mutation", "mutation_detail",
             "deletion", "amplification")] %>%
-    map(filter, sample_id %in% genie$complete_ids)
+    map(filter, sample_id %in% genie$analysis_ids)
 
 # Caching the results ------
 
@@ -179,7 +186,8 @@
   genie <-
     genie[c("clinic",
             "mutation", "mutation_detail",
-            "deletion", "amplification")]
+            "deletion", "amplification",
+            "analysis_ids")]
 
   save(genie, file = './data/genie.RData')
 

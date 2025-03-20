@@ -11,6 +11,9 @@
 #
 # 4) Effects of amplification of the FGF3/4/19 genes on expression of genes
 # coding for FGFR, FGF, and FGFBP proteins
+#
+# 5) Comparison of predicted drug resistance between cancers with and without
+# mutations of FGFR3
 
 
 # tools -------
@@ -67,6 +70,16 @@
 
   c('./FGFR3 analysis scripts/tmb.R',
     './FGFR3 analysis scripts/amplification_gene_expression.R') %>%
+    source_all(message = TRUE)
+
+  ## ssGSEA scores of FGFR-related gene signatures in the WT and mutant samples
+  ## effects of FGFR3 mutation on predicted drug resistance,
+  ## enrichment analysis of mechanisms of action and molecular targets
+  ## for the common significant drugs
+
+  c('./FGFR3 analysis scripts/signatures.R',
+    './FGFR3 analysis scripts/drugs.R',
+    './FGFR3 analysis scripts/moa_enrichment.R') %>%
     source_all(message = TRUE)
 
 # END -----

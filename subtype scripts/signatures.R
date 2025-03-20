@@ -1,50 +1,36 @@
-# Differential expression of the FGFR and FGF genes between the molecular
-# subtypes. The analysis is done for the TCGA and IMvigor.
-# Differentially regulated genes are identified with the following rules:
+# Comparison of ssGSEA scores of signatures of FGFR-related genes between
+# consensus molecular subtypes of MIBC.
 #
-# 1) Significant difference in expression between the classes by FDR-corrected
-# one-way ANOVA (pFDR < 0.05).
-#
-# 2) Differential expression in a given class as compared with LumP is
-# investigated by two-tailed T test.
-#
-# significantly differentially regulated genes are identified by pFDR(ANOVA) < 0.05
+# Statistical significance of overall differences between the subsets is
+# determined by one-way ANOVA with eta-square effect size statistic.
+# Differences between single subsets (LumU, Stroma-rich, Ba/Sq) and the LumP
+# class are assessed by Welch's T test with Cohen's d effect size statistic.
+# Differentially regulated signatures are defined by pFDR(ANOVA) < 0.05,
+# eta-square >= 0.14, pFDR(T test) < 0.05, and Cohen's d >= 0.5.
 
+  insert_tail()
 
-  insert_head()
+# container ------
 
-# container -------
+  sub_sig <- list()
 
-  sub_dge <- list()
+# analysis globals ----
 
-# analysis data -------
+  insert_msg('Analysis globals')
 
-  insert_msg('Analysis data')
+  ## variables and their lexicon
 
-  sub_dge$variables <-
-    globals[c("receptors", "ligands", "binding_proteins")] %>%
-    reduce(union)
+  sub_sig$lexicon <- sig$lexicon
 
-  ## expression data
+  sub_sig$variables <- sub_sig$lexicon$variable
 
-  sub_dge$data <- globals$cohort_expr %>%
-    eval %>%
-    map(~.x$expression) %>%
-    compact %>%
-    map(select, sample_id, any_of(sub_dge$variables))
+  ## ssGSEA scores appended with the consensus class assignment
 
-  sub_dge$variables <- sub_dge$data %>%
-    map(names) %>%
-    map(intersect, sub_dge$variables)
+  sub_sig$data <- sig$scores
 
-  ## assignment to the molecular classes,
-  ## removal of the NE-like and LumNS subsets: not enough observations
-  ## to evaluate
-  ## setting the modeling intercept to LumP
-
-  sub_dge$data <-
-    map2(subtypes$assignment[names(sub_dge$data)],
-         sub_dge$data,
+  sub_sig$data <-
+    map2(subtypes$assignment[names(sub_sig$data)],
+         sub_sig$data,
          inner_join, by = 'sample_id') %>%
     map(filter,
         !consensusClass %in% c('NE-like', 'LumNS', 'not assigned')) %>%
@@ -54,33 +40,30 @@
 
   ## levels for T tests
 
-  sub_dge$t_levels <- sub_dge$data %>%
+  sub_sig$t_levels <- sub_sig$data %>%
     map(filter, consensusClass != 'LumP') %>%
     map(mutate, consensusClass = droplevels(consensusClass)) %>%
     map(~.x$consensusClass) %>%
     map(levels)
 
-  sub_dge$t_levels <- sub_dge$t_levels %>%
+  sub_sig$t_levels <- sub_sig$t_levels %>%
     map(~set_names(.x, .x))
 
-# Descriptive stats -------
+# descriptive stats --------
 
   insert_msg('Descriptive stats')
 
-  sub_dge$stats <-
-    list(data = sub_dge$data,
-         variables = sub_dge$variables) %>%
-    pmap(fast_num_stats,
-         split_fct = 'consensusClass')
+  sub_sig$stats <- sub_sig$data %>%
+    map(fast_num_stats,
+        variables = sub_sig$variables,
+        split_fct = 'consensusClass')
 
 # One-way ANOVA --------
 
   insert_msg('One-way ANOVA')
 
-  sub_dge$anova <-
-    map2(sub_dge$data,
-         sub_dge$variables,
-         ~f_one_anova(.x[.y],
+  sub_sig$anova <- sub_sig$data %>%
+    map(~f_one_anova(.x[sub_sig$variables],
                       f = .x[['consensusClass']],
                       safely = TRUE,
                       as_data_frame = TRUE,
@@ -93,20 +76,21 @@
 
   ## formatting and significant ANOVA effects
 
-  sub_dge$anova <- sub_dge$anova %>%
+  sub_sig$anova <- sub_sig$anova %>%
     map(mutate,
         regulation = ifelse(p_adjusted < 0.05 & etasq >= 0.14,
                             'regulated', 'ns'),
         regulation = factor(regulation, c('regulated', 'ns'))) %>%
     map(mutate,
-        ax_lab = paste(html_italic(variable), plot_cap, sep = '<br>'),
+        ax_lab = exchange(variable, sub_sig$lexicon),
+        ax_lab = paste(ax_lab, plot_cap, sep = '<br>'),
         ax_lab = ifelse(regulation == 'regulated',
                         html_bold(ax_lab), ax_lab),
+        ax_lab_short = exchange(variable, sub_sig$lexicon),
         ax_lab_short = ifelse(regulation == 'regulated',
-                              html_bold(html_italic(variable)),
-                              html_italic(variable)))
+                              html_bold(ax_lab_short), ax_lab_short))
 
-  sub_dge$anova_significant <- sub_dge$anova %>%
+  sub_sig$anova_significant <- sub_sig$anova %>%
     map(filter, regulation == 'regulated') %>%
     map(~.x$variable)
 
@@ -114,14 +98,14 @@
 
   insert_msg('Post-hoc T test')
 
-  for(i in names(sub_dge$data)) {
+  for(i in names(sub_sig$data)) {
 
-    sub_dge$test[[i]] <- sub_dge$t_levels[[i]] %>%
-      map(~filter(sub_dge$data[[i]], consensusClass %in% c('LumP', .x))) %>%
+    sub_sig$test[[i]] <- sub_sig$t_levels[[i]] %>%
+      map(~filter(sub_sig$data[[i]], consensusClass %in% c('LumP', .x))) %>%
       map(mutate, consensusClass = droplevels(consensusClass))
 
-    sub_dge$test[[i]] <- sub_dge$test[[i]] %>%
-      map(~f_t_test(.x[sub_dge$variables[[i]]],
+    sub_sig$test[[i]] <- sub_sig$test[[i]] %>%
+      map(~f_t_test(.x[sub_sig$variables],
                     .x[['consensusClass']],
                     type = 'welch',
                     safely = TRUE,
@@ -135,26 +119,26 @@
 
   ## formatting the testing results
 
-  sub_dge$test <-
-    map2(sub_dge$test,
-         sub_dge$anova_significant,
+  sub_sig$test <-
+    map2(sub_sig$test,
+         sub_sig$anova_significant,
          ~mutate(.x,
                  anova_significant = ifelse(variable %in% .y,
                                             'yes', 'no'),
                  regulation = ifelse(anova_significant == 'no' | p_adjusted >= 0.05,
                                      'ns',
-                                     ifelse(estimate >= log2(1.25),
+                                     ifelse(cohen_d >= 0.5,
                                             'upregulated',
-                                            ifelse(estimate <= -log2(1.25),
+                                            ifelse(cohen_d <= -0.5,
                                                    'downregulated', 'ns'))),
                  regulation = factor(regulation,
                                      c('upregulated', 'downregulated', 'ns'))))
 
-# Differentially regulated genes -------
+# Differentially regulated signatures -------
 
-  insert_msg('Differentially regulated genes')
+  insert_msg('Differentially regulated signatures')
 
-  sub_dge$significant <- sub_dge$test %>%
+  sub_sig$significant <- sub_sig$test %>%
     map(filter, regulation %in% c('upregulated', 'downregulated')) %>%
     map(blast, consensusClass) %>%
     map(map, blast, regulation) %>%
@@ -165,37 +149,9 @@
 
   ## significant effects shared by at least two cohorts
 
-  sub_dge$common_significant <- sub_dge$significant %>%
+  sub_sig$common_significant <- sub_sig$significant %>%
     map(map, shared_features, m = 2) %>%
     map(map, as.character)
-
-# Box plots for single variables -------
-
-  insert_msg('Box plots')
-
-  for(i in names(sub_dge$data)) {
-
-    sub_dge$plots[[i]] <-
-      list(variable = sub_dge$anova[[i]]$variable,
-           plot_title = sub_dge$anova[[i]]$variable %>%
-             html_italic %>%
-             paste(globals$cohort_labs[i], sep = ', '),
-           plot_subtitle = sub_dge$anova[[i]]$plot_cap) %>%
-      pmap(plot_variable,
-           sub_dge$data[[i]],
-           split_factor = 'consensusClass',
-           type = 'box',
-           cust_theme = globals$common_theme,
-           x_n_labs = TRUE,
-           x_lab = 'MIBC consensus class',
-           y_lab = globals$cohort_axis_labs[[i]]) %>%
-      map(~.x +
-            theme(plot.title = element_markdown(),
-                  axis.title.y = element_markdown()) +
-            scale_fill_manual(values = globals$sub_colors)) %>%
-      set_names(sub_dge$anova[[i]]$variable)
-
-  }
 
 # Heat map for the common differentially regulated genes ------
 
@@ -203,31 +159,31 @@
 
   ## variables: common differentially regulated genes
 
-  sub_dge$hm_variables <- sub_dge$common_significant %>%
+  sub_sig$hm_variables <- sub_sig$common_significant %>%
     unlist(use.names = FALSE) %>%
     unique
 
   ## plotting order: classification for the four biggest classes
   ## in the TCGA cohort
 
-  sub_dge$hm_classification <- sub_dge$data$tcga %>%
+  sub_sig$hm_classification <- sub_sig$data$tcga %>%
     filter(consensusClass %in% c('LumP', 'LumU', 'Stroma-rich', 'Ba/Sq')) %>%
     mutate(consensusClass = droplevels(consensusClass)) %>%
-    classify(variables = sub_dge$hm_variables,
+    classify(variables = sub_sig$hm_variables,
              split_fct = 'consensusClass')
 
   ## heat maps
 
-  sub_dge$hm_plots <-
-    list(data = sub_dge$data %>%
+  sub_sig$hm_plots <-
+    list(data = sub_sig$data %>%
            map(mutate,
                consensusClass = fct_recode(consensusClass,
                                            `Stroma\nrich` = 'Stroma-rich')),
-         plot_title = globals$cohort_labs[names(sub_dge$data)]) %>%
+         plot_title = globals$cohort_labs[names(sub_sig$data)]) %>%
     pmap(heat_map,
-         variables = sub_dge$hm_variables,
+         variables = sub_sig$hm_variables,
          split_fct = 'consensusClass',
-         variable_classification = sub_dge$hm_classification$classification,
+         variable_classification = sub_sig$hm_classification$classification,
          cust_theme = globals$common_theme,
          midpoint = 0,
          limits = c(-3, 3),
@@ -236,9 +192,9 @@
 
   ## additional styling
 
-  sub_dge$hm_plots <-
-    list(x = sub_dge$hm_plots,
-         y = sub_dge$anova) %>%
+  sub_sig$hm_plots <-
+    list(x = sub_sig$hm_plots,
+         y = sub_sig$anova) %>%
     pmap(function(x, y) x +
            labs(subtitle = stri_replace(x$labels$subtitle,
                                         fixed = '\n',
@@ -256,30 +212,30 @@
 
   insert_msg('Result table')
 
-  sub_dge$result_tbl <-
-    map2(sub_dge$stats,
-         sub_dge$anova,
+  sub_sig$result_tbl <-
+    map2(sub_sig$stats,
+         sub_sig$anova,
          merge_stat_test) %>%
     map(format_res_tbl, dict = NULL) %>%
     map2(., names(.),
          ~mutate(.x, cohort = globals$cohort_labs[.y])) %>%
     reduce(full_rbind)
 
-  sub_dge$result_tbl <- sub_dge$result_tbl %>%
+  sub_sig$result_tbl <- sub_sig$result_tbl %>%
     select(cohort, variable,
-           all_of(levels(sub_dge$data[[1]]$consensusClass)),
+           all_of(levels(sub_sig$data[[1]]$consensusClass)),
            significance, eff_size) %>%
     set_names(c('Cohort', 'Variable',
-                globals$sub_labels[levels(sub_dge$data[[1]]$consensusClass)],
+                globals$sub_labels[levels(sub_sig$data[[1]]$consensusClass)],
                 'Significance', 'Effect size'))
 
 # END ------
 
-  sub_dge$data <- NULL
-  sub_dge$hm_classification <- NULL
-  sub_dge$n_number_tbl <- NULL
+  sub_sig$data <- NULL
+  sub_sig$hm_classification <- NULL
+  sub_sig$n_number_tbl <- NULL
 
-  sub_dge <- compact(sub_dge)
+  sub_sig <- compact(sub_sig)
 
   rm(i)
 

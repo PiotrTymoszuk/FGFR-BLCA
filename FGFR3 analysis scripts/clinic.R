@@ -6,6 +6,12 @@
 
   fgfr_clinic <- list()
 
+# parallel backend -------
+
+  insert_msg('Parallel backend')
+
+  plan('multisession')
+
 # analysis variables and data --------
 
   insert_msg('Analysis variables and data')
@@ -64,13 +70,14 @@
   insert_msg('Analysis stats')
 
   fgfr_clinic$stats <-
-    map2(fgfr_clinic$data,
-         fgfr_clinic$variables,
-         ~explore(.x,
-                  variables = .y,
-                  split_factor = 'FGFR3_mutation',
-                  what = 'table',
-                  pub_styled = TRUE)) %>%
+    future_map2(fgfr_clinic$data,
+                fgfr_clinic$variables,
+                ~explore(.x,
+                         variables = .y,
+                         split_factor = 'FGFR3_mutation',
+                         what = 'table',
+                         pub_styled = TRUE),
+                .options = furrr_options(seed = TRUE)) %>%
     map(format_desc)
 
 # Testing for differences between the mutation strata ------
@@ -78,19 +85,20 @@
   insert_msg('Testing for differences between the mutation strata')
 
   fgfr_clinic$test <-
-    map2(fgfr_clinic$data,
-         fgfr_clinic$variables,
-         ~compare_variables(.x,
-                            variables = .y,
-                            split_factor = 'FGFR3_mutation',
-                            what = 'eff_size',
-                            types = exchange(.y,
-                                             fgfr_clinic$lexicon,
-                                             value = 'test_type'),
-                            exact = FALSE,
-                            ci = FALSE,
-                            pub_styled = TRUE,
-                            adj_method = 'BH')) %>%
+    future_map2(fgfr_clinic$data,
+                fgfr_clinic$variables,
+                ~compare_variables(.x,
+                                   variables = .y,
+                                   split_factor = 'FGFR3_mutation',
+                                   what = 'eff_size',
+                                   types = exchange(.y,
+                                                    fgfr_clinic$lexicon,
+                                                    value = 'test_type'),
+                                   exact = FALSE,
+                                   ci = FALSE,
+                                   pub_styled = TRUE,
+                                   adj_method = 'BH'),
+                .options = furrr_options(seed = TRUE)) %>%
     map(mutate,
         plot_cap = paste(eff_size, significance, sep = ', '),
         significance = ifelse(stri_detect(eff_size, fixed = 'Inf'),
@@ -118,15 +126,16 @@
            type = fgfr_clinic$test[[i]]$variable %>%
              exchange(fgfr_clinic$lexicon,
                       value = 'plot_type')) %>%
-      pmap(plot_variable,
-           fgfr_clinic$data[[i]],
-           split_factor = 'FGFR3_mutation',
-           scale = 'percent',
-           cust_theme = globals$common_theme +
-             theme(axis.title.x = element_markdown(),
-                   legend.title = element_markdown()),
-           x_lab = html_italic('FGFR3'),
-           x_n_labs = TRUE) %>%
+      future_pmap(plot_variable,
+                  fgfr_clinic$data[[i]],
+                  split_factor = 'FGFR3_mutation',
+                  scale = 'percent',
+                  cust_theme = globals$common_theme +
+                    theme(axis.title.x = element_markdown(),
+                          legend.title = element_markdown()),
+                  x_lab = html_italic('FGFR3'),
+                  x_n_labs = TRUE,
+                  .options = furrr_options(seed = TRUE)) %>%
       set_names(fgfr_clinic$test[[i]]$variable)
 
     fgfr_clinic$plots[[i]]$age <- fgfr_clinic$plots[[i]]$age +
@@ -147,7 +156,8 @@
 
   fgfr_clinic$result_tbl <-
     map2(fgfr_clinic$stats,
-         fgfr_clinic$test,
+         fgfr_clinic$test %>%
+           map(filter, !stri_detect(eff_size, fixed = 'Inf')),
          merge_stat_test) %>%
     map(format_res_tbl,
         dict = fgfr_clinic$lexicon) %>%
@@ -163,6 +173,8 @@
                 'Effect size'))
 
 # END -------
+
+  plan('sequential')
 
   rm(i)
 

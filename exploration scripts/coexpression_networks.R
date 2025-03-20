@@ -84,6 +84,8 @@
 
   insert_msg('Plots')
 
+  ## version for the report
+
   expl_exnet$plots <-
     list(x = expl_exnet$graph_obj,
          vertex_shape_variable = 'protein_type',
@@ -98,10 +100,38 @@
          vertex_size = 3,
          vertex_color = 'black',
          cust_theme = globals$net_theme,
-         seed = 12345) %>%
-    map(~.x +
-          guides(shape = guide_legend(override.aes = list(fill = 'cornsilk2')),
-                 fill = guide_legend(override.aes = list(shape = 21))) +
+         seed = 12345)
+
+  ## version for the paper with larger fonts
+
+  expl_exnet$paper_plots <-
+    list(x = expl_exnet$graph_obj,
+         vertex_shape_variable = 'protein_type',
+         plot_title = globals$cohort_labs[names(expl_exnet$graph_obj)]) %>%
+    pmap(plot,
+         layout = layout.fruchterman.reingold,
+         weighting_order = 1,
+         label_vertices = TRUE,
+         vertex_fill_variable = 'hub_score',
+         vertex_color_variable = NULL,
+         vertex_txt_size = 3,
+         vertex_txt_face = 'italic',
+         vertex_txt_color_variable = 'hub_score',
+         vertex_size = 3,
+         vertex_color = 'black',
+         cust_theme = globals$net_theme +
+           theme(plot.title = element_text(size = 10, face = 'bold'),
+                 plot.subtitle = globals$figure_text,
+                 legend.title = globals$figure_text,
+                 legend.text = globals$figure_text),
+         seed = 12345)
+
+  ## common styling
+
+  expl_exnet[c("plots", "paper_plots")] <-
+    expl_exnet[c("plots", "paper_plots")] %>%
+    map(map,
+        ~.x +
           scale_linewidth_continuous(limits = c(0.3, 1),
                                      range = c(0.25, 1),
                                      name = '\u03C1') +
@@ -116,10 +146,19 @@
                                high = 'firebrick',
                                limits = c(0, 1),
                                midpoint = 0.5,
-                               name = 'Hub score'))
+                               name = 'Hub score') +
+          scale_color_gradient2(low = 'steelblue',
+                               mid = 'black',
+                               high = 'firebrick',
+                               limits = c(0, 1),
+                               midpoint = 0.5,
+                               name = 'Hub score') +
+          guides(shape = guide_legend(override.aes = list(fill = 'cornsilk2')),
+                 fill = guide_legend(override.aes = list(shape = 21)),
+                 color = 'none'))
 
 # END -------
 
-  expl_exnet <- expl_exnet[c("graph_obj", "stats", "plots")]
+  expl_exnet <- expl_exnet[c("graph_obj", "stats", "plots", "paper_plots")]
 
   insert_tail()

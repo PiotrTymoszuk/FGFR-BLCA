@@ -134,14 +134,26 @@
 
   }
 
-# Restricting the data sets to the patients with complete information ------
+# Restricting the data sets to the BLCA MIBC with complete information ------
 
-  insert_msg('Complete cases')
+  insert_msg('Complete cases, BLCA MIBC')
+
+  ## IDs of samples included in the analysis
 
   msk$complete_ids <-
     msk[c("clinic", "mutation", "deletion", "amplification")] %>%
     map(~.x$sample_id) %>%
     reduce(intersect)
+
+  msk$analysis_ids <- msk$clinic %>%
+    filter(tissue == 'bladder',
+           invasiveness == 'muscle invasive') %>%
+    .$sample_id
+
+  msk$analysis_ids <- intersect(msk$complete_ids,
+                                msk$analysis_ids)
+
+  ## selection
 
   msk[c("clinic",
          "mutation", "mutation_detail",
@@ -149,7 +161,7 @@
     msk[c("clinic",
            "mutation", "mutation_detail",
            "deletion", "amplification")] %>%
-    map(filter, sample_id %in% msk$complete_ids)
+    map(filter, sample_id %in% msk$analysis_ids)
 
 # Caching the results -------
 
@@ -157,7 +169,8 @@
 
   msk <- msk[c("clinic",
                "mutation_detail", "mutation",
-               "deletion", "amplification")]
+               "deletion", "amplification",
+               "analysis_ids")]
 
   save(msk, file = './data/msk.RData')
 

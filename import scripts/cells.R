@@ -18,17 +18,54 @@
 
   depmap$cell_lines <- read_csv('./data/cell lines/Model.csv')
 
+  ## clinical and demographic information
+
   depmap$cell_lines <- depmap$cell_lines %>%
     transmute(sample_id = ModelID,
               cosmic_id = COSMICID,
               cell_line_name = CellLineName,
               oncotree = DepmapModelType,
-              lineage = OncotreeLineage)
+              lineage = OncotreeLineage,
+              age = Age,
+              sex = Sex,
+              metastasis = ifelse(PrimaryOrMetastasis == 'Primary',
+                                  'no', 'yes'),
+              metastasis = factor(metastasis, c('no', 'yes')),
+              patient_treatment = tolower(PatientTreatmentStatus),
+              patient_treatment = factor(patient_treatment,
+                                         c('pre-treatment', 'post-treatment')),
+              systemic_chemotherapy = ifelse(stri_detect(PatientTreatmentType,
+                                                         regex = 'chemo|Chemo'),
+                                             'yes', 'no'),
+              systemic_chemotherapy = factor(systemic_chemotherapy,
+                                             c('no', 'yes')),
+              pt_stage = paste0('T', Stage),
+              pt_stage = factor(pt_stage, c('Ta', 'Tcis', paste0('T', 0:4))),
+              pt_stage = droplevels(pt_stage))
 
   ## filtering for urothelial cancer cell lines
 
   depmap$cell_lines <- depmap$cell_lines %>%
     filter(lineage == 'Bladder/Urinary Tract')
+
+# Clinical information lexicon for the cell lines --------
+
+  insert_msg('Clinical information lexicon for the cell lines')
+
+  depmap$clinic_lexicon <-
+    tibble(variable = c('oncotree', 'age', 'sex',
+                        'metastasis',
+                        'patient_treatment',
+                        'systemic_chemotherapy',
+                        'pt_stage'),
+           label = c('Oncotree', 'Age', 'Gender',
+                     'Metastsis as a source',
+                     'Patient treatment status',
+                     'Systemic chemotherapy',
+                     'pT stage')) %>%
+    mutate(format = ifelse(variable %in% c('age'),
+                           'numeric', 'factor'),
+           unit = ifelse(variable == 'age', 'years', NA))
 
 # Expression of FGFR-, FGF-, and FGFBP-coding genes --------
 
@@ -324,7 +361,7 @@
   insert_msg('Caching')
 
   depmap <-
-    depmap[c("cell_lines",
+    depmap[c("cell_lines", "clinic_lexicon",
              "raw_expression", "expression", "annotation",
              "mutation",
              "crispr", "crispr_bcg",
