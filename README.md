@@ -30,6 +30,9 @@ By means of machine learning models trained with levels of 38 FGFR-, FGF-, and F
 Parts/panels of Figure 1 of the manuscript are available as [__PDF files__](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/paper%20figure%201) and [__PNG files__](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/paper%20PNG%20figure%201). 
 Legend of Figure 1 is available as a [__Word file__](https://github.com/PiotrTymoszuk/FGFR-BLCA/blob/main/report/figure1_legend.docx). 
 Rebuttal Letter is provided as a [__Word file__](https://github.com/PiotrTymoszuk/FGFR-BLCA/blob/main/report/rebuttal_letter.docx). 
+Supplementary Figures are provided as [__PDF and high resolution PNG files__](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/supplementary%20figures). 
+Supplementary Tables are available as an [__Excel file__](https://github.com/PiotrTymoszuk/FGFR-BLCA/blob/main/report/supplementary_tables.xlsx). 
+A Word file with Supplementary Material is available in from a [__Dropbox__](https://www.dropbox.com/scl/fi/ec72xu9xworvahcsorvek/supplementary_material.docx?rlkey=slhsm6cw5nxfz9lh1ynvbr7gz&dl=0).
 
 ## Usage
 
