@@ -1,0 +1,156 @@
+---
+title: "FGFR1/3 Signaling as Achilles’ Heel of Phenotypic Diversity in Urothelial Carcinoma"
+subtitle: "Figure 1 Legend"
+author: "Department of Urology, Medical University of Innsbruck"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+
+output: 
+  bookdown::html_document2:
+    css: "style.css"
+    
+bibliography: blca.bib
+
+csl: frontiers_medical.csl
+
+header-includes:
+  \usepackage{longtable}
+  \usepackage{tabu}
+  \usepackage{caption}
+  \usepackage{makecell}
+  \usepackage{pdflscape}
+  \usepackage{array}
+  \usepackage{booktabs}
+  \usepackage{threeparttable}
+  \usepackage{threeparttablex}
+  \usepackage{wrapfig}
+  \usepackage{multirow}
+  \usepackage[normalem]{ulem}
+  \usepackage{colortbl}
+  \usepackage{xcolor}
+  \usepackage{float} \floatplacement{figure}{H} \floatplacement{table}{H}
+
+---
+
+```{r, setup, include = FALSE}
+
+library(Cairo)
+
+opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      dev = "cairo_pdf", 
+                      dpi = 600)
+
+set_flextable_defaults(font.family = "Cambria", 
+                       font.size = 10)
+
+
+```
+
+\newpage
+
+```{r fig-figure-1a, fig.width = figur::convert(fig$figure_1a, to = 'in')$w, fig.height = figur::convert(fig$figure_1a, to = 'in')$h, fig.cap = 'Alterations of FGFR-, FGF-, and FGFBP-coding genes in MIBC consensus molecular classes of urothelial cancer.'}
+
+fig$figure_1a$plot
+
+```
+
+__Figure 1A. Alterations of FGFR-, FGF-, and FGFBP-coding genes in MIBC consensus molecular classes of urothelial cancer.__ 
+
+_Cancer samples from the TCGA BLCA, IMvigor, and BCAN data sets were assigned to the MIBC consensus molecular classes based on ComBat-adjusted whole-genome mRNA levels by the nearest centroid algorithm (R package consensusMIBC). Differences in frequency of somatic mutations and copy number variants of FGFR-, FGF-, and FGFBP-coding genes between the LumP (luminal papillary), LumU (luminal unstable), stroma-rich, and basal/squamous-like (Ba/Sq) consensus molecular classes were assessed by weighted permutation test. P values were corrected for multiple testing with the false discovery rate method. Presence/absence of selected genetic alterations in the consensus molecular classes in the TCGA BLCA cohort was visualized in a oncoplot. Alteration names (mut: mutation, amp: amplification, del: deletion) with effect sizes and p values of differences between the consensus classes are indicated in the Y axis. Significant effects are highlighted with bold font. Numbers of cancer samples in the consensus classes are displayed in the plot caption._
+
+\newpage
+
+```{r fig-figure-1b, fig.width = figur::convert(fig$figure_1b, to = 'in')$w, fig.height = figur::convert(fig$figure_1b, to = 'in')$h, fig.cap = 'Mutational hot spots of the FGFR3 gene.'}
+
+fig$figure_1b$plot
+
+```
+
+__Figure 1B. Mutational hot spots of the FGFR3 gene.__ 
+
+_Frequency of mutations affecting residues of the FGFR3 protein was expressed as percentage of all cancer samples in the cohort and displayed in dot plots. Each point represents a single protein residue, point color codes for assignment of the residue to the protein domain. Candidate mutation hot spots with mutation rates $\geq$ 1% are highlighted with enlarged symbols and labeled with percentages and protein sequence changes. Cohort names and numbers of analyzed cancer samples are indicated in the plot facets. The protein domain scheme is displayed above the plot._
+
+\newpage
+
+```{r fig-figure-1c, fig.width = figur::convert(fig$figure_1c, to = 'in')$w, fig.height = figur::convert(fig$figure_1c, to = 'in')$h, fig.cap = 'Expression of genes coding FGFR, FGF, and FGFBP at mRNA and protein level.'}
+
+fig$figure_1c$plot
+
+```
+
+__Figure 1C. Expression of genes coding FGFR, FGF, and FGFBP at mRNA and protein level.__ 
+
+_Levels of FGFR-, FGF-, and FGFBP-coding mRNA were determined in cancer tissue samples in the TCGA BLCA, IMvigor, and BCAN by RNA sequencing and published as $log_2$ gene counts (TCGA BLCA and IMvigor) or Z-scores of $log_2$ gene counts (BCAN). mRNA expression of the genes of interest in DepMap urothelial cancer cell lines was measured by RNA sequencing and provided as $log_2$ gene counts. Median Z-scores of $log_2$ mRNA expression are shown in a heat map. Each tile represents median expression Z-score of a gene in one cohort. Numbers of cancer samples are indicated in the X axis. White tiles represent genes not detected in each cohort. Protein expression of `r expl_expr$plot_data$hpa %>% filter(complete.cases(.)) %>% .$variable %>% unique %>% length` FGFR-, FGF-, and FGFBP-coding genes in the Human Protein Atlas (HPA) repository was quantified by immunohistochemistry (IHC). The protein expression is shown as IHC scores defined as a product of intensity (1: negative, 4: strong) and quantity of positive cells (1: none to 4: >75%). Median IHC scores with interquartile ranges are visualized as boxes with whiskers spanning over 150% of the interquartile ranges. Single IHC specimens are visualized as points. Numbers of IHC samples are indicated in the Y axis._
+
+\newpage
+
+```{r fig-figure-1d, fig.width = figur::convert(fig$figure_1d, to = 'in')$w, fig.height = figur::convert(fig$figure_1d, to = 'in')$h, fig.cap = 'Co-expression networks of FGFR-, FGF-, and FGFBP-coding genes.'}
+
+fig$figure_1d$plot
+
+```
+
+__Figure 1D. Co-expression networks of FGFR-, FGF-, and FGFBP-coding genes.__ 
+
+_Co-expression networks were constructed in the TCGA BLCA, IMvigor, and BCAN cohorts for the FGFR-, FGF-, and FGFBP-coding genes, whose expression levels correlated with Spearman’s $\rho \geq$ 0.3. Isolated vertices of the networks were removed. The networks were visualized using the Fruchterman-Reingold algorithm. Points represent node vertices/genes, point shape codes for classification of the protein product. Point color represent hub scores, which measure the overall correlation strength. Lines represent edges, i.e correlations between expression levels with $\rho \geq$ 0.3. Line widths correspond to $\rho$ values. Note the central position, connectivity, and high hub scores of the genes coding for FGFR1, its ligands FGF2, FGF7 and FGF10, and the binding proteins SDC2, DCN, PTX3 and HSPG2 preserved in all cohorts. This suggests that ligand-dependent signaling via FGFR1 may serve as a substantial signaling pathway in urothelial cancer._
+
+\newpage
+
+```{r fig-figure-1e, fig.width = figur::convert(fig$figure_1e, to = 'in')$w, fig.height = figur::convert(fig$figure_1e, to = 'in')$h, fig.cap = 'Differential expression of FGFR-, FGF-, and FGFR-coding genes in the consensus molecular classes of urothelial cancers.'}
+
+fig$figure_1e$plot
+
+```
+
+__Figure 1E. Differential expression of FGFR-, FGF-, and FGFR-coding genes in the consensus molecular classes of urothelial cancers.__ 
+
+_Differences in log2-transformed mRNA levels of FGFR-, FGF-, and FGFBP-coding genes between the LumP, LumU, stroma-rich, and Ba/Sq consensus molecular classes (Figure 1A) were assessed by one-way ANOVA with $\eta^2$ effect size statistic. Differences in $log_2$-transformed gene expression between a class and LumP were investigated by two-tailed T test. P values were corrected for multiple testing with the false discovery rate method (FDR). Significantly differentially regulated genes were defined by p(ANOVA) < 0.05, $\eta^2$ 0.06, pFDR(T test) < 0.05, and at least 1.25-fold up- or downregulation in a class as compared with LumP cancers. Z-scores of $log_2$ expression levels in the TCGA BLCA cohort of significantly differentially regulated genes shared by at least two cohorts are displayed in a heat map. Each tile represents a single cancer sample. Significant effects are labeled with bold font in the Y axes. Numbers of cancer samples in the consensus classes are indicated in the plot caption._
+
+\newpage
+
+```{r fig-figure-1f-elnet, fig.width = figur::convert(fig$figure_1f_elnet, to = 'in')$w, fig.height = figur::convert(fig$figure_1f_elnet, to = 'in')$h, fig.cap = 'Importance of explanatory variables in the Elastic Net model of MIBC molecular consensus classes of urothelial cancers assessed by the SHAP algorithm.'}
+
+fig$figure_1f_elnet$plot
+
+```
+
+__Figure 1F. Importance of explanatory variables in the Elastic Net model of MIBC molecular consensus classes of urothelial cancers assessed by the SHAP algorithm.__ 
+
+_Contributions of the explanatory variables, i.e. the FGFR-, FGF-, and FGFBP-coding genes, to prediction of LumP, LumU, stroma-rich, and Ba/Sq consensus molecular classes by an Elastic Net machine learning model were estimated with the SHAP algorithm (Shapley additive explanations). SHAP values for single highly influential genes (top 10 highest mean absolute SHAP) and observations are visualized in violin/swarm plots. Each point represents a single observation, point color codes for the minimum/maximum-scaled $log_2$-transformed expression of the gene. The corresponding mean absolute SHAP values as metrics of overall gene importance are presented in bar plots. Colors of the bars code for the sign of association of SHAP values and gene expression (red: positive, blue: negative)._
+
+\newpage
+
+```{r fig-figure-1f-ranger, fig.width = figur::convert(fig$figure_1f_ranger, to = 'in')$w, fig.height = figur::convert(fig$figure_1f_ranger, to = 'in')$h, fig.cap = 'Importance of explanatory variables in the Random Forest model of MIBC molecular consensus classes of urothelial cancers assessed by the SHAP algorithm.'}
+
+fig$figure_1f_ranger$plot
+
+```
+
+__Figure 1F. Importance of explanatory variables in the Random Forest model of MIBC molecular consensus classes of urothelial cancers assessed by the SHAP algorithm.__ 
+
+_Contributions of the explanatory variables, i.e. the FGFR-, FGF-, and FGFBP-coding genes, to prediction of LumP, LumU, stroma-rich, and Ba/Sq consensus molecular classes by a Random Forest machine learning model were estimated with the SHAP algorithm (Shapley additive explanations). SHAP values for single highly influential genes (top 10 highest mean absolute SHAP) and observations are visualized in violin/swarm plots. Each point represents a single observation, point color codes for the minimum/maximum-scaled $log_2$-transformed expression of the gene. The corresponding mean absolute SHAP values as metrics of overall gene importance are presented in bar plots. Colors of the bars code for the sign of association of SHAP values and gene expression (red: positive, blue: negative)._
+
+\newpage
+
+```{r fig-resistance, fig.width = figur::convert(fig$figure_1g, to = 'in')$w, fig.height = figur::convert(fig$figure_1g, to = 'in')$h, fig.cap = 'Resistance and sensitivity to pan-FGFR inhibitors of DepMap cancer urothelial cell lines.'}
+
+fig$figure_1g$plot
+
+```
+
+__Figure 1G. Resistance and sensitivity to pan-FGFR inhibitors of DepMap cancer urothelial cell lines.__ 
+
+_Information on resistance of urothelial cancer cell lines to pan-FGFR inhibitors in the GDSC1/2 (n = `r expl_res$sensitive$gdsc %>% select(-sample_id, -FGFR3_mutation) %>% map(~complete.cases(.x)) %>% map_dbl(sum) %>% range %>% paste(collapse = ' to ')` cell lines) and PRISM (n = `r expl_res$sensitive$prism %>% select(-sample_id, -FGFR3_mutation) %>% map(~complete.cases(.x)) %>% map_dbl(sum) %>% range %>% paste(collapse = ' to ')`) drug screening experiments was extracted from the DepMap repository. The resistance values were expressed as IC50 (concentration resulting in 50% growth inhibition, GDSC) or AUC (area under the dose-response curve, relative to DMSO control, PRISM). Significant sensitivity for the GDSC data was defined as IC50 below 10 µM, which was the maximum concentration of the FGFR inhibitors. Significant sensitivity for the PRISM data was defined as AUC < 1, which indicates stronger growth inhibition by a FGFR inhibitor than the DMSO control. IC50 and AUC for doxorubicin are presented as a positive cytotoxicity controls. Median IC50 and AUC values for the FGFR inhibitors with interquartile ranges are depicted as boxes with whiskers spanning over 150% of the interquartile ranges. Points represent single cell lines. Point symbols codes for the FGFR3 gene mutation status, point color represent sensitivity and resistance. The sensitivity cutoffs are represented by dashed lines. FGFR3 wild-type cell lines RT-112, RT4, SW 780, CAL-29, and J82 showed particularly high sensitivity to multiple FGFR blockers in the GDSC1/2 experiments. FGFR3 wild-type cell lines `r expl_res$box_plots$prism$data %>% filter(stri_detect(variable, fixed = 'erdafi'), resistance < 0.9) %>%  arrange(resistance) %>% .$name_lab %>% collapse_and` demonstrated a very good sensitivity to erdafitinib in the PRISM assay (AUC: `r expl_res$box_plots$prism$data %>% filter(stri_detect(variable, fixed = 'erdafi'), resistance < 0.9) %>%  arrange(resistance) %>% .$resistance %>% range %>% signif(2) %>% paste(collapse = ' to ')`). By contrast, `r expl_res$sensitive$prism %>% filter(.data[['PRISM_BRD-K84868168-001-01-0_erdafitinib']] == 'resistant') %>% .$sample_id %>% exchange(depmap$cell_lines, key = 'sample_id', value = 'cell_line_name') %>% collapse_and` cell lines were found to be resistant to erdafitinib with AUC values ranging from `r expl_res$box_plots$prism$data %>% filter(stri_detect(variable, fixed = 'erdafi'), status == 'resistant') %>%  arrange(resistance) %>% .$resistance %>% range %>% signif(2) %>% paste(collapse = ' to ')`._
+
+\newpage
+
+```{r fig-figure-1h, fig.width = figur::convert(fig$figure_1h, to = 'in')$w, fig.height = figur::convert(fig$figure_1h, to = 'in')$h, fig.cap = 'Confluence of cultured FGFR1-4 wild-type (UM-UC-3, 5637 and RT112) and FGFR3 mutated (UM-UC-14 and UM-UC-6) UC cell lines after treatment with different concentrations of erdafitinib.'}
+
+fig$figure_1h$plot
+
+```
+
+__Figure 1H. Confluence of cultured FGFR1-4 wild-type (UM-UC-3, 5637 and RT112) and FGFR3 mutated (UM-UC-14 and UM-UC-6) UC cell lines after treatment with different concentrations of erdafitinib.__ 
+
+_Confluence was measured after 96 hours in cultures treated with erdafitinib at 0, 1, 4, 7 and 10 µM. Dots represent means of three biological replicates. Mean values with standard deviations are depicted as bars with whiskers._
