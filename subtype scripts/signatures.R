@@ -20,7 +20,8 @@
 
   ## variables and their lexicon
 
-  sub_sig$lexicon <- sig$lexicon
+  sub_sig$lexicon <- sig$lexicon %>%
+    mutate(gene_string = map_chr(genes, paste, collapse = ', '))
 
   sub_sig$variables <- sub_sig$lexicon$variable
 
@@ -88,7 +89,11 @@
                         html_bold(ax_lab), ax_lab),
         ax_lab_short = exchange(variable, sub_sig$lexicon),
         ax_lab_short = ifelse(regulation == 'regulated',
-                              html_bold(ax_lab_short), ax_lab_short))
+                              html_bold(ax_lab_short), ax_lab_short),
+        star_lab = ifelse(regulation == 'regulated',
+                          html_bold(plot_cap),
+                          paste0('<span style = "color: #585858">',
+                                 plot_cap, '</span>')))
 
   sub_sig$anova_significant <- sub_sig$anova %>%
     map(filter, regulation == 'regulated') %>%
@@ -153,24 +158,13 @@
     map(map, shared_features, m = 2) %>%
     map(map, as.character)
 
-# Heat map for the common differentially regulated genes ------
+# Heat map for the common significant signatures ------
 
-  insert_msg('Heat map for the selected genes')
-
-  ## variables: common differentially regulated genes
+  insert_msg('Heat map for the common significant signatures')
 
   sub_sig$hm_variables <- sub_sig$common_significant %>%
     unlist(use.names = FALSE) %>%
     unique
-
-  ## plotting order: classification for the four biggest classes
-  ## in the TCGA cohort
-
-  sub_sig$hm_classification <- sub_sig$data$tcga %>%
-    filter(consensusClass %in% c('LumP', 'LumU', 'Stroma-rich', 'Ba/Sq')) %>%
-    mutate(consensusClass = droplevels(consensusClass)) %>%
-    classify(variables = sub_sig$hm_variables,
-             split_fct = 'consensusClass')
 
   ## heat maps
 
@@ -183,12 +177,14 @@
     pmap(heat_map,
          variables = sub_sig$hm_variables,
          split_fct = 'consensusClass',
-         variable_classification = sub_sig$hm_classification$classification,
+         variable_classification = NULL,
+         normalize = FALSE,
          cust_theme = globals$common_theme,
          midpoint = 0,
-         limits = c(-3, 3),
+         limits = c(-0.8, 0.8),
          oob = scales::squish,
-         x_lab = 'cancer sample')
+         x_lab = 'cancer sample',
+         fill_lab = 'ssGSEA')
 
   ## additional styling
 
@@ -206,7 +202,8 @@
                  strip.text.x = element_text(hjust = 0, angle = 90),
                  strip.background.y = element_blank(),
                  strip.text.y = element_blank()) +
-           scale_y_discrete(labels = set_names(y$ax_lab_short, y$variable)))
+           scale_y_discrete(labels = set_names(y$star_lab,
+                                               y$variable)))
 
 # Result table -------
 
@@ -221,11 +218,21 @@
          ~mutate(.x, cohort = globals$cohort_labs[.y])) %>%
     reduce(full_rbind)
 
+  ## appending the samples with gene members of the signatures
+  ## and user friendly signature names
+
   sub_sig$result_tbl <- sub_sig$result_tbl %>%
-    select(cohort, variable,
+    mutate(genes = exchange(variable, sub_sig$lexicon, value = 'gene_string'),
+           variable = exchange(variable, sub_sig$lexicon),
+           variable = ifelse(is.na(variable), 'Samples, N', variable))
+
+  ## final styling
+
+  sub_sig$result_tbl <- sub_sig$result_tbl %>%
+    select(cohort, variable, genes,
            all_of(levels(sub_sig$data[[1]]$consensusClass)),
            significance, eff_size) %>%
-    set_names(c('Cohort', 'Variable',
+    set_names(c('Cohort', 'Variable', 'Member genes',
                 globals$sub_labels[levels(sub_sig$data[[1]]$consensusClass)],
                 'Significance', 'Effect size'))
 

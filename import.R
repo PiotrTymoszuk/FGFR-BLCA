@@ -174,11 +174,13 @@
     map(reduce, left_join, by = 'sample_id') %>%
     map(select, sample_id, all_of(drugs$lexicon$variable))
 
-  ## identification of drugs that target FGFR according to
+  ## identification of drugs that target at least three FGFR according to
   ## the experiment's annotation
 
   drugs$fgfr_drugs <- drugs$lexicon %>%
     reglook('FGFR(1|2|3|4)') %>%
+    filter(!stri_detect(targets_tmp, regex = 'VEGFR|MET|FLT|PDGFRA|KIT'),
+           variable != 'FGFR_0939_1421') %>%
     .$variable
 
 # ComBat expression adjustment and assignment to the molecular subtypes -------

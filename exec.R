@@ -8,9 +8,5 @@
                      'subtypes.R',
                      'ml.R',
                      'ml_mibc.R',
-                     'survival.R',
-                     'latent_class.R',
-                     'paper.R'#,
-                     #'report.R'
-                     ),
+                     'paper.R'),
                    message = TRUE, crash = TRUE))

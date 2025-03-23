@@ -100,7 +100,7 @@
                           alpha = fgfr_color_var)) +
            geom_text_repel(aes(label = fgfr_label,
                                color = fgfr_color_var),
-                           size = 2.5,
+                           size = 2.3,
                            fontface = 'italic',
                            box.padding = 0.6,
                            force = 2,

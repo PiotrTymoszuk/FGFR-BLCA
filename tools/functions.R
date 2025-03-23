@@ -1519,7 +1519,7 @@
                              plot_title = NULL,
                              x_lab = 'observed class',
                              y_lab = 'predicted class',
-                             txt_size = 2.3) {
+                             txt_size = 2) {
 
     ## heat map visualization of confusion matrices
 
@@ -1528,19 +1528,28 @@
       mutate(count = Freq,
              percent = count/sum(count) * 100,
              plot_lab = paste0(signif(percent, 2), '%\n(n = ',
-                               count, ')'))
+                               count, ')'),
+             highlight = ifelse(obs == pred, 'yes', 'no'),
+             font_face = ifelse(obs == pred, 'bold', 'plain'))
 
     plot_tbl %>%
       ggplot(aes(x = obs,
                  y = pred,
-                 fill = .data[['percent']])) +
+                 fill = .data[['percent']],
+                 linewidth = highlight)) +
       geom_tile(color = 'black') +
-      geom_text(aes(label = plot_lab),
+      geom_text(aes(label = plot_lab,
+                    fontface = font_face),
                 size = txt_size) +
       scale_fill_gradient(low = 'white',
                           high = 'firebrick',
                           limits = c(0, 100),
                           name = '% of all samples') +
+      scale_linewidth_manual(values = c(yes = 1,
+                                        no = 0.5)) +
+      guides(linewidth = 'none',
+             fontface = 'none',
+             size = 'none') +
       globals$common_theme +
       labs(title = plot_title,
            x = x_lab,

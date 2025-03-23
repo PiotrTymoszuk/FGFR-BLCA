@@ -30,11 +30,20 @@
     './tools/functions.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
+# Links and HTML elements -------
+
+  insert_msg('Links and HTML elements')
+
+  c('./report scripts')
+
 # figure, supplementary figures and supplementary tables -------
 
   insert_msg('Figure, Supplementary Figures, Supplementary Tables')
 
-  c('./paper scripts/figure.R') %>%
+  c('./paper scripts/figure.R',
+    './paper scripts/reviewer_tables.R',
+    './paper scripts/supplementary_tables.R',
+    './paper scripts/supplementary_figures.R') %>%
     source_all(message = TRUE, crash = TRUE)
 
 # rendering the legends and supplementary material ------

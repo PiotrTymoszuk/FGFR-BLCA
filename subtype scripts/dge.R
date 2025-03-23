@@ -102,9 +102,11 @@
         ax_lab = paste(html_italic(variable), plot_cap, sep = '<br>'),
         ax_lab = ifelse(regulation == 'regulated',
                         html_bold(ax_lab), ax_lab),
+        ax_lab_short = html_italic(variable),
         ax_lab_short = ifelse(regulation == 'regulated',
-                              html_bold(html_italic(variable)),
-                              html_italic(variable)))
+                              html_bold(ax_lab_short),
+                              paste0('<span style = "color: #585858">',
+                                     ax_lab_short, '</span>')))
 
   sub_dge$anova_significant <- sub_dge$anova %>%
     map(filter, regulation == 'regulated') %>%

@@ -4,7 +4,7 @@
 
 # container --------
 
-  lca_clinic <- list()
+  sub_clinic <- list()
 
 # parallel backend ------
 
@@ -18,8 +18,9 @@
 
   ## variables: removal of the ones analyzed by other scripts
 
-  lca_clinic$lexicon <- globals$clinic_lexicon %>%
-    filter(!variable %in% c('tmb_per_mb', 'bi_reponse', 'death')) %>%
+  sub_clinic$lexicon <- globals$clinic_lexicon %>%
+    filter(!variable %in% c('tmb_per_mb', 'bi_reponse', 'death',
+                            'tissue', 'invasiveness')) %>%
     mutate(test_type = ifelse(format == 'numeric',
                               'kruskal_etasq', 'cramer_v'),
            plot_type = ifelse(format == 'numeric',
@@ -29,34 +30,43 @@
 
   ## analysis data
 
-  lca_clinic$data <-
+  sub_clinic$data <-
     list(tcga = tcga, imvigor = imvigor, bcan = bcan) %>%
     map(~.x$clinic) %>%
-    map(select, sample_id, any_of(lca_clinic$lexicon$variable))
+    map(select, sample_id, any_of(sub_clinic$lexicon$variable))
 
-  lca_clinic$data <-
-    map2(subtypes$assignment[names(lca_clinic$data)],
-         lca_clinic$data,
+  sub_clinic$data <-
+    map2(subtypes$assignment[names(sub_clinic$data)],
+         sub_clinic$data,
          inner_join, by = 'sample_id') %>%
     map(filter, !is.na(consensusClass)) %>%
     map(map_dfc, function(x) if(is.factor(x)) droplevels(x) else x)
 
-  ## data set-specific variable vectors. No point at testing
-  ## the tissue variable for the TCGA BLCA data set (bladder only!)
+  ## consensus classes to test: only the LumP, LumU, Stroma-rich, and Ba/Sq
+  ## classes
 
-  lca_clinic$variables <- lca_clinic$data %>%
+  sub_clinic$data <- sub_clinic$data %>%
+    map(filter,
+        !consensusClass %in% c('not assigned', 'NE-like', 'LumNS')) %>%
+    map(mutate,
+        consensusClass = droplevels(consensusClass))
+
+  ## data set-specific variable vectors. No point at testing
+  ## the tissue variable (bladder only)
+
+  sub_clinic$variables <- sub_clinic$data %>%
     map(names) %>%
-    map(~filter(lca_clinic$lexicon, variable %in% .x)) %>%
+    map(~filter(sub_clinic$lexicon, variable %in% .x)) %>%
     map(~.x$variable)
 
-  lca_clinic$variables$tcga <-
-    lca_clinic$variables$tcga[lca_clinic$variables$tcga != 'tissue']
+  sub_clinic$variables$tcga <-
+    sub_clinic$variables$tcga[sub_clinic$variables$tcga != 'tissue']
 
 # N numbers --------
 
   insert_msg('N numbers of samples')
 
-  lca_clinic$n_numbers <- lca_clinic$data %>%
+  sub_clinic$n_numbers <- sub_clinic$data %>%
     map(count, consensusClass) %>%
     map(column_to_rownames, 'consensusClass') %>%
     map(t) %>%
@@ -69,9 +79,9 @@
 
   insert_msg('Analysis stats')
 
-  lca_clinic$stats <-
-    future_map2(lca_clinic$data,
-                lca_clinic$variables,
+  sub_clinic$stats <-
+    future_map2(sub_clinic$data,
+                sub_clinic$variables,
                 ~explore(.x,
                          variables = .y,
                          split_factor = 'consensusClass',
@@ -80,19 +90,19 @@
                 .options = furrr_options(seed = TRUE)) %>%
     map(format_desc)
 
-# Testing for differences between the genetic clusters ------
+# Testing for differences between the consensus classes ------
 
-  insert_msg('Testing for differences between the genetic clusters')
+  insert_msg('Testing for differences between the consensus classes')
 
-  lca_clinic$test <-
-    future_map2(lca_clinic$data,
-                lca_clinic$variables,
+  sub_clinic$test <-
+    future_map2(sub_clinic$data,
+                sub_clinic$variables,
                 ~compare_variables(.x,
                                    variables = .y,
                                    split_factor = 'consensusClass',
                                    what = 'eff_size',
                                    types = exchange(.y,
-                                                    lca_clinic$lexicon,
+                                                    sub_clinic$lexicon,
                                                     value = 'test_type'),
                                    exact = FALSE,
                                    ci = FALSE,
@@ -106,34 +116,34 @@
 
   insert_msg('Plots')
 
-  for(i in names(lca_clinic$data)) {
+  for(i in names(sub_clinic$data)) {
 
-    lca_clinic$plots[[i]] <-
-      list(variable = lca_clinic$test[[i]]$variable,
-           plot_title = lca_clinic$test[[i]]$variable %>%
-             exchange(lca_clinic$lexicon) %>%
+    sub_clinic$plots[[i]] <-
+      list(variable = sub_clinic$test[[i]]$variable,
+           plot_title = sub_clinic$test[[i]]$variable %>%
+             exchange(sub_clinic$lexicon) %>%
              paste(globals$cohort_labs[i], sep = ', '),
-           plot_subtitle = lca_clinic$test[[i]]$plot_cap,
-           y_lab = lca_clinic$test[[i]]$variable %>%
-             exchange(lca_clinic$lexicon,
+           plot_subtitle = sub_clinic$test[[i]]$plot_cap,
+           y_lab = sub_clinic$test[[i]]$variable %>%
+             exchange(sub_clinic$lexicon,
                       value = 'ax_label'),
-           type = lca_clinic$test[[i]]$variable %>%
-             exchange(lca_clinic$lexicon,
+           type = sub_clinic$test[[i]]$variable %>%
+             exchange(sub_clinic$lexicon,
                       value = 'plot_type')) %>%
       future_pmap(plot_variable,
-                  lca_clinic$data[[i]],
+                  sub_clinic$data[[i]],
                   split_factor = 'consensusClass',
                   scale = 'percent',
                   cust_theme = globals$common_theme,
                   x_n_labs = TRUE,
                   .options = furrr_options(seed = TRUE)) %>%
-      set_names(lca_clinic$test[[i]]$variable)
+      set_names(sub_clinic$test[[i]]$variable)
 
-    lca_clinic$plots[[i]]$age <- lca_clinic$plots[[i]]$age +
+    sub_clinic$plots[[i]]$age <- sub_clinic$plots[[i]]$age +
       scale_fill_manual(values = globals$genet_colors)
 
-    lca_clinic$plots[[i]][names(lca_clinic$plots[[i]]) != 'age'] <-
-      lca_clinic$plots[[i]][names(lca_clinic$plots[[i]]) != 'age'] %>%
+    sub_clinic$plots[[i]][names(sub_clinic$plots[[i]]) != 'age'] <-
+      sub_clinic$plots[[i]][names(sub_clinic$plots[[i]]) != 'age'] %>%
       map(~.x + scale_fill_brewer(palette = 'Reds'))
 
   }
@@ -142,21 +152,21 @@
 
   insert_msg('Result table')
 
-  lca_clinic$result_tbl <-
-    map2(lca_clinic$stats,
-         lca_clinic$test %>%
+  sub_clinic$result_tbl <-
+    map2(sub_clinic$stats,
+         sub_clinic$test %>%
            map(filter, !stri_detect(eff_size, fixed = 'Inf')),
          merge_stat_test) %>%
     map(format_res_tbl,
-        dict = lca_clinic$lexicon) %>%
-    map2(., lca_clinic$n_numbers,
+        dict = sub_clinic$lexicon) %>%
+    map2(., sub_clinic$n_numbers,
          ~full_rbind(.y, .x)) %>%
     compress(names_to = 'cohort') %>%
     mutate(cohort = globals$cohort_labs[cohort]) %>%
     relocate(cohort) %>%
     set_names(c('Cohort',
                 'Variable',
-                levels(lca_clinic$data[[1]]$consensusClass),
+                levels(sub_clinic$data[[1]]$consensusClass),
                 'Significance',
                 'Effect size'))
 
@@ -166,8 +176,8 @@
 
   rm(i)
 
-  lca_clinic$data <- NULL
+  sub_clinic$data <- NULL
 
-  lca_clinic <- compact(lca_clinic)
+  sub_clinic <- compact(sub_clinic)
 
   insert_tail()

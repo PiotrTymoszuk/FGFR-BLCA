@@ -70,6 +70,18 @@
            death = factor(death, c('no', 'yes'))) %>%
     map_dfc(function(x) if(is.factor(x)) droplevels(x) else x)
 
+# Total numbers of cancer samples ------
+
+  insert_msg('Total numbers of cancer samples')
+
+  expl_cohorts$n_numbers <- expl_cohorts$data %>%
+    count(cohort) %>%
+    column_to_rownames('cohort') %>%
+    t %>%
+    as_tibble %>%
+    mutate(variable = 'Samples, N') %>%
+    relocate(variable)
+
 # Descriptive stats -------
 
   insert_msg('Descriptive stats')
@@ -116,6 +128,14 @@
                       filter(!stri_detect(eff_size, fixed = 'Inf'))) %>%
     format_res_tbl(dict = expl_cohorts$lexicon,
                    value = 'table_label')
+
+  ## appending with the N numbers of samples
+
+  expl_cohorts$result_tbl <-
+    full_rbind(expl_cohorts$n_numbers,
+               expl_cohorts$result_tbl) %>%
+    set_names(c('Variable', levels(expl_cohorts$data$cohort),
+                'Significance', 'Effect size'))
 
 # Plots ---------
 

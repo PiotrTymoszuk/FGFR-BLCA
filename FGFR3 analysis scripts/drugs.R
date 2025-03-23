@@ -88,13 +88,14 @@
         hm_label = exchange(variable,
                             fgfr_drugs$lexicon,
                             value = 'hm_label'),
-        hm_label_long = paste(hm_label, plot_cap, sep = '<br>'),
+        hm_label_long = paste(title_label, plot_cap, sep = '<br>'),
         hm_label = ifelse(regulation %in% c('resistant', 'sensitive'),
                           html_bold(hm_label),
                           hm_label),
         hm_label_long = ifelse(regulation %in% c('resistant', 'sensitive'),
                                html_bold(hm_label_long),
-                               hm_label_long))
+                               paste0('<span style = "color: #585858">',
+                                      hm_label_long, '</span>')))
 
 # significant differences in predicted drug resistance -------
 

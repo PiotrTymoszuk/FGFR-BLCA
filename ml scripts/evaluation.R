@@ -104,6 +104,9 @@
              paste(globals$algo_labs[[i]], sep = ', ')) %>%
       pmap(plot_confusion) %>%
       map(~.x +
+            scale_x_discrete(labels = function(x) stri_replace(x,
+                                                               fixed = '-',
+                                                               replacement = '\n')) +
             scale_y_discrete(labels = function(x) stri_replace(x,
                                                                fixed = '-',
                                                                replacement = '\n')) +

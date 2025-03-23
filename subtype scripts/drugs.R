@@ -71,7 +71,7 @@
   sub_drugs$title_suffixes <-
     c(all = 'all drugs',
       common_significant = 'significant in at least two cohorts',
-      fgfr_drugs = 'FGFR-targeting drugs')
+      fgfr_drugs = 'pan FGFR inhibitors')
 
 # Descriptive stats -------
 
@@ -112,13 +112,15 @@
         hm_label = exchange(variable,
                             sub_drugs$lexicon,
                             value = 'hm_label'),
-        hm_label_long = paste(hm_label, plot_cap, sep = '<br>'),
+        hm_label_long = paste(title_label, plot_cap, sep = '<br>'),
         hm_label = ifelse(regulation == 'regulated',
                           html_bold(hm_label),
-                          hm_label),
+                          paste0('<span stype = "opacity: 0.5">',
+                                 hm_label, '</span>')),
         hm_label_long = ifelse(regulation == 'regulated',
                                html_bold(hm_label_long),
-                               hm_label_long))
+                               paste0('<span style = "color: #585858">',
+                                      hm_label_long, '</span>')))
 
   sub_drugs$kruskal_significant <- sub_drugs$kruskal %>%
     map(filter, regulation == 'regulated') %>%
@@ -280,7 +282,10 @@
          oob = scales::squish)
 
   sub_drugs$hm_plots$fgfr_drugs <-
-    list(data = sub_drugs$data,
+    list(data = sub_drugs$data %>%
+           map(mutate,
+               consensusClass = fct_recode(consensusClass,
+                                           `Stroma\nrich` = 'Stroma-rich')),
          plot_title = globals$cohort_labs[names(sub_drugs$data)] %>%
            paste(sub_drugs$title_suffixes["fgfr_drugs"],
                  sep = ', ')) %>%
@@ -308,13 +313,18 @@
     map2(sub_drugs$hm_plots$common_significant,
          sub_drugs$kruskal,
          ~.x +
-           scale_y_discrete(labels = set_names(.y$hm_label, .y$variable)))
+           scale_y_discrete(labels = set_names(.y$hm_label,
+                                               .y$variable)))
 
   sub_drugs$hm_plots$fgfr_drugs <-
     map2(sub_drugs$hm_plots$fgfr_drugs,
          sub_drugs$kruskal,
          ~.x +
-           scale_y_discrete(labels = set_names(.y$hm_label_long, .y$variable)))
+           labs(subtitle = .x$labels$subtitle %>%
+                  stri_replace(fixed = '\n', replacement = '-')) +
+           theme(strip.text.x = element_text(angle = 90, hjust = 0)) +
+           scale_y_discrete(labels = set_names(.y$hm_label_long,
+                                               .y$variable)))
 
 # Box plots for the FGFR-targeting drugs -------
 

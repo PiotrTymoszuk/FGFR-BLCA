@@ -85,7 +85,9 @@
                color = 'black') +
     geom_text_repel(aes(label = plot_lab),
                     size = 2.5,
-                    show.legend = FALSE) +
+                    show.legend = FALSE,
+                    box.padding = 0.6,
+                    force = 2) +
     scale_color_manual(values = mibc_comp$model_colors,
                        labels = mibc_comp$model_labels,
                        name = 'predictor genes') +
@@ -109,9 +111,11 @@
   for(i in names(mibc_comp$predictions)) {
 
     mibc_comp$brier_square_plots[[i]] <-
-      list(x = mibc_comp$predictions[[i]],
+      list(x = mibc_comp$predictions[[i]] %>%
+             map(mutate,
+                 obs = fct_recode(obs, `Stroma\nrich` = 'Stroma-rich')),
            y = mibc_comp$stats %>%
-             filter(algorithm == i) %>%
+             #filter(algorithm == i) %>%
              blast(cohort),
            z = globals$cohort_labs[names(mibc_comp$predictions[[i]])] %>%
              paste(globals$algo_labs[i], sep = ', ')) %>%
@@ -135,12 +139,7 @@
              globals$common_theme +
              labs(title = z,
                   x = 'observed consensus class',
-                  y = '2 - Brier square distance'))
-
-    ## appending the plots with mean square values expected for
-    ## NULL models
-
-
+                  y = '2 - square distance to outcome'))
 
   }
 
