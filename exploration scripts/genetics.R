@@ -134,6 +134,15 @@
     map(map, ~.x$variable) %>%
     map(reduce, intersect)
 
+  ## top FGF/FGFBP/FGFR alterations present in at least 1% of samples
+  ## in all cohorts
+
+  expl_genet$fgf_top_alterations <- expl_genet$fgf_stats %>%
+    map(blast, cohort) %>%
+    map(map, filter, percent >= 1) %>%
+    map(map, ~.x$variable) %>%
+    map(reduce, intersect)
+
 # Testing for differences between the cohorts ------
 
   insert_msg('Testing for differences between the cohorts')

@@ -158,6 +158,15 @@
     map(map, shared_features, m = 2) %>%
     map(map, as.character)
 
+  ## top common significant effects:
+  ## the largest effect sizes in ANOVA
+
+  sub_sig$top_common_significant <- sub_sig$anova %>%
+    map(filter, variable %in% unique(unlist(sub_sig$common_significant))) %>%
+    map(slice_max, etasq, n = 15) %>%
+    map(~.x$variable) %>%
+    reduce(intersect)
+
 # Heat map for the common significant signatures ------
 
   insert_msg('Heat map for the common significant signatures')
@@ -233,7 +242,8 @@
            all_of(levels(sub_sig$data[[1]]$consensusClass)),
            significance, eff_size) %>%
     set_names(c('Cohort', 'Variable', 'Member genes',
-                globals$sub_labels[levels(sub_sig$data[[1]]$consensusClass)],
+                globals$sub_labels[levels(sub_sig$data[[1]]$consensusClass)] %>%
+                  stri_capitalize_first,
                 'Significance', 'Effect size'))
 
 # END ------

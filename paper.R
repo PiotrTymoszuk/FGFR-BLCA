@@ -34,7 +34,9 @@
 
   insert_msg('Links and HTML elements')
 
-  c('./report scripts')
+  c('./report scripts/html.R',
+    './report scripts/links.R') %>%
+    source_all(message = TRUE, crash = TRUE)
 
 # figure, supplementary figures and supplementary tables -------
 

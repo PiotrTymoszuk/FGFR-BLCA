@@ -268,7 +268,7 @@
            eff_size) %>%
     set_names(c('Cohort', 'Gene symbol', 'Alteration',
                 'MIBC consensus class',
-                'Percentage of samples with alterations',
+                'Percentage of alterations',
                 'Samples with alterations, N',
                 'Total samples, N',
                 'Significance',

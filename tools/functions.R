@@ -1947,7 +1947,7 @@
                         space = 'free',
                         scales = 'free') +
              labs(title = y,
-                  x = 'SHAP value'))
+                  x = 'SHAP'))
 
     if(show_violin) {
 
@@ -2006,7 +2006,7 @@
              theme(axis.title.y = element_blank(),
                    axis.text.y = element_text(face = 'italic')) +
              labs(title = y,
-                  x = 'mean |SHAP value|'))
+                  x = 'mean |SHAP|'))
 
     ## optional: plot panels --------
 
@@ -2490,6 +2490,16 @@
     dict %>%
       compact %>%
       map(~.x$variable)
+
+  }
+
+# Labeller functions --------
+
+  drug_labeller <- function(x) {
+
+    x %>%
+      stri_replace(regex = '\\n.*', replacement = '') %>%
+      stri_capitalize_first
 
   }
 

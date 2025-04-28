@@ -171,6 +171,15 @@
     map(map, shared_features, m = 2) %>%
     map(map, as.character)
 
+  ## top common significant effects:
+  ## the largest effect sizes in ANOVA
+
+  sub_dge$top_common_significant <- sub_dge$anova %>%
+    map(filter, variable %in% unique(unlist(sub_dge$common_significant))) %>%
+    map(slice_max, etasq, n = 15) %>%
+    map(~.x$variable) %>%
+    reduce(intersect)
+
 # Box plots for single variables -------
 
   insert_msg('Box plots')
@@ -272,7 +281,8 @@
            all_of(levels(sub_dge$data[[1]]$consensusClass)),
            significance, eff_size) %>%
     set_names(c('Cohort', 'Variable',
-                globals$sub_labels[levels(sub_dge$data[[1]]$consensusClass)],
+                globals$sub_labels[levels(sub_dge$data[[1]]$consensusClass)] %>%
+                  stri_capitalize_first,
                 'Significance', 'Effect size'))
 
 # END ------
