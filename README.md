@@ -32,7 +32,7 @@ Legend of Figure 1 is available as a [__Word file__](https://github.com/PiotrTym
 Rebuttal Letter is provided as a [__Word file__](https://github.com/PiotrTymoszuk/FGFR-BLCA/blob/main/report/rebuttal_letter.docx). 
 Supplementary Figures are provided as [__PDF and high resolution PNG files__](https://github.com/PiotrTymoszuk/FGFR-BLCA/tree/main/report/supplementary%20figures). 
 Supplementary Tables are available as an [__Excel file__](https://github.com/PiotrTymoszuk/FGFR-BLCA/blob/main/report/supplementary_tables.xlsx). 
-A Word file with Supplementary Material is available in from a [__Dropbox__](https://www.dropbox.com/scl/fi/ec72xu9xworvahcsorvek/supplementary_material.docx?rlkey=slhsm6cw5nxfz9lh1ynvbr7gz&dl=0).
+A Word file with Supplementary Material is available in from a [__Dropbox__](https://www.dropbox.com/scl/fi/80tylg5aoieyr2a358bvm/supplementary_material.docx?rlkey=1s863cbokfbgucbyr1m8cspbx&dl=0).
 
 ## Usage
 
