@@ -1,6 +1,6 @@
 ---
 title: "FGFR1/3 Signaling as Achilles’ Heel of Phenotypic Diversity in Urothelial Carcinoma"
-subtitle: "Rebuttal Letter"
+subtitle: "Rebuttal Letter, first revision"
 author: "Department of Urology, Medical University of Innsbruck"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
 

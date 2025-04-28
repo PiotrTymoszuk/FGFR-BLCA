@@ -2,9 +2,24 @@
 
   insert_head()
 
-# container ------
+# containers ------
 
   suppl_tabs <- list()
+  suppl_globals <- list()
+
+# some globals ----
+
+  insert_msg('Table globals')
+
+  ## levels of classes and cohorts
+  ## for arr<anging the supplementary tables
+
+  suppl_globals$class_levels <- c('LumP', 'LumU', 'Stroma-rich', 'Ba/Sq')
+
+  suppl_globals$cohort_levels <- globals$analysis_cohorts
+
+  suppl_globals$cohort_lab_levels <-
+    unname(globals$cohort_labs[suppl_globals$cohort_levels])
 
 # Characteristic of the bulk cancer and IHC cohorts -------
 
@@ -61,7 +76,13 @@
 
   insert_msg('Frequency of genetic alterations in FGFR/FGF/FGFBP genes')
 
-  suppl_tabs$genetic_alterations <- expl_genet$fgf_result_tbl %>%
+  ## to meet the request by a reviewer: showing only the alterations
+  ## presenting at least 1% of the samples
+
+  suppl_tabs$genetic_alterations <-
+    map2(expl_genet$fgf_result_tbl,
+         expl_genet$fgf_top_alterations,
+         ~filter(.x, `Gene symbol` %in% .y)) %>%
     compress(names_to = 'Alteration type') %>%
     relocate(`Alteration type`) %>%
     mdtable(label = 'genetic_fgf_fgfr_features',
@@ -74,19 +95,43 @@
                             "with Cramer's V effect size statistic.",
                             'P values were corrected for multiple testing with',
                             'the false discovery rate method.',
-                            'The table is available as a supplementary Excel',
-                            'file.'))
+                            'Frequency of alterations found in at least 1% of',
+                            'specimens in the BCAN, GENIE BLCA, IMvigor,',
+                            'MSK IMPACT, and TCGA BLCA are presented.'))
 
 # Alterations of the FGFR/FGF/FGFBP genes in the consensus classes of MIBC ------
 
   insert_msg('Genetics of FGFR/FGF/FGFBP in the consensus MIBC classes')
 
+  ## showing the same genetic alterations as in the previous table
+  ## (mutations of )
+
   suppl_tabs$sub_genetics <- sub_genet$result_tbl %>%
+    mutate(Alteration = factor(Alteration,
+                               c('mutation', 'deletion', 'amplification'))) %>%
+    blast(Alteration)
+
+  suppl_tabs$sub_genetics <-
+    map2_dfr(suppl_tabs$sub_genetics,
+             expl_genet$fgf_top_alterations[names(suppl_tabs$sub_genetics)],
+             ~filter(.x, `Gene symbol` %in% .y)) %>%
+    mutate(Alteration = paste(`Gene symbol`, Alteration)) %>%
+    relocate(Cohort, Alteration) %>%
+    select(-`Gene symbol`)
+
+  suppl_tabs$sub_genetics <- suppl_tabs$sub_genetics %>%
+    mutate(Alteration = factor(Alteration, unique(Alteration)),
+           Cohort = factor(Cohort, suppl_globals$cohort_lab_levels),
+           `MIBC consensus class` = factor(`MIBC consensus class`,
+                                           suppl_globals$class_levels)) %>%
+    arrange(Alteration, Cohort, `MIBC consensus class`) %>%
     mdtable(label = 'sub_genetics',
             ref_name = 'sub_genetics',
             caption = paste('Frequency of somatic mutations and copy number',
-                            'variants of FGFR-, FGF-, and FGFBP-coding genes',
-                            'in the consensus molecular classes of MIBC',
+                            'variants of FGFR3 and FGF3/4/19 genes',
+                            'in the luminal papillary (LumP), luminal unstable (LumU),',
+                            'stoma-rich, and basal/squamous like (Ba/Sq)',
+                            'consensus molecular classes of MIBC',
                             'in the TCGA BLCA, IMvigor, and BCAN cohorts.',
                             'The frequencies are presented as percentages of',
                             'the consensus class.',
@@ -95,13 +140,13 @@
                             'weighted permutation test',
                             "with Cramer's V effect size statistic.",
                             'P values were corrected for multiple testing with',
-                            'the false discovery rate method.',
-                            'The table is available as a supplementary',
-                            'Excel file.'))
+                            'the false discovery rate method.'))
 
 # Expression of genes and proteins -------
 
   insert_msg('Expression, genes and proteins')
+
+  ## showing the entire table as requested by the reviewer
 
   suppl_tabs$expression <- expl_expr$stats %>%
     set_names(c('Variable', globals$cohort_labs[names(expl_expr$stats)[-1]])) %>%
@@ -122,15 +167,17 @@
                                'intensity and quantity of positive cells.',
                                'Median mRNA and protein amounts with',
                                'interquartile ranges, ranges, and numbers of',
-                               'cancer samples are listed.',
-                               'The table is available as a supplementary Excel',
-                               'file.'))
+                               'cancer samples are listed.'))
 
 # Differential expression of FGFR/FGF/FGFBP genes in the consensus classes ------
 
   insert_msg('Differential expression of FGFR/FGF/FGFBP genes in the classes')
 
+  ## showing the to genes found to be differentially regulated between the
+  ## consensus classes in at least two cohorts
+
   suppl_tabs$sub_dge <- sub_dge$result_tbl %>%
+    filter(Variable %in% c('Samples, N', sub_dge$top_common_significant)) %>%
     mdtable(label = 'sub_dge',
             ref_name = 'sub_dge',
             caption = paste('Expression of FGF-, FGFR-, and FGFBP-coding genes',
@@ -142,15 +189,26 @@
                             'P values were corrected for multiple testing with',
                             'the false discovery rate method.',
                             'log2-transformed expression levels are presented',
-                            'as medians with interquartile ranges and ranges.',
-                            'The table is available as a supplementary Excel',
-                            'file.'))
+                            'as medians with interquartile ranges and ranges for',
+                            'the top genes whose expression differentiated',
+                            'between the molecular consensus classes',
+                            '(top 15 largest eta-square values shared by',
+                            'all cohorts).'))
 
 # Signatures of FGFR-related genes in the consensus classes ------
 
   insert_msg('Signatures of FGFR-related genes in the classes')
 
+  ## showing the top differentially regulated signatures
+  ## to meet the reviewer's request
+
   suppl_tabs$sub_sig <- sub_sig$result_tbl %>%
+    filter(Variable %in%
+             c('Samples, N',
+               sub_sig$top_common_significant %>%
+                 reduce(union) %>%
+                 exchange(sig$lexicon))) %>%
+    select(-`Member genes`) %>%
     mdtable(label = 'sub_sig',
             ref_name = 'sub_sig',
             caption = paste('Single sample gene set enrichment analysis',
@@ -162,10 +220,12 @@
                             'ANOVA with eta-square effect size statistic.',
                             'P values were corrected for multiple testing with',
                             'the false discovery rate method.',
-                            'ssGSEA scores are presented',
-                            'as medians with interquartile ranges and ranges.',
-                            'The table is available as a supplementary Excel',
-                            'file.'))
+                            'ssGSEA scores are presented as medians with',
+                            'interquartile ranges and ranges for',
+                            'the top signatures whose scores differentiated',
+                            'between the molecular consensus classes',
+                            '(top 15 largest eta-square values shared by',
+                            'all cohorts).'))
 
 # Forecasts of resistance in the consensus molecular classes, anti-FGFR drugs -------
 
@@ -278,38 +338,54 @@
 
   insert_msg('SHAP variable importance')
 
-  suppl_tabs$shap <-
-    list(mibc_genes = mibc_splots$stats %>%
-           map(transmute,
-               variable = variable,
-               class = class,
-               importance = abs(importance)),
-         fgfr_genes = ml_splots$stats) %>%
+  ## to meet the Reviewer's requirements, creating two separate tables:
+  ## 1) For the FGFR/FGF/FGFBP classifiers
+  ## 2) For the classifiers employing the consensus class-defining genes by
+  ## Kamoun et al.
+  ## in each table we present top five most influential genes
+
+  suppl_tabs[c('shap', 'kamoun_shap')] <-
+    list(ml_splots$stats, mibc_splots$stats) %>%
+    map(map, mutate, importance = abs(importance)) %>%
+    map(map, group_by, class) %>%
+    map(map, slice_max, importance, n = 5) %>%
+    map(map, ungroup) %>%
     map(compress, names_to = 'algorithm') %>%
-    compress(names_to = 'model') %>%
-    left_join(ml_globals$lexicon) %>%
-    transmute(`Explanatory factors/genes` = mibc_comp$model_labels[model],
-              Algorithm = globals$algo_labs[algorithm],
-              `Consensus class` = class,
-              `Gene symbol` = variable,
-              `FGFR/FGF/FGFBP protein type` = ifelse(is.na(protein_type),
-                                                     'non-FGFR/FGF/FGFBP',
-                                                     protein_type),
-              `Importance, mean absolute SHAP` = signif(importance, 2)) %>%
-    as_mdtable(label = 'shap',
-               ref_name = 'shap',
-               caption = paste('Importance of explanatory variables for the',
-                               'Elastic Net and Random Forest models of',
-                               'MIBC consensus molecular classes estimated by',
-                               'the SHAP algorithm.',
-                               'Contribution of the genuine MIBC consensus',
-                               'class-defining genes and the FGFR-, FGF-, and',
-                               'FGFBP-coding genes to prediction of consensus',
-                               'molecular classes was assessed by mean absolute',
-                               'values of SHAP metrics (Shapley additive',
-                               'explanations).',
-                               'The table is available as a supplementary',
-                               'Excel file.'))
+    map(left_join, ml_globals$lexicon, by = 'variable') %>%
+    map(transmute,
+        Algorithm = globals$algo_labs[algorithm],
+        `Consensus MIBC class` = factor(class, suppl_globals$class_levels),
+        `Gene symbol` = variable,
+        `Protein type` = ifelse(is.na(protein_type),
+                                'non FGFR/FGF/FGFBP',
+                                stri_replace_all(protein_type,
+                                                 fixed = '_',
+                                                 replacement = ' ')),
+        `Importance, mean |SHAP|` = signif(importance, 2))
+
+  suppl_tabs[c('shap', 'kamoun_shap')] <-
+    suppl_tabs[c('shap', 'kamoun_shap')] %>%
+    map(arrange, Algorithm, `Consensus MIBC class`) %>%
+    list(label = names(.),
+         ref_name = names(.),
+         caption = paste('Importance of explanatory variables for the',
+                         'Elastic Net and Random Forest models of',
+                         'MIBC consensus molecular classes estimated by',
+                         'the SHAP algorithm.',
+                         'The models employed',
+                         c('the FGFR-, FGF-, and FGFBP-coding genes',
+                           'the genuine MIBC consensus class-defining genes by Kamoun et al.'),
+                         'as explanatory factors.',
+                         'Contribution of the explanatory factors to predictions',
+                         'of consensus molecular classes was assessed by mean absolute',
+                         'values of SHAP metrics (Shapley additive',
+                         'explanations).',
+                         'Top five most influential genes for the predictions of',
+                         'luminal papillary (LumP), luminal unstable (LumU),',
+                         'stroma-rich, and basal/squamous-like (Ba/Sq) classes',
+                         'by the Elastic Net and Random Forest algorithms are',
+                         'listed.')) %>%
+    pmap(as_mdtable)
 
 # Saving the tables on the disc --------
 

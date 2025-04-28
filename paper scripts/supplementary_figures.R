@@ -29,8 +29,7 @@
     as_figure(label = 'consensus_subtypes_fgf_fgfr_gene_alterations',
               ref_name = 'sub_genet',
               caption = paste('Alterations of FGFR-, FGF-, and FGFBP-coding',
-                              'genes in consensus molecular classes of',
-                              'urothelial cancers.'),
+                              'genes in consensus molecular classes of MIBC.'),
               w = 180,
               h = 90)
 
@@ -64,7 +63,75 @@
               w = 180,
               h = 140)
 
-# Representative stainings for FGFR/FGF/FGFBP -------
+# Mutation density and mutation hotspots, FGFR3 ------
+
+  insert_msg('Mtation density and mutation hotspots, FGFR3')
+
+  ## density plot and detailed plot
+
+  suppl_figs$fgfr3_hot <-
+    plot_grid(expl_hot$domain_density_plots_paper$FGFR3,
+              expl_hot$domain_percentage_plots_paper$protein_domain$FGFR3,
+              ncol = 2,
+              align = 'hv',
+              axis = 'tblr') %>%
+    plot_grid(get_legend(expl_fgfr$domain_plots$FGFR3 +
+                           globals$figure_theme +
+                           theme(legend.position = 'bottom',
+                                 legend.text = element_text(margin =
+                                                              ggplot2::margin(r = 10)))),
+              nrow = 2,
+              rel_heights = c(0.9, 0.1)) %>%
+    as_figure(label = 'fgfr3_mutation_hotspots',
+              ref_name = 'fgfr3_hot',
+              caption = 'Mutational hot spots of the FGFR3 gene.',
+              w = 190,
+              h = 160)
+
+# mRNA and protein expression of the genes of interest --------
+
+  insert_msg('mRNA and protein expression')
+
+  ## left: heat map with the mRNA expression Z scores
+  ## right: box plots with IHVC scores
+
+  suppl_figs$expression <-
+    list(x = list(expl_expr$hm_plot, expl_expr$plots$hpa),
+         y = c('mRNA expression', 'Protein expression'),
+         z = c('italic', 'plain'),
+         v = c(45, 0)) %>%
+    pmap(function(x, y, z, v) x +
+           guides(x = guide_axis(angle = v)) +
+           labs(title = y) +
+           #globals$figure_theme +
+           theme(plot.subtitle = element_blank(),
+                 axis.text.y = element_text(face = z),
+                 axis.title.y = element_blank()))
+
+  suppl_figs$expression[[1]] <- suppl_figs$expression[[1]] +
+    theme(axis.title.x = element_blank())
+
+  suppl_figs$expression <-
+    plot_grid(suppl_figs$expression[[1]] +
+                theme(legend.position = 'none'),
+              plot_grid(suppl_figs$expression[[2]] +
+                          theme(legend.position = 'none'),
+                        get_legend(suppl_figs$expression[[1]] +
+                                     theme(legend.position = 'bottom')),
+                        nrow = 2,
+                        rel_heights = c(0.73, 0.27)),
+              ncol = 2,
+              rel_widths = c(1, 1.15))
+
+  suppl_figs$expression <- suppl_figs$expression %>%
+    as_figure(label = 'expression_mRNA_protein_expression',
+              ref_name = 'expression',
+              caption = paste('Expression of genes coding FGFR, FGF, and FGFBP',
+                              'at mRNA and protein level.'),
+              w = 180,
+              h = 183)
+
+# Representative staining for FGFR/FGF/FGFBP -------
 
   insert_msg('Representative IHC stainings')
 
@@ -87,6 +154,33 @@
          h = c(160, 80, 160)) %>%
     pmap(as_figure,
          w = 120)
+
+# Co-expression networks, IMvigor and BCAN ---------
+
+  insert_msg('Co-expression networks, Imvigor and BCAN')
+
+  suppl_figs$bulk_networks <-
+    expl_exnet$paper_plots[c("imvigor", "bcan")] %>%
+    map(~.x +
+          theme(plot.subtitle = element_blank(),
+                legend.position = 'none')) %>%
+    plot_grid(plotlist = .,
+              ncol = 2,
+              align = 'hv',
+              axis = 'tblr') %>%
+    plot_grid(ggdraw(),
+              get_legend(expl_exnet$paper_plots[[1]] +
+                           theme(legend.box = 'horizontal',
+                                 legend.text = element_text(margin = ggplot2::margin(r = 10)))),
+              nrow = 3,
+              rel_heights = c(0.7, 0.05, 0.3)) %>%
+    as_figure(label = 'fgfr_fgf_coexpression_networks',
+              ref_name = 'bulk_networks',
+              caption = paste('Co-expression networks of FGFR-, FGF-,',
+                              'and FGFBP-coding genes in the IMvigor',
+                              'and BCAN cohorts.'),
+              w = 190,
+              h = 140)
 
 # Co-expression network, cell lines --------
 
@@ -139,7 +233,7 @@
               ref_name = 'sub_fgfr_dge',
               caption = paste('Differential expression of FGF-, FGFR-,',
                               'and FGFR-coding genes in the consensus molecular',
-                              'classes of urothelial cancers.'),
+                              'classes of MIBC.'),
               w = 180,
               h = 190)
 
@@ -162,8 +256,7 @@
     as_figure(label = 'consensus_classes_fgfr_gene_signatures',
               ref_name = 'sub_sig',
               caption = paste('Scores of FGFR-related gene signatures in',
-                              'the consensus molecular classes of urothelial',
-                              'cancers.'),
+                              'the consensus molecular classes of MIBC.'),
               w = 190,
               h = 210)
 
@@ -188,10 +281,14 @@
 
   suppl_figs$sub_drugs$bottom <- sub_drugs$fgfr_plots %>%
     map(~.x$erdafitinib) %>%
-    map(~.x +
-          guides(x = guide_axis(angle = 45)) +
-          theme(legend.position = 'none',
-                axis.title.x = element_blank())) %>%
+    map2(., names(.),
+         ~.x +
+           labs(title = paste(.x$labels$title,
+                              globals$cohort_labs[.y],
+                              sep = ', ')) +
+           guides(x = guide_axis(angle = 45)) +
+           theme(legend.position = 'none',
+                 axis.title.x = element_blank())) %>%
     plot_grid(plotlist = .,
               ncol = 3,
               align = 'hv',
@@ -209,8 +306,7 @@
     as_figure(label = 'consensus_classes_predicted_fgfr_inhibitors',
               ref_name = 'sub_drugs',
               caption = paste('Predicted response to pan-FGFR inhibitors in',
-                              'the consensus molecular classes of urothelial',
-                              'cancers.'),
+                              'the consensus molecular classes of MIBC.'),
               w = 190,
               h = 230)
 
@@ -339,6 +435,28 @@
               w = 190,
               h = 230)
 
+# SHAP importance, Random Forest model, FGFR/FGF/FGFB independent variables -----------
+
+  insert_msg('Figure 1D: SHAP importances, Random Forest')
+
+  suppl_figs$rf_shap <- ml_splots$plots$ranger$panels %>%
+    map(~.x + guides(x = guide_axis(angle = 45))) %>%
+    plot_grid(plotlist = .,
+              ncol = 2,
+              align = 'hv',
+              axis = 'tblr') %>%
+    plot_grid(ml_splots$plots$ranger$legend,
+              nrow = 2,
+              rel_heights = c(0.87, 0.13)) %>%
+    as_figure(label = 'random_forest_model_mibc_classes_shap',
+              ref_name = 'rf_shap',
+              caption = paste('SHAP variable importance in the',
+                              'Random Forest model of consensus molecular classes',
+                              'of MIBC with FGFR/FGF/FGFBP-coding genes as',
+                              'explanatory factors.'),
+              w = 180,
+              h = 180)
+
 # Variable importance, SHAP, full predictor models ---------
 
   insert_msg('Variable importance, full predictor sets')
@@ -406,6 +524,24 @@
                               'set of the class-defining genes by Kamoun et al.'),
               w = 190,
               h = 110)
+
+# Response to pan-FGFR inhibitors, GDSC ---------
+
+  insert_msg('Response to pan-FGFRi, GDSC')
+
+  suppl_figs$pani_response <- expl_res$box_plots$gdsc +
+    theme(legend.title = element_markdown(),
+          axis.title.y = element_blank())
+
+  suppl_figs$pani_response <- suppl_figs$pani_response %>%
+    as_figure(label = 'fgfr_pan_inhibitors_reistance_cell_lines_gdsc',
+              ref_name = 'pani_response',
+              caption = paste('Sensitivity to pan-FGFR',
+                              'inhibitors of DepMap urothelial cancer',
+                              'cell lines in the GDSC1/2 drug screening',
+                              'experiments.'),
+              w = 135,
+              h = 100)
 
 # In vitro erdafitinib treatments --------
 
