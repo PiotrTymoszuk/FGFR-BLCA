@@ -40,6 +40,7 @@
                       exact = FALSE,
                       ci = FALSE,
                       pub_styled = TRUE) %>%
+    p_formatter(text = TRUE) %>%
     mutate(plot_cap = paste(eff_size, significance, sep = ', '))
 
 # Stack plot --------
@@ -70,7 +71,7 @@
     format_res_tbl(dict = NULL) %>%
     mutate(variable = 'Best overall response to ICB') %>%
     set_names(c('Variable', levels(fgfr_icb$data$FGFR3_mutation),
-                'Significance', 'Effect size'))
+                'P value', 'Effect size'))
 
 # END -------
 

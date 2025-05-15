@@ -22,7 +22,9 @@
   ## drug variables and their lexicon
 
   fgfr_drugs$lexicon <- drugs$lexicon %>%
-    mutate(axis_title = paste('predicted resistance,', unit))
+    mutate(axis_title = paste('predicted resistance,', unit),
+           unit = ifelse(unit == "log IC50",
+                         paste0(unit, ",µM"), unit))
 
   fgfr_drugs$variables <- fgfr_drugs$lexicon$variable
 
@@ -73,6 +75,7 @@
 
   fgfr_drugs$test <- fgfr_drugs$test %>%
     map(re_adjust) %>%
+    map(p_formatter, text = TRUE) %>%
     map(mutate,
         eff_size = paste('r =', signif(biserial_r, 2)),
         plot_cap = paste(eff_size, significance, sep = ', '),
@@ -265,15 +268,18 @@
   fgfr_drugs$result_tbl <-
     map2(fgfr_drugs$stats,
          fgfr_drugs$test %>%
+           map(p_formatter, text = FALSE) %>%
            map(~.x[c('variable', 'title_label', 'significance', 'eff_size')]),
          left_join, by = 'variable') %>%
+    map(format_res_tbl, dict = NULL) %>%
     compress(names_to = 'cohort') %>%
+    mutate(unit = exchange(variable,
+                           fgfr_drugs$lexicon,
+                           value = 'unit')) %>%
     transmute(Cohort = globals$cohort_labs[cohort],
               Variable = title_label,
               Variable = ifelse(is.na(Variable), 'Samples, N', Variable),
-              `Resistance metric` = exchange(variable,
-                                             fgfr_drugs$lexicon,
-                                             value = 'unit'),
+              `Resistance metric` = unit,
               `FGFR WT` = WT,
               `FGFR mutated` = mutated,
               Significance = significance,

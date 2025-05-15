@@ -86,6 +86,7 @@
   fgfr_os$test <- fgfr_os$survfit_objects %>%
     map(surv_pvalue, method = 'S1') %>%
     map(re_adjust, 'pval', method = 'BH') %>%
+    map(p_formatter, text = TRUE) %>%
     map(as_tibble)
 
 # Plotting -------

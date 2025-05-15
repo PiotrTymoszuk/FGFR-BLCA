@@ -42,7 +42,7 @@
                                        mutated = 'yes'))
 
   expl_res$data <- expl_res$data %>%
-    map(left_join,
+    map(inner_join,
         expl_res$FGFR3_mutation,
         by = 'sample_id') %>%
     map(relocate, sample_id, FGFR3_mutation)
@@ -113,11 +113,14 @@
                          expl_res$lexicon),
         label = stri_replace(label, fixed = ', ', replacement = '\n'))
 
-# Box plots -------
+# Representation of resistance metrics violin plots --------
 
-  insert_msg('Box plots')
+  insert_msg("Violin plots fo the resistance metrics")
 
-  expl_res$box_plots <-
+  ## displaying the points for FGFR3 mutant cell lines
+  ## on the top of points for the FGFR3 WT cell lines
+
+  expl_res$violin_plots <-
     list(x = expl_res$long_data,
          v = c(10, 1),
          u = c('resistance<br>vs max. concentration',
@@ -128,45 +131,42 @@
          z = c('GDSC drug screening',
                'PRISM drug screening')) %>%
     pmap(function(x, v, u, w, y, z) x %>%
+           filter(FGFR3_mutation == "WT") %>%
            ggplot(aes(x = resistance,
                       y = reorder(label,
                                   -resistance,
-                                  FUN = function(x) median(x, na.rm = TRUE)),
-                      color = status)) +
+                                  FUN = function(x) median(x, na.rm = TRUE)))) +
            facet_grid(data_set ~ .,
                       scales = 'free',
                       space = 'free') +
            geom_vline(xintercept = v,
                       linetype = 'dashed') +
-           geom_boxplot(outlier.color = NA,
-                        alpha = 0.25,
-                        color = 'black',
-                        linewidth = 0.5,
-                        fill = 'cornsilk') +
-           geom_point(aes(shape = FGFR3_mutation,
+           geom_violin(alpha = 0.25,
+                       scale = "width") +
+           geom_point(aes(shape = status,
                           size = FGFR3_mutation,
-                          alpha = FGFR3_mutation,
-                          fill = status),
-                      position = position_jitter(0, 0.1)) +
-           #geom_text_repel(aes(label = name_lab),
-            #               size = 2.3,
-             #              show.legend = FALSE) +
-           scale_shape_manual(values = c(WT = 8,
-                                         mutated = 23),
-                              name = html_italic('FGFR3')) +
+                          fill = FGFR3_mutation,
+                          group = FGFR3_mutation),
+                      position = position_jitter(width = 0,
+                                                 height = 0.1)) +
+           geom_point(data = x %>%
+                        filter(FGFR3_mutation == "mutated"),
+                      aes(shape = status,
+                          size = FGFR3_mutation,
+                          fill = FGFR3_mutation,
+                          group = FGFR3_mutation),
+                      position = position_jitter(width = 0,
+                                                 height = 0.1)) +
+           scale_shape_manual(values = c(sensitive = 21,
+                                         resistant = 23),
+                              name = "") +
            scale_size_manual(values = c(WT = 2,
                                         mutated = 3),
                              name = html_italic('FGFR3')) +
-           scale_alpha_manual(values = c(WT = 0.5,
-                                         mutated = 1),
-                              name = html_italic('FGFR3')) +
-           scale_color_manual(values = c(sensitive = 'steelblue',
-                                         resistant = 'firebrick'),
-                              name = '') +
-           scale_fill_manual(values = c(sensitive = 'steelblue',
-                                        resistant = 'firebrick'),
-                             name = '') +
+           scale_fill_manual(values = globals$mut_status_color,
+                             name = html_italic('FGFR3')) +
            scale_x_continuous(trans = w) +
+           guides(fill = guide_legend(override.aes = list(shape = 21))) +
            globals$common_theme +
            theme(axis.title.y = element_blank(),
                  legend.title = element_markdown()) +
@@ -175,6 +175,6 @@
 
 # END --------
 
-  expl_res <- expl_res[c("sensitive", "box_plots")]
+  expl_res <- expl_res[c("sensitive", "violin_plots")]
 
   insert_tail()

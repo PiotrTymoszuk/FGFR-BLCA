@@ -187,6 +187,98 @@
 
 # Result table formatting ------
 
+  p_formatter <- function(df,
+                          p_variable = "p_adjusted",
+                          text = TRUE) {
+
+    ## formats the p values in accordance with the EAU policy
+
+    p_vec <- df[[p_variable]]
+
+    p_vec <- ifelse(p_vec == 1,
+                    "1",
+                    ifelse(p_vec > 0.01 & p_vec < 0.1,
+                           signif(p_vec, 2),
+                           ifelse(p_vec < 0.001,
+                                  "< 0.001",
+                                  signif(p_vec, 1))))
+
+    df[["significance"]] <- p_vec
+
+    if(text) {
+
+      df <- df %>%
+        mutate(significance = ifelse(.data[[p_variable]] >= 0.05,
+                                     paste0("ns (p = ", significance, ")"),
+                                     ifelse(stri_detect(significance, fixed = "<"),
+                                            paste("p", significance),
+                                            paste("p =", significance))))
+
+    }
+
+    df
+
+  }
+
+  fct_formatter <- function(col) {
+
+    ## converts a column of the output of `explore()` for categorical variables
+    ## and converts it to the form 'count (percent)'
+
+    ## pre-processing of the columns, n numbers interfere with extraction
+    ## of percentages and counts
+
+    pre_col <- col %>%
+      stri_replace(regex = "\\ncomplete.*$",
+                   replacement = "")
+
+    ## percentages and counts, positions containing stats for numeric features
+
+    percent_str <- pre_col %>%
+      stri_extract_all(regex = "\\d+(\\.\\d+)?%") %>%
+      map(stri_replace_all, regex = "%$", replacement = "")
+
+    num_positions <- percent_str %>%
+      map_lgl(~all(is.na(.x)))
+
+    count_str <- pre_col %>%
+      stri_extract_all(regex = "\\(\\d+(\\.\\d+)?\\)") %>%
+      map(stri_replace_all, regex = "\\(|\\)", replacement = "")
+
+    ## category names and numbers of complete cases
+
+    cat_str <- pre_col %>%
+      stri_extract_all(regex = "\\w+:") %>%
+      map(stri_replace, regex = ":$", replacement = "")
+
+    compl_str <- col %>%
+      stri_extract(regex = "\\ncomplete.*$")
+
+    ## the output preserves positions with statistics of numeric features
+
+    out <- list(x = col,
+                y = num_positions,
+                u = cat_str,
+                v = count_str,
+                z = percent_str,
+                w = compl_str) %>%
+      pmap_chr(function(x, y, u, v, z, w) {
+
+        if(y) return(x)
+
+        out <- zip_cat_count_percent(u, v, z) %>%
+          paste(collapse = "\n")
+
+        if(is.na(w)) return(out)
+
+        paste0(out, w)
+
+      })
+
+    out
+
+  }
+
   format_desc <- function(df) {
 
     ## formats the output of 'explore()' function
@@ -199,7 +291,12 @@
 
   }
 
-  merge_stat_test <- function(stats, test, by = 'variable') {
+  merge_stat_test <- function(stats,
+                              test,
+                              p_variable = "p_adjusted",
+                              by = 'variable') {
+
+    test <- p_formatter(test, p_variable = p_variable, text = FALSE)
 
     left_join(stats, test[c(by, 'significance', 'eff_size')], by = by)
 
@@ -207,7 +304,13 @@
 
   format_res_tbl <- function(df,
                              dict = globals$clinic_lexicon,
+                             remove_range = TRUE,
+                             format_effect = TRUE,
                              remove_complete = FALSE, ...) {
+
+    ## the table format compatible with EAU guidelines of table presentation
+
+    ## general formatting ---------
 
     if(!is.null(dict)) {
 
@@ -244,18 +347,109 @@
               replacement = '') %>%
       map_dfc(stri_replace,
               regex = '^yes:\\s{1}',
-              replacement = '')
-
-    if(!remove_complete) return(df)
-
-    df %>%
-      map_dfc(stri_replace,
-              regex = '\\ncomplete.*',
               replacement = '') %>%
-      map_dfc(stri_replace,
-              regex = '^complete.*',
-              replacement = '')
+      map_dfc(stri_replace_all,
+              fixed = "[IQR: ",
+              replacement = "(") %>%
+      map_dfc(stri_replace_all,
+              fixed = "]",
+              replacement = ")") %>%
+      map_dfc(stri_replace_all,
+              fixed = " - ",
+              replacement = ", ")
 
+    ## formatting of the categorical variables, removal of cases
+    ## where there's no meaningfull number in the table cell
+
+    df <- df %>%
+      map_dfc(fct_formatter) %>%
+      map_dfc(function(x) ifelse(stri_detect(x, fixed = "complete: n = 0"), "", x))
+
+    ## formatting options for effect sizes, complete cases, and ranges -------
+
+    if(any(c("eff_size", "Effect size") %in% names(df))) {
+
+      eff_variable <- intersect(c("eff_size", "Effect size"), names(df))[1]
+
+      df[[eff_variable]] <-
+        stri_split_fixed(df[[eff_variable]] ,
+                         pattern = " = ",
+                         simplify = TRUE)[, 2]
+
+    }
+
+    if(remove_range) {
+
+      df <- df %>%
+        map_dfc(stri_replace,
+                regex = "\\nrange.*\\n",
+                replacement = "\n") %>%
+        map_dfc(stri_replace,
+                regex = "\\nrange.*$",
+                replacement = "")
+
+    }
+
+    if(remove_complete) {
+
+      df <- df %>%
+        map_dfc(stri_replace,
+                regex = "\\ncomplete.*\\n",
+                replacement = "\n") %>%
+        map_dfc(stri_replace,
+                regex = "\\ncomplete.*$",
+                replacement = "")
+
+    }
+
+    df
+
+  }
+
+  format_genetics <- function(df,
+                              cohort_labels = globals$cohort_labs) {
+
+    ## format of summary tables with frequency of genetic alterations
+    ## according to the EAU guidelines
+
+    gene_var <- intersect(c("gene_symbol", "gene", "variable"),
+                          names(df))[1]
+
+    df <- df %>%
+      mutate(`Gene symbol` = .data[[gene_var]],
+             `Cohort (n samples)` = paste0(cohort_labels[cohort],
+                                           " (", n_total, ")"),
+             `Alteration frequency, n samples (percentage)` =
+               paste0(n, " (", signif(percent, 2), ")")) %>%
+      select(-cohort, -n_total, -n, -percent)
+
+    df <- df[names(df) != gene_var]
+
+    df <- df %>%
+      relocate(`Gene symbol`,
+               `Cohort (n samples)`,
+               `Alteration frequency, n samples (percentage)`)
+
+    if("significance" %in% names(df)) {
+
+      df <- df %>%
+        mutate(`FDR p value` = significance) %>%
+        select(-significance)
+
+    }
+
+    if("eff_size" %in% names(df)) {
+
+      df <- df %>%
+        mutate(`Effect size, Cramer's V` =
+                 stri_split_fixed(eff_size,
+                                  pattern = " = ",
+                                  simplify = TRUE)[, 2]) %>%
+        select(-eff_size)
+
+    }
+
+    return(df)
 
   }
 
@@ -2493,13 +2687,31 @@
 
   }
 
-# Labeller functions --------
+# Labeller and helper functions --------
 
   drug_labeller <- function(x) {
 
     x %>%
       stri_replace(regex = '\\n.*', replacement = '') %>%
       stri_capitalize_first
+
+  }
+
+  zip_cat_count_percent <- function(cat, ct, pt) {
+
+    ## collapses a vector with category labels (`cat`) counts (`ct`) and
+    ## a vector with
+    ## percentages (`pt`) into string of counts and percentages of a general
+    ## form 'category: count (percent)'
+
+    cat <- ifelse(is.na(cat),
+                  "",
+                  paste0(cat, ": "))
+
+    list(x = cat,
+         y = ct,
+         z = pt) %>%
+      pmap_chr(function(x, y, z) paste0(x, y, " (", z, ")"))
 
   }
 

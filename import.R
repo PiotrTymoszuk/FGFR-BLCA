@@ -37,8 +37,9 @@
   library(cbioportalR)
   library(xml2)
   library(readxl)
-  library(gseaTools)
+  library(prism2R)
 
+  library(gseaTools)
   library(AnnotationDbi)
   library(org.Hs.eg.db)
 
@@ -220,6 +221,13 @@
   access_cache(cache_path = './data/sig.RData',
                script_path = './import scripts/signatures.R',
                message = 'Cached FGFR-related gene signature scores')
+
+# Importing in vitro treatment data from a prism file --------
+
+  insert_msg("Import of in vitro treatment data")
+
+  c("./import scripts/in_vitro_treatments.R") %>%
+    source_all(message = TRUE, crash = TRUE)
 
 # END ------
 

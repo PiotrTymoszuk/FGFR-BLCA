@@ -104,15 +104,15 @@
              paste, sep = ', n = ') %>%
     set_names(names(expl_expr$hpa_complete))
 
-# Box plot panels --------
+# Violin plot panels --------
 
-  insert_msg('Box plot panels')
+  insert_msg('Violin plot panels')
 
   expl_expr$plots <-
     list(x = expl_expr$plot_data,
          u = c('gray60', 'gray60', 'gray60', 'gray60', 'black'),
          t = c(0.5, 0.5, 0.5, 0.5, 1),
-         q = c(0, 0, 0, 0, 0.2),
+         q = c(0, 0, 0, 0, 0.1),
          y = globals$cohort_labs[names(expl_expr$plot_data)],
          z = map_dbl(expl_expr$data, nrow),
          w = globals$cohort_axis_labs[names(expl_expr$plot_data)]) %>%
@@ -128,8 +128,8 @@
                                                                       replacement = '\n')),
                       scales = 'free',
                       space = 'free') +
-           geom_boxplot(outlier.color = NA,
-                        alpha = 0.35) +
+           geom_violin(scale = "width",
+                       alpha = 0.35) +
            geom_point(shape = 16,
                       size = t,
                       alpha = 0.5,
@@ -205,11 +205,31 @@
           axis.text.y = element_text(face = 'italic')) +
     labs(title = 'FGFR-, FGF-, and FGFBP-coding genes, RNA sequencing')
 
+# Result table --------
+
+  insert_msg("Result table")
+
+  ## column names:
+  ## contain the cohort names, number of samples, and units
+
+  expl_expr$result_caps <-
+    list(x = globals$cohort_labs[names(expl_expr$stats)[-1]],
+         y = unlist(expl_expr$stats[2, -1]),
+         z = unlist(expl_expr$stats[1, -1])) %>%
+    pmap_chr(function(x, y, z) paste0(x, "\n", y, "\n(samples: n = ", z, ")"))
+
+  ## the results table according to the EAU guidelines
+
+  expl_expr$result_tbl <- expl_expr$stats[c(-2:-1), ] %>%
+    format_res_tbl(dict = NULL) %>%
+    set_names(c("Gene symbol", expl_expr$result_caps))
+
 # END -------
 
   expl_expr$lexicon <- NULL
   expl_expr$hm_data <- NULL
   expl_expr$data <- NULL
+  expl_expr$result_caps <- NULL
 
   expl_expr <- compact(expl_expr)
 

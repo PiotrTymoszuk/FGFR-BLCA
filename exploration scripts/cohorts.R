@@ -23,6 +23,7 @@
            tissue = factor(tissue, c('bladder', 'non-bladder')))
 
   expl_cohorts$lexicon <- globals$clinic_lexicon %>%
+    filter(!variable %in% c("tissue", "invasiveness")) %>%
     mutate(unit = ifelse(variable == 'tmb_per_mb',
                          'mutations/MB or fraction of genome',
                          unit),
@@ -58,6 +59,11 @@
            test_type = ifelse(variable %in% c('tmb_per_mb', 'invasiveness'),
                               'none', test_type))
 
+  ## conversion of characters to factors
+
+  expl_cohorts$data <- expl_cohorts$data %>%
+    map(map_dfc, function(x) if(is.character(x)) factor(x) else x)
+
   ## a common analysis data frame
 
   expl_cohorts$data <- expl_cohorts$data %>%
@@ -68,7 +74,8 @@
            death = as.character(death),
            death = car::recode(death, "'0' = 'no'; '1' = 'yes'"),
            death = factor(death, c('no', 'yes'))) %>%
-    map_dfc(function(x) if(is.factor(x)) droplevels(x) else x)
+    map_dfc(function(x) if(is.factor(x)) droplevels(x) else x) %>%
+    map_dfc(unname)
 
 # Total numbers of cancer samples ------
 
@@ -116,6 +123,7 @@
                                  exact = FALSE,
                                  pub_styled = TRUE)) %>%
     re_adjust %>%
+    p_formatter(text = TRUE) %>%
     mutate(plot_cap = paste(eff_size, significance, sep = ', '))
 
 # Result table -------
@@ -135,7 +143,7 @@
     full_rbind(expl_cohorts$n_numbers,
                expl_cohorts$result_tbl) %>%
     set_names(c('Variable', levels(expl_cohorts$data$cohort),
-                'Significance', 'Effect size'))
+                'FDR p value', 'Effect size'))
 
 # Plots ---------
 

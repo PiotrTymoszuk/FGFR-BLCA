@@ -145,19 +145,14 @@
 
   expl_fgfr$result_tbl <- expl_fgfr$stats %>%
     map(compress, names_to = 'cohort') %>%
-    map(mutate, cohort = globals$cohort_labs[cohort]) %>%
-    map2(., names(.),
-         ~select(.x, cohort, gene_symbol, all_of(.y), percent, n, n_total)) %>%
-    map2(., names(.),
-         ~arrange(.x, cohort, gene_symbol, .data[[.y]])) %>%
+    map(format_genetics) %>%
+    map(select, -plot_pos) %>%
     map2(., c('Mutation type',
               'Variant type',
               'Protein domain'),
-         ~set_names(.x,
-                    c('Cohort', 'Gene symbol', .y,
-                      'Percentage of samples',
-                      'Samples with mutation, N',
-                      'Total samples, N')))
+         function(x, y) x %>%
+           mutate(!!y := .data[[names(x)[ncol(x)]]]) %>%
+           relocate(`Gene symbol`, !!y))
 
 # END ------
 

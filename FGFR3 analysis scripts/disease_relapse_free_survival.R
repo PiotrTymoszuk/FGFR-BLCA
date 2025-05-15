@@ -106,6 +106,7 @@
   fgfr_rfs$test <- fgfr_rfs$survfit_objects %>%
     map(surv_pvalue, method = 'S1') %>%
     map(re_adjust, 'pval', method = 'BH') %>%
+    map(p_formatter, text = TRUE) %>%
     compress(names_to = 'response') %>%
     as_tibble
 

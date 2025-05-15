@@ -19,13 +19,17 @@
   ## variables: removal of the ones analyzed by other scripts
 
   fgfr_clinic$lexicon <- globals$clinic_lexicon %>%
-    filter(!variable %in% c('tmb_per_mb', 'bi_response', 'death')) %>%
+    filter(!variable %in% c('tmb_per_mb', 'bi_response', 'death',
+                            "tissue", "invasiveness")) %>%
     mutate(test_type = ifelse(format == 'numeric',
                               'wilcoxon_r', 'cramer_v'),
            plot_type = ifelse(format == 'numeric',
                               'box', 'stack'),
            ax_label = ifelse(is.na(unit),
-                             '% of cluster', unit))
+                             '% of cluster', unit),
+           table_label = ifelse(!is.na(unit),
+                                paste(label, unit, sep = ", "),
+                                label))
 
   ## analysis data
 
@@ -40,17 +44,18 @@
          inner_join, by = 'sample_id') %>%
     map(map_dfc, function(x) if(is.factor(x)) droplevels(x) else x)
 
-  fgfr_clinic$data$bcan <- fgfr_clinic$data$bcan %>%
-    mutate(tissue = ifelse(tissue == 'bladder',
-                           'bladder', 'non-bladder'),
-           tissue = factor(tissue, c('bladder', 'non-bladder')))
-
   ## data set-specific variable vectors
 
   fgfr_clinic$variables <- fgfr_clinic$data %>%
     map(names) %>%
     map(~filter(fgfr_clinic$lexicon, variable %in% .x)) %>%
     map(~.x$variable)
+
+  ## converting of characters to vectors
+
+  fgfr_clinic$data <- fgfr_clinic$data %>%
+    map(select, -sample_id) %>%
+    map(map_dfc, function(x) if(is.character(x)) factor(x) else x)
 
 # N numbers -------
 
@@ -99,6 +104,7 @@
                                    pub_styled = TRUE,
                                    adj_method = 'BH'),
                 .options = furrr_options(seed = TRUE)) %>%
+    map(p_formatter, text = TRUE) %>%
     map(mutate,
         plot_cap = paste(eff_size, significance, sep = ', '),
         significance = ifelse(stri_detect(eff_size, fixed = 'Inf'),
@@ -160,7 +166,8 @@
            map(filter, !stri_detect(eff_size, fixed = 'Inf')),
          merge_stat_test) %>%
     map(format_res_tbl,
-        dict = fgfr_clinic$lexicon) %>%
+        dict = fgfr_clinic$lexicon,
+        value = "table_label") %>%
     map2(., fgfr_clinic$n_numbers,
          ~full_rbind(.y, .x)) %>%
     compress(names_to = 'cohort') %>%

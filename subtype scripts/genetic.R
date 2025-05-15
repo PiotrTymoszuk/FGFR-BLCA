@@ -124,6 +124,7 @@
 
   sub_genet$test <- sub_genet$test %>%
     map(re_adjust, 'global_p_value') %>%
+    map(p_formatter, text = TRUE) %>%
     map(as_tibble) %>%
     map(group_by, variable) %>%
     map(mutate,
@@ -135,6 +136,7 @@
 
   sub_genet$test <- sub_genet$test %>%
     map(re_adjust) %>%
+    map(p_formatter, text = TRUE) %>%
     map(mutate,
         cluster_significance = significance,
         regulation = ifelse(p_adjusted < 0.05 & ES >= 1.2,
@@ -248,31 +250,28 @@
                significance = global_significance),
          merge_stat_test) %>%
     compress(names_to = 'cohort') %>%
-    mutate(gene_symbol = stri_split_fixed(variable,
-                                          pattern = '_',
-                                          simplify = TRUE)[, 1],
-           alteration = stri_split_fixed(variable,
+    format_genetics %>%
+    mutate(Alteration = stri_split_fixed(`Gene symbol`,
                                          pattern = '_',
                                          simplify = TRUE)[, 2],
-           cohort = globals$cohort_labs[cohort],
-           percent = signif(percent, 2)) %>%
-    arrange(cohort, variable, consensusClass) %>%
-    select(cohort,
-           gene_symbol,
-           alteration,
-           consensusClass,
-           percent,
-           n,
-           n_total,
-           significance,
-           eff_size) %>%
-    set_names(c('Cohort', 'Gene symbol', 'Alteration',
-                'MIBC consensus class',
-                'Percentage of alterations',
-                'Samples with alterations, N',
-                'Total samples, N',
-                'Significance',
-                'Effect size'))
+           `Gene symbol` = stri_split_fixed(`Gene symbol`,
+                                            pattern = '_',
+                                            simplify = TRUE)[, 1],
+           n_total = stri_extract(`Cohort (n samples)`,
+                                  regex = "\\d+"),
+           `MIBC consensus class (n samples)` = paste0(consensusClass,
+                                                       " (", n_total, ")"),
+           `Cohort` = stri_replace(`Cohort (n samples)`,
+                                   regex = "\\s{1}\\(\\d+\\)",
+                                   replacement = "")) %>%
+    arrange(`Cohort`, `Gene symbol`, consensusClass) %>%
+    select(`Cohort`,
+           `Gene symbol`,
+           Alteration,
+           `MIBC consensus class (n samples)`,
+           `Alteration frequency, n samples (percentage)`,
+           `FDR p value`,
+           `Effect size, Cramer's V`)
 
 # Oncoplot representation of alterations of interest -------
 
@@ -348,10 +347,10 @@
 
   insert_msg('Caching')
 
-  sub_genet$data <- NULL
-  sub_genet$hm_data <- NULL
-  sub_genet$onco_data <- NULL
-  sub_genet$stack_test <- NULL
+  #sub_genet$data <- NULL
+  #sub_genet$hm_data <- NULL
+  #sub_genet$onco_data <- NULL
+  #sub_genet$stack_test <- NULL
 
   sub_genet <- compact(sub_genet)
 

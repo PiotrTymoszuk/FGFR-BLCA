@@ -83,7 +83,8 @@
            geom_vline(xintercept = 0,
                       linetype = 'dashed') +
            geom_violin(fill = 'cornsilk',
-                       alpha = 0.25) +
+                       alpha = 0.25,
+                       scale = "width") +
            geom_point(data = x %>%
                         filter(fgfr_gene == 'no'),
                       aes(color = fgfr_color_var,
@@ -105,6 +106,7 @@
                            box.padding = 0.6,
                            force = 2,
                            show.legend = FALSE) +
+           scale_x_continuous(trans = scales::pseudo_log_trans(base = 10)) +
            scale_color_manual(values = c(other = 'gray40',
                                          positive = 'firebrick',
                                          negative = 'steelblue'),

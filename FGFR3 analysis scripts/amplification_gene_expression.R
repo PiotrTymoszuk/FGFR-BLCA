@@ -18,10 +18,12 @@
     reduce(union)
 
   fgfr_ampl$data <- tcga$expression %>%
-    select(sample_id, any_of(fgfr_ampl$variables))
+    select(sample_id, CCND1, any_of(fgfr_ampl$variables))
 
   fgfr_ampl$variables <-
     fgfr_ampl$variables[fgfr_ampl$variables %in% names(fgfr_ampl$data)]
+
+  fgfr_ampl$variables <- c("CCND1", fgfr_ampl$variables)
 
   ## genetics data
 
@@ -61,6 +63,7 @@
                   adj_method = 'BH',
                   safely = TRUE) %>%
     re_adjust %>%
+    p_formatter(text = TRUE) %>%
     mutate(eff_size = paste('r =', signif(biserial_r, 2)),
            plot_cap = paste(eff_size, significance, sep = ', ')) %>%
     as_tibble

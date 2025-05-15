@@ -25,6 +25,9 @@
                               'kruskal_etasq', 'cramer_v'),
            plot_type = ifelse(format == 'numeric',
                               'box', 'stack'),
+           table_label = ifelse(!is.na(unit),
+                                paste(label, unit, sep = ', '),
+                                label),
            ax_label = ifelse(is.na(unit),
                              '% of subset', unit))
 
@@ -61,6 +64,12 @@
 
   sub_clinic$variables$tcga <-
     sub_clinic$variables$tcga[sub_clinic$variables$tcga != 'tissue']
+
+  ## characters to vectors
+
+  sub_clinic$data <- sub_clinic$data %>%
+    map(select, -sample_id) %>%
+    map(map_dfc, function(x) if(is.character(x)) factor(x) else x)
 
 # N numbers --------
 
@@ -109,6 +118,7 @@
                                    pub_styled = TRUE,
                                    adj_method = 'BH'),
                 .options = furrr_options(seed = TRUE)) %>%
+    map(p_formatter, text = TRUE) %>%
     map(mutate,
         plot_cap = paste(eff_size, significance, sep = ', '))
 
@@ -140,7 +150,7 @@
       set_names(sub_clinic$test[[i]]$variable)
 
     sub_clinic$plots[[i]]$age <- sub_clinic$plots[[i]]$age +
-      scale_fill_manual(values = globals$genet_colors)
+      scale_fill_manual(values = globals$sub_colors)
 
     sub_clinic$plots[[i]][names(sub_clinic$plots[[i]]) != 'age'] <-
       sub_clinic$plots[[i]][names(sub_clinic$plots[[i]]) != 'age'] %>%
@@ -158,7 +168,8 @@
            map(filter, !stri_detect(eff_size, fixed = 'Inf')),
          merge_stat_test) %>%
     map(format_res_tbl,
-        dict = sub_clinic$lexicon) %>%
+        dict = sub_clinic$lexicon,
+        value = "table_label") %>%
     map2(., sub_clinic$n_numbers,
          ~full_rbind(.y, .x)) %>%
     compress(names_to = 'cohort') %>%
@@ -167,7 +178,7 @@
     set_names(c('Cohort',
                 'Variable',
                 levels(sub_clinic$data[[1]]$consensusClass),
-                'Significance',
+                'FDR p value',
                 'Effect size'))
 
 # END -------

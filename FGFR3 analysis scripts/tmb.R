@@ -119,6 +119,7 @@
                         safely = TRUE,
                         adj_method = 'BH')) %>%
     map(re_adjust) %>%
+    map(p_formatter, text = TRUE) %>%
     map(mutate,
         eff_size = paste('r =', signif(biserial_r, 2)),
         plot_cap = paste(eff_size, significance, sep = ', ')) %>%

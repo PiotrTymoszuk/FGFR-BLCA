@@ -158,6 +158,7 @@
                        as_data_frame = TRUE,
                        adj_method = 'BH')) %>%
     map(re_adjust) %>%
+    map(p_formatter, text = TRUE) %>%
     map(mutate,
         eff_size = paste('V =', signif(cramer_v, 2)),
         plot_cap = paste(eff_size, significance, sep = ', ')) %>%
@@ -211,23 +212,13 @@
 
   expl_genet$result_tbl <-
     map2(expl_genet$stats,
-         map(expl_genet$test, ~.x[c('variable', 'significance', 'eff_size')]),
+         expl_genet$test %>%
+           map(p_formatter, text = FALSE) %>%
+           map(~.x[c('variable', 'significance', 'eff_size')]),
          left_join, by = 'variable') %>%
     map2(., expl_genet$top_alterations,
          ~filter(.x, variable %in% .y)) %>%
-    map(mutate,
-        cohort = globals$cohort_labs[cohort],
-        percent = signif(percent, 2)) %>%
-    map(arrange, variable, cohort) %>%
-    map(select,
-        variable, cohort, percent, n, n_total, significance, eff_size) %>%
-    map(set_names,
-        c('Gene symbol', 'Cohort',
-          'Percentage of alterations',
-          'Samples with alterations, N',
-          'Total samples, N',
-          'Significance',
-          'Effect size'))
+    map(format_genetics)
 
 # Detailed bar plots for the genes of interest -------
 
@@ -273,20 +264,12 @@
   insert_msg('Result table for the genes of interest')
 
   expl_genet$fgf_result_tbl <- expl_genet$fgf_stats %>%
+    map(format_genetics) %>%
     map(mutate,
-        percent = signif(percent, 2),
-        cohort = globals$cohort_labs[cohort],
-        gene_group = car::recode(as.character(gene_group),
+        `Gene group` = car::recode(as.character(gene_group),
                                  "'BP' = 'binding protein'")) %>%
-    map(arrange, gene_group, variable, cohort) %>%
-    map(select,
-        gene_group, variable, cohort,
-        percent, n, n_total) %>%
-    map(set_names,
-        c('Gene group', 'Gene symbol', 'Cohort',
-          'Percentage of alterations',
-          'Samples with alterations, N',
-          'Total samples, N'))
+    map(relocate, `Gene group`) %>%
+    map(select, -gene_group)
 
 # END -------
 

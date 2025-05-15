@@ -86,6 +86,7 @@
                       as_data_frame = TRUE,
                       adj_method = 'BH')) %>%
     map(re_adjust) %>%
+    map(p_formatter) %>%
     map(mutate,
         eff_size = paste('\u03B7\u00B2 =', signif(etasq, 2)),
         plot_cap = paste(eff_size, significance, sep = ', ')) %>%
@@ -131,6 +132,7 @@
                     adj_method = 'BH')) %>%
       compress(names_to = 'consensusClass') %>%
       re_adjust %>%
+      p_formatter %>%
       as_tibble
 
   }
@@ -180,9 +182,9 @@
     map(~.x$variable) %>%
     reduce(intersect)
 
-# Box plots for single variables -------
+# Violin plots for single variables -------
 
-  insert_msg('Box plots')
+  insert_msg('Violin plots')
 
   for(i in names(sub_dge$data)) {
 
@@ -195,11 +197,12 @@
       pmap(plot_variable,
            sub_dge$data[[i]],
            split_factor = 'consensusClass',
-           type = 'box',
+           type = 'violin',
            cust_theme = globals$common_theme,
            x_n_labs = TRUE,
            x_lab = 'MIBC consensus class',
-           y_lab = globals$cohort_axis_labs[[i]]) %>%
+           y_lab = globals$cohort_axis_labs[[i]],
+           point_hjitter = 0) %>%
       map(~.x +
             theme(plot.title = element_markdown(),
                   axis.title.y = element_markdown()) +
@@ -281,9 +284,8 @@
            all_of(levels(sub_dge$data[[1]]$consensusClass)),
            significance, eff_size) %>%
     set_names(c('Cohort', 'Variable',
-                globals$sub_labels[levels(sub_dge$data[[1]]$consensusClass)] %>%
-                  stri_capitalize_first,
-                'Significance', 'Effect size'))
+                levels(sub_dge$data[[1]]$consensusClass),
+                'FDR p value', "Effect size, \u03B7\u00B2"))
 
 # END ------
 

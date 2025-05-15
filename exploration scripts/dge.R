@@ -131,6 +131,7 @@
 
   expl_dge$test <- expl_dge$test %>%
     map(map, re_adjust, method = 'BH') %>%
+    map(map, p_formatter, text = TRUE) %>%
     map(map,
         mutate,
         regulation = ifelse(p_adjusted >= 0.05, 'ns',
@@ -235,8 +236,9 @@
 
     expl_dge$result_tbl[[i]] <-
       map2(expl_dge$stats[[i]][names(expl_dge$test[[i]])],
-           map(expl_dge$test[[i]],
-               ~.x[c('variable', 'significance', 'eff_size')]),
+           expl_dge$test[[i]] %>%
+             map(p_formatter, text = FALSE) %>%
+             map(~.x[c('variable', 'significance', 'eff_size')]),
            left_join, by = 'variable') %>%
       map(format_res_tbl,
           remove_complete = TRUE,
@@ -250,7 +252,7 @@
              significance, eff_size) %>%
       set_names(c('Cohort', 'Variable',
                   'Wild-type', 'mutated',
-                  'Significance', 'Effect size'))
+                  'FDR p value', "Effect size, Cohen's d"))
 
   }
 

@@ -60,6 +60,7 @@
 
   fgfr_sig$test <- fgfr_sig$test %>%
     map(re_adjust) %>%
+    map(p_formatter, text = TRUE) %>%
     map(mutate,
         regulation = ifelse(p_adjusted >= 0.05, 'ns',
                             ifelse(cohen_d >= 0.5, 'upregulated',
@@ -164,16 +165,18 @@
   fgfr_sig$result_tbl <-
     map2(fgfr_sig$stats,
          fgfr_sig$test %>%
+           map(p_formatter, text = FALSE) %>%
            map(~.x[c('variable', 'variable_label', 'significance', 'eff_size')]),
          left_join, by = 'variable') %>%
+    map(format_res_tbl, dict = NULL) %>%
     compress(names_to = 'cohort') %>%
     transmute(Cohort = globals$cohort_labs[cohort],
               Variable = variable_label,
               Variable = ifelse(is.na(Variable), 'Samples, N', Variable),
               `FGFR WT` = WT,
               `FGFR mutated` = mutated,
-              Significance = significance,
-              `Effect size` = eff_size)
+              `FDR p value` = significance,
+              `Effect size, Cohen's d` = eff_size)
 
 # END -------
 

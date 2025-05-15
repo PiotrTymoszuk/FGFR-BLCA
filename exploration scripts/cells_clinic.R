@@ -18,7 +18,8 @@
                               paste(label, unit, sep = ', '),
                               label))
 
-  expl_cecli$data <- depmap$cell_lines
+  expl_cecli$data <- depmap$cell_lines %>%
+    map_dfc(function(x) if(is.character(x)) factor(x) else x)
 
 # Descriptive stats -------
 
@@ -41,6 +42,7 @@
     rbind(tibble(variable = 'Cell lines, N',
                  statistic = nrow(expl_cecli$data)),
           expl_cecli$stats) %>%
+    format_res_tbl(dict = NULL) %>%
     set_names(c('Variable', 'Statistic'))
 
 # END -------

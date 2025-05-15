@@ -86,6 +86,7 @@
 
   sub_moa$test <- sub_moa$test %>%
     map(map, re_adjust) %>%
+    map(map, p_formatter, text = TRUE) %>%
     map(map,
         mutate,
         log_or = log(or),

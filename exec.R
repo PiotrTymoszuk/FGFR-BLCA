@@ -8,5 +8,6 @@
                      'subtypes.R', ## clinical, genetic, and transcriptomic characteristic of MIBC consensus classes
                      'ml.R', ## machine learning: prediction of MIBC consensus classes with FGFR/FGF/FGFBP genes
                      'ml_mibc.R', ## machine learning: prediction of MIBC consensus classes with genes by Kamoun et al. 2020
+                     'in_vitro.R', ## results of in vitro treatments with Erdafitinib
                      'paper.R'), ## figures, supplementary material
                    message = TRUE, crash = TRUE))

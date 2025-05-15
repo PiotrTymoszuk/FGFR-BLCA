@@ -46,7 +46,7 @@
   ## differences in predicted drug resistance between the consensus classes,
   ## enrichment analysis of mechanisms of action and molecular targets
   ## for the common significant drugs.
-  ## differences in ssGSEA scores of FGFR-reated gene signatures between
+  ## differences in ssGSEA scores of FGFR-related gene signatures between
   ## consensus classes of MIBC
 
   c('./subtype scripts/clinic.R',

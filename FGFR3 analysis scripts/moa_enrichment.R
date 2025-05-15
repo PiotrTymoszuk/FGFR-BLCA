@@ -59,6 +59,7 @@
 
   fgfr_moa$test <- fgfr_moa$test %>%
     map(map, re_adjust) %>%
+    map(map, p_formatter, text = TRUE) %>%
     map(map,
         mutate,
         log_or = log(or),

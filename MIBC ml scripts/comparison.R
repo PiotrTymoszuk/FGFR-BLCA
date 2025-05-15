@@ -108,6 +108,9 @@
 
   insert_msg('Plots of Brier squares')
 
+  ## violin plots with point overlay, to make them compatible
+  ## with the journal policy
+
   for(i in names(mibc_comp$predictions)) {
 
     mibc_comp$brier_square_plots[[i]] <-
@@ -123,9 +126,9 @@
              ggplot(aes(x = obs,
                         y = 2 - square_dist,
                         fill = model)) +
-             geom_boxplot(outlier.color = NA,
-                          alpha = 0.5,
-                          position = position_dodge(0.9)) +
+             geom_violin(alpha = 0.5,
+                         position = position_dodge(0.9),
+                         scale = "width") +
              geom_point(shape = 21,
                         position = position_jitterdodge(dodge.width = 0.9,
                                                         jitter.width = 0.1,

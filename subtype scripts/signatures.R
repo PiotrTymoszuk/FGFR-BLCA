@@ -70,6 +70,7 @@
                       as_data_frame = TRUE,
                       adj_method = 'BH')) %>%
     map(re_adjust) %>%
+    map(p_formatter, text = TRUE) %>%
     map(mutate,
         eff_size = paste('\u03B7\u00B2 =', signif(etasq, 2)),
         plot_cap = paste(eff_size, significance, sep = ', ')) %>%
@@ -118,6 +119,7 @@
                     adj_method = 'BH')) %>%
       compress(names_to = 'consensusClass') %>%
       re_adjust %>%
+      p_formatter(text = TRUE) %>%
       as_tibble
 
   }
@@ -163,7 +165,7 @@
 
   sub_sig$top_common_significant <- sub_sig$anova %>%
     map(filter, variable %in% unique(unlist(sub_sig$common_significant))) %>%
-    map(slice_max, etasq, n = 15) %>%
+    map(slice_max, etasq, n = 18) %>%
     map(~.x$variable) %>%
     reduce(intersect)
 
@@ -242,9 +244,8 @@
            all_of(levels(sub_sig$data[[1]]$consensusClass)),
            significance, eff_size) %>%
     set_names(c('Cohort', 'Variable', 'Member genes',
-                globals$sub_labels[levels(sub_sig$data[[1]]$consensusClass)] %>%
-                  stri_capitalize_first,
-                'Significance', 'Effect size'))
+                levels(sub_sig$data[[1]]$consensusClass),
+                'FDR p value', 'Effect size, \u03B7\u00B2'))
 
 # END ------
 

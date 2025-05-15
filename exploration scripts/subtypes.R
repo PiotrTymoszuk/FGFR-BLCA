@@ -44,6 +44,7 @@
                       exact = FALSE,
                       ci = FALSE,
                       pub_styled = TRUE) %>%
+    p_formatter(text = TRUE) %>%
     mutate(plot_cap = paste(eff_size, significance, sep = ', '))
 
 # Stack plot ------

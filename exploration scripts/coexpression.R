@@ -67,6 +67,7 @@
         variable1 != variable2,
         !duplicated(corr_id)) %>%
     map(re_adjust) %>%
+    map(p_formatter, text = TRUE) %>%
     map(mutate,
         variable1 = factor(variable1, expl_corr$variables),
         variable2 = factor(variable2, expl_corr$variables),

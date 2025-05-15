@@ -25,7 +25,10 @@
   ## drug variables and their lexicon
 
   sub_drugs$lexicon <- drugs$lexicon %>%
-    mutate(axis_title = paste('predicted resistance,', unit))
+    mutate(unit = ifelse(unit == "log IC50",
+                         paste0(unit, ", µM"),
+                         unit),
+           axis_title = paste('predicted resistance,', unit))
 
   sub_drugs$variables <- sub_drugs$lexicon$variable
 
@@ -93,6 +96,7 @@
                         adj_method = 'BH',
                         safely = TRUE)) %>%
     map(re_adjust) %>%
+    map(p_formatter) %>%
     map(mutate,
         eff_size = paste('\u03B7\u00B2 =', signif(etasq, 2)),
         plot_cap = paste(eff_size, significance, sep = ', ')) %>%
@@ -101,6 +105,7 @@
   ## formatting and significant ANOVA effects
 
   sub_drugs$kruskal <- sub_drugs$kruskal %>%
+    map(p_formatter) %>%
     map(mutate,
         regulation = ifelse(p_adjusted < 0.05 & etasq >= 0.14,
                             'regulated', 'ns'),
@@ -145,6 +150,7 @@
                          adj_method = 'BH')) %>%
       compress(names_to = 'consensusClass') %>%
       re_adjust %>%
+      p_formatter %>%
       as_tibble
 
   }
@@ -326,9 +332,9 @@
            scale_y_discrete(labels = set_names(.y$hm_label_long,
                                                .y$variable)))
 
-# Box plots for the FGFR-targeting drugs -------
+# Violin plots for the FGFR-targeting drugs -------
 
-  insert_msg('Box plots for the FGFR-trageting drugs')
+  insert_msg('Violin plots for the FGFR-trageting drugs')
 
   ## plotting meta-data
 
@@ -349,10 +355,11 @@
       pmap(plot_variable,
            sub_drugs$data[[i]],
            split_factor = 'consensusClass',
-           type = 'box',
+           type = 'violin',
            cust_theme = globals$common_theme,
            x_lab = 'MIBC consensus class',
-           x_n_labs = TRUE) %>%
+           x_n_labs = TRUE,
+           point_hjitter = 0) %>%
       map(~.x +
             scale_fill_manual(values = globals$sub_colors)) %>%
       set_names(sub_drugs$box_data[[i]]$variable)
@@ -366,9 +373,11 @@
   sub_drugs$result_tbl <-
     map2(sub_drugs$stats,
          sub_drugs$kruskal %>%
+           map(p_formatter, text = FALSE) %>%
            map(~.x[c('variable', 'title_label', 'significance', 'eff_size')]),
          left_join, by = 'variable') %>%
     compress(names_to = 'cohort') %>%
+    format_res_tbl(dict = NULL, remove_complete = TRUE) %>%
     transmute(Cohort = globals$cohort_labs[cohort],
               Variable = title_label,
               Variable = ifelse(is.na(Variable), 'Samples, N', Variable),
@@ -379,8 +388,11 @@
               LumU = LumU,
               `Stroma-rich` = `Stroma-rich`,
               `Ba/Sq` = `Ba/Sq`,
-              Significance = significance,
+              `FDR p value` = significance,
               `Effect size` = eff_size)
+
+  names(sub_drugs$result_tbl)[ncol(sub_drugs$result_tbl)] <-
+    "Effect size, \u03B7\u00B2"
 
 # END ---------
 
