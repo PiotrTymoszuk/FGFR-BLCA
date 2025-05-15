@@ -12,6 +12,7 @@
   library(cowplot)
   library(figur)
   library(flextable)
+  library(ftExtra)
   library(writexl)
 
   library(rmarkdown)

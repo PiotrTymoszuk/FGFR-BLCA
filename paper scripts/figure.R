@@ -106,15 +106,18 @@
 
   insert_msg('Figure 1E: PRISM drug screening results')
 
+  ## violin plots, according to the rule 21 of the figure/table guidelines
   ## Results of GDSC screening go into Supplementary Material
 
-  fig$figure_1e <- expl_res$box_plots$prism +
+  fig$figure_1e <- expl_res$violin_plots$prism +
     scale_y_discrete(labels = drug_labeller) +
     globals$figure_theme +
     theme(legend.title = element_markdown(),
           strip.background.y = element_blank(),
           strip.text.y = element_blank(),
-          axis.title.y = element_blank())
+          axis.title.y = element_blank(),
+          legend.position = "bottom",
+          legend.box = "vertical")
 
   fig$figure_1e <- fig$figure_1e %>%
     as_figure(label = 'figure_1e_fgfr_pan_inhibitors_reistance_cell_lines',
@@ -122,16 +125,18 @@
               caption = paste('Sensitivity to pan-FGFR',
                               'inhibitors of DepMap urothelial cancer',
                               'cell lines.'),
-              w = 120,
-              h = 90)
+              w = 100,
+              h = 100)
 
 # Figure 1F: resistance and sensitivity, cell lines WT and FGFR3 mutant ------
 
   insert_msg('Figure 1F: cell lines, FGFR3 mutation/WT')
 
   fig$figure_1f <-
-    plot_grid(ggdraw() +
-                draw_image('./report/aux files/erdafitinib_summary.png')) %>%
+    plot_grid(iv_plots$line_plot +
+                globals$figure_theme +
+                theme(legend.position = "none",
+                      strip.text.x = element_markdown())) %>%
     as_figure(label = 'figure_1f_in_vitro_cell_lines_erdafitinib',
               ref_name = 'figure_1f',
               caption = paste('Confluence of cultured FGFR1-4 wild-type',
@@ -139,8 +144,8 @@
                               '(UM-UC-14 and UM-UC-6) UC cell lines after',
                               'treatment with different concentrations of',
                               'erdafitinib.'),
-              w = 180,
-              h = 90)
+              w = 200,
+              h = 100)
 
 # The complete Figure 1 ---------
 
@@ -172,7 +177,7 @@
     plot_grid(fig$figure_1e$plot,
               fig$figure_1f$plot,
               ncol = 2,
-              rel_widths = c(fig$figure_1e$w, fig$figure_1h$w),
+              rel_widths = c(fig$figure_1e$w, fig$figure_1f$w),
               labels = c('E', 'F'),
               label_size = 14)
 

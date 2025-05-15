@@ -277,7 +277,7 @@
               align = 'hv',
               axis = 'tblr')
 
-  ## bottom panel: box plots for erdafitinib
+  ## bottom panel: violin plots for erdafitinib
 
   suppl_figs$sub_drugs$bottom <- sub_drugs$fgfr_plots %>%
     map(~.x$erdafitinib) %>%
@@ -437,7 +437,7 @@
 
 # SHAP importance, Random Forest model, FGFR/FGF/FGFB independent variables -----------
 
-  insert_msg('Figure 1D: SHAP importances, Random Forest')
+  insert_msg('SHAP importances, Random Forest')
 
   suppl_figs$rf_shap <- ml_splots$plots$ranger$panels %>%
     map(~.x + guides(x = guide_axis(angle = 45))) %>%
@@ -529,7 +529,7 @@
 
   insert_msg('Response to pan-FGFRi, GDSC')
 
-  suppl_figs$pani_response <- expl_res$box_plots$gdsc +
+  suppl_figs$pani_response <- expl_res$violin_plots$gdsc +
     theme(legend.title = element_markdown(),
           axis.title.y = element_blank())
 
