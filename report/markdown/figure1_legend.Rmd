@@ -105,7 +105,7 @@ fig$figure_1e$plot
 
 __Figure 1E. Sensitivity to pan-FGFR inhibitors of DepMap urothelial cancer cell lines.__ 
 
-_Resistance values in the PRISM (n = `r expl_res$sensitive$prism %>% select(-sample_id, -FGFR3_mutation) %>% map(~complete.cases(.x)) %>% map_dbl(sum) %>% range %>% paste(collapse = ' to ')`) drug screening experiment were expressed as AUC (area under the dose-response curve). Significant sensitivity for was defined as AUC < 1, which indicates stronger growth inhibition than the DMSO control. Doxorubicin is presented as a positive cytotoxicity control. Median AUC values with interquartile ranges are depicted as boxes with whiskers spanning over 150% of the interquartile ranges. Points represent single cell lines. Point symbols code for FGFR3 mutation, point color represents resistance/sensitivity. The sensitivity cutoff is represented by the dashed line._
+_Resistance values in the PRISM (n = `r expl_res$sensitive$prism %>% select(-sample_id, -FGFR3_mutation) %>% map(~complete.cases(.x)) %>% map_dbl(sum) %>% range %>% paste(collapse = ' to ')`) drug screening experiment were expressed as AUC (area under the dose-response curve). Significant sensitivity for was defined as AUC < 1, which indicates stronger growth inhibition than the DMSO control. Doxorubicin is presented as a positive cytotoxicity control. AUC values are depicted in violin plots; points represent single cell lines. Point color codes for FGFR3 mutation, point shape represents resistance/sensitivity. The sensitivity cutoff is represented by the dashed line._
 
 \newpage
 
@@ -115,6 +115,6 @@ fig$figure_1f$plot
 
 ```
 
-__Figure \@ref(fig:fig-figure-1f). Confluence of cultured FGFR1-4 wild-type (UM-UC-3, 5637 and RT112) and FGFR3 mutated (UM-UC-14 and UM-UC-6) UC cell lines after treatment with different concentrations of erdafitinib.__ 
+__Figure \@ref(fig:fig-figure-1f). Sensitivity of *FGFR3* wild-type and *FGFR3* mutant urothelial cancer cell lines to erdafitinib.__ 
 
-_Confluence was measured after 96 hours in cultures treated with erdafitinib at 0, 1, 4, 7 and 10 µM. Dots represent means of three biological replicates. Mean values with standard deviations are depicted as bars with whiskers._
+_Confluence of cultures of FGFR1/2/3/4 wild-type (WT; 5637, RT-112, UM-UC-3) and FGFR3 mutant cell lines (UM-UC-6, UM-UC-14) at 96 hours following treatment with 0 (control), 1, 4, 7, and 10 µM erdafitinib. Points represent measurements obtained in three independent biological replicates; data points obtained in the same replicate are connected with lines._
