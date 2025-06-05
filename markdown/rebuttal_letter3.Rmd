@@ -1,0 +1,143 @@
+---
+title: "FGFR1/3 Signaling as Achilles’ Heel of Phenotypic Diversity in Urothelial Carcinoma"
+subtitle: "Rebuttal Letter, third revision"
+author: "Department of Urology, Medical University of Innsbruck"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+
+output: 
+  bookdown::html_document2:
+    css: "style.css"
+    
+bibliography: blca.bib
+
+csl: frontiers_medical.csl
+
+header-includes:
+  \usepackage{longtable}
+  \usepackage{tabu}
+  \usepackage{caption}
+  \usepackage{makecell}
+  \usepackage{pdflscape}
+  \usepackage{array}
+  \usepackage{booktabs}
+  \usepackage{threeparttable}
+  \usepackage{threeparttablex}
+  \usepackage{wrapfig}
+  \usepackage{multirow}
+  \usepackage[normalem]{ulem}
+  \usepackage{colortbl}
+  \usepackage{xcolor}
+  \usepackage{float} \floatplacement{figure}{H} \floatplacement{table}{H}
+
+---
+
+```{r, setup, include = FALSE}
+
+library(Cairo)
+
+opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      dev = "cairo_pdf", 
+                      dpi = 600)
+
+set_flextable_defaults(font.family = "Cambria", 
+                       font.size = 10)
+
+
+```
+
+\newpage
+
+# Reviewer 4
+
+## Issue
+
+As previously requested, the authors need to follow the European Urology guidelines for reporting figures and tables https://www.sciencedirect.com/science/article/pii/S030228382030316X?via%3Dihub. The use of box and whisker plots in 1e and bar charts in 1f goes against our guidelines and is easily addressed (e.g. for 1e a scatter plot is fine; for 1f, a line plot). This is also seen in the supplementary figures.
+
+The authors were also asked to follow the European Urology guidelines for the presentation of statistics https://doi.org/10.1016/j.eururo.2018.12.014. Many of the supplementary tables are not in compliance with guideline 4.1, 4.2 and 4.3, for instance, precision of percentages and p values, reporting of proportions for both men and women, reporting of the range.
+
+## Response
+
+We have studied carefully the EAU guidelines [@Vickers2020; @Assel2019] and made efforts to make Figures, Supplementary Figures, and Supplementary Tables compliant with them. 
+
+concerning Supplementary Tables, we present now median (first and third quartile) for numeric features, and counts (percentage of complete observations) for qualitative features. 
+Medians, quartiles, percentages, effect size values, machine learning models' hyperparmeters and performance metrics are displayed with two significant digits (rule 4.1 in @Assel2019). 
+P values were formatted according to rule 4.1 in @Assel2019. 
+For p $\geq$ 0.1 and p $\leq$ 0.01, p values are reported to one significant digit, for p values within the (0.01, 0.1) range, we report them to two significant digits. 
+P values below 0.001 are displayed as '< 0.001'
+In Supplementary Tables, we removed leading 'p' and 'ns', while we decided to keep them in Supplementary Figures, following your general policy that figures are intended for the reader to get an instant impression of the data [@Vickers2020]. 
+
+We agree that with your policy that while box plots have a long tradition and wide acceptance in the clinical community, they are inferior to histograms and violin plots when it comes to visualization of distribution. 
+For this reason we replaced box plots in Figure 1E, Supplementary Figure S12, Supplementary Figure S14, and Supplementary Figure S20 with violin plots. 
+The legends were adjusted accordingly. 
+In Figure 1F, we show confluence values in single biological replicates as points; data points obtained from the same biological replicate of the experiment are connected with lines. 
+
+Still diversity of the presented data required flexibility of visualization and reporting and in some cases were decided to break the EAU guidelines. 
+In particular, while the statistical reporting guidelines discourage multiple testing correction of p values in most cases (rule 3.5 in @Assel2019), we decided to keep adjusting our p values with the FDR method which is a standard in similar multi-omics studies. 
+Furthermore, we are convinced, that reporting of p values (or test statistics such as T or $\chi^2$) without interpretable measures of effect size [@Funder2019; @Cohen2013] is misleading, in particular for large data sets such as GENIE BLCA and MSK, where statistical significance is reached for differences without apparent biological or clinical impact. 
+Although reporting of effect sizes metrics was not mentioned in the EAU guidelines, we strongly prefer to show them in the our report.
+
+Below we describe details of changes to Figures, Supplementary Figures, and Supplementary Tables and justify deviations from the EAU guidelines. 
+
+### Figure 1
+
+In Figure 1E, the box plots were replaced by violin plots. 
+In Figure 1F, a point and line plot instead of the bar plot.
+
+### Supplementary Table S1
+
+The table was generally formatted according to the EAU guidelines. 
+Because we analyzed MIBC cohorts of various designs, difference, especially in tumor pathology were obvious. 
+For this reason and following the rule 5.3 (which we wholeheartedly support!) of the figure and table guidelines [@Vickers2020] we decided not to show p values and effect sizes for differences between the investigated cohorts. 
+Still we present numbers of complete observation, because the clinical information was in many cases far from being complete. 
+Types of the descriptive statistics are outlined in the table caption and in the footnotes.
+
+### Supplementary Table S2
+
+The table was generally formatted according to the EAU guidelines. 
+Due to incompleteness of the clinical information, we present numbers of complete cases as well. 
+Types of descriptive statistics, tests, and effect sizes are outlined in the table caption and footnotes.
+
+### Supplementary Table S3
+
+Because of space reasons and readability, we decided to present the analyzed genes in a general form 'gene symbol (gene identifier').
+
+### Supplementary Table S4
+
+The table was formatted according to the EAU guidelines. 
+In particular, we removed redundant columns, which resulted in a more compact representation. 
+Additionally, because of obvious differences in cohort designs which percolate to differences in genetic alteration rates (e.g. low rates of _FGFR3_ mutations in metastatic tumors in the BCAN cohort), we decided not to show results of statistical hypothesis testing. 
+Types of the descriptive statistics are outlined in the table caption.
+
+## Supplementary Table S5
+
+The table was formatted according to the EAU guidelines. 
+As in case of __Supplementary Table S5__ we pruned redundant columns. 
+Types of the descriptive statistics, tests, and effect size metrics are outlined in the table caption and in the footnotes.
+
+### Supplementary Table S6
+
+The table was formatted according to the EAU guidelines with one exception: in the HPA cohort, we provide the number of evaluable IHC specimens for each gene. 
+Types of the descriptive statistics are outlined in the table caption.
+
+### Supplementary Table S7 - S9
+
+The tables were formatted according to the EAU guidelines. 
+Types of descriptive statistics, tests, and effect sizes are outlined in the table caption and footnotes.
+
+### Supplementary Tables S10 and S11
+
+The tables were formatted according to the EAU guidelines. 
+Model hyper-parameters and performance metrics are shown with two significant digits. 
+Description of the hyper-parameters and performance metrics is provided in the footnotes.
+
+### Supplementary Tables S11 and S12
+
+The tables stayed as before.
+
+### Supplementary Figures 
+
+In Supplementary Figures S4B, S12B, S14B, and S20, we replaced the box plots with violin plots. 
+
+# References

@@ -1,0 +1,782 @@
+---
+title: "FGFR1/3 Signaling as Achilles’ Heel of Phenotypic Diversity in Urothelial Carcinoma"
+subtitle: "Supplementary Material"
+author: "Department of Urology, Medical University of Innsbruck"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+
+output: 
+  bookdown::html_document2:
+    css: "style.css"
+    
+bibliography: blca.bib
+
+csl: frontiers_medical.csl
+
+header-includes:
+  \usepackage{longtable}
+  \usepackage{tabu}
+  \usepackage{caption}
+  \usepackage{makecell}
+  \usepackage{pdflscape}
+  \usepackage{array}
+  \usepackage{booktabs}
+  \usepackage{threeparttable}
+  \usepackage{threeparttablex}
+  \usepackage{wrapfig}
+  \usepackage{multirow}
+  \usepackage[normalem]{ulem}
+  \usepackage{colortbl}
+  \usepackage{xcolor}
+  \usepackage{float} \floatplacement{figure}{H} \floatplacement{table}{H}
+
+---
+
+```{r, setup, include = FALSE}
+
+library(Cairo)
+
+opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      dev = "png", 
+                      dpi = 600)
+
+set_flextable_defaults(font.family = "Cambria", 
+                       font.size = 9)
+
+
+```
+
+\newpage
+
+# Supplementary Methods
+
+## Software
+
+Data handling and analysis was accomplished with R version 4.2.3. 
+For general transformation tasks for matrix, tabular, and text data, base R, _tidyverse_ package bundle [@Wickham2019], _rlang_ [@Henry2022], [_trafo_](https://github.com/PiotrTymoszuk/trafo), and _stringi_ [@Gagolewski2021] were utilized. 
+General data visualization tasks were performed with _ggplot2_ [@Wickham2016], _cowplot_ [@Wilke2019], and _flextable_ [@Gohel2022]. 
+
+## Data sources
+
+Five genomic and transcriptomic collectives of urothelial carcinoma patients were evaluated in the current report: 
+the urothelial cancer subset of the GENIE cohort referred to as GENIE BLCA [@Sweeney2017], 
+the MSK IMPACT collective [@Clinton2022], 
+the bladder cancer TCGA collective of muscle-invasive urothelial cancers referred to as TCGA BLCA [@Liu2018; @Robertson2017], 
+the IMvigor cohort of chemotherapy-resistant cancers treated subsequently with immunotherapy [@Balar2017], and 
+the BCAN cohort of metastatic cancer patients administered systemic chemotherapy [@Damrauer2022]. 
+Except of the GENIE BLCA cohort, for which only rudimentary clinical information was available, these collectives were restricted to muscle invasive cancers of the bladder (MIBC) with the invasiveness information provided by the study authors or by selecting T2 - T4 stage cancers. 
+
+The GENIE BLCA cohort [@Sweeney2017] consisted of n = `r nrow(genie$clinic)` cases of bladder cancers selected by oncotree 'BLCA' term. 
+The available data sets for the GENIE BLCA cohort included basic clinical information (age at sequencing in years, sex, follow-up in days, mortality), total mutation burden (TMB) expressed as fraction of genome, detailed information on location, variant type, nucleotide sequence and protein residues affected by somatic mutations, as well as 0/1 coded absence/presence of gene deletions and amplifications. 
+Approximate overall survival was computed as the time interval between the last follow-up in days and age at sequencing in years. 
+In case of multiple samples per participant, the earliest sample, i.e. the specimen with the lowest ID, was included in the current analysis. 
+The GENIE BLCA data sets were fetched from the [cBioportal API](https://www.cbioportal.org/) with tools provided by the _cbioportalR_ package [@Whiting2024] and formatted with in-house developed R scripts.
+
+The MSK IMPACT collective consisted of n = `r nrow(msk$clinic)` patients restricted to muscle-invasive cancers of the bladder [@Clinton2022]. 
+In case of multiple samples available for a patient, the sample with the lowest ID was included in the analysis. 
+The clinical information included entries on participants age, gender, overall survival, cancer pathological stage, and cancer treatment. 
+The mutation data set included detailed information on mutation nucleotide sequence, variant type, and affected protein residues. 
+The copy number variant data were provided as 0/1 coded presence of gene deletions and amplifications. 
+The data sets for the MSK impact study were downloaded from [cBioportal](https://www.cbioportal.org/) and implemented in R with in-house developed scripts. 
+
+Data sets for the pan-cancer version of TCGA BLCA cohort [@Liu2018; @Robertson2017] were fetched from the [cBioportal](https://www.cbioportal.org/) repository with in-house developed scripts for n = `r table(tcga$expression$tissue_type)['tumor']` muscle-invasive bladder cancer patients. 
+The clinical information consisted of demographic variables (e.g. age, sex, BMI), pathological features (e.g. pathological staging, histology, grade, extracapsular extension), survival information (overall, tumor-specific and relapse-free survival), and TMB expressed as mutation count per MB. 
+Information on non-invasive treatment, surgery and smoking was extracted from the seminal publication by Robertson et al. [@Robertson2017]. 
+Data on chemo-, immuno- and radiotherapy were derived from the manually curated table by Moiso [@Moiso2021]. 
+The somatic mutation data set included detailed information on location, variant type, nucleotide sequence and affected protein residues. 
+The copy number variant data set consisted of 0/1 coded presence of gene amplifications and deletions. 
+The expression data set for the TCGA BLCA collective consisted of $log_2(x + 1)$-transformed RSEM-normalized  gene-integrated transcript counts obtained by bulk cancer RNA sequencing. 
+
+The IMvigor data set included a subset of `r nrow(imvigor$expression)` muscle-invasive bladder cancers of the IMvigor210 trial subjected to RNAseq and DNA sequencing [@Balar2017; @Mariathasan2018]. 
+The study participants were treated with an anti-PD-L1 drug (atezolizumab) following chemotherapy. 
+The clinical data set included basic demographic, clinical and pathological features, best overall response (complete/partial response [CR/PR], stable/progressive disease [SD/PD]), overall survival, and TMB quantified as mutation count per MB. 
+The mutation data set consisted of 0/1 coded information on presence of any somatic mutations in a particular gene. 
+The expression data set consisted of $log_2(x + 1)$-transformed gene-integrated transcript counts obtained by bulk cancer RNA sequencing. 
+The IMvigor data sets were obtained from the R package _IMvigor210CoreBiologies_. 
+
+The BCAN study information was extracted from [cBioportal](https://www.cbioportal.org/) and consisted of demographic and clinical information, staging of primary tumors, overall and disease-specific survival, RNA sequencing expression Z scores of bulk cancer samples, as well as detailed somatic mutation data of bulk cancer specimens. 
+This collective consisted of metastatic cancers, treated in most patients by systemic chemotherapy. 
+For the analysis in the current report, the collective was restricted to muscle invasive primary cancers of the bladder. 
+Missing values in the Z-score expression data set of the BCAN cohort were imputed with the 9-nearest neighbor algorithm implemented by function `impute.knn()` from _impute_ package [@Hastie2023].
+
+Demographic, clinical, and pathological characteristic of the cohorts is shown in __Supplementary Table S\@ref(tab:tab-cohorts)__. 
+
+For MIBC molecular class assignment and machine learning modeling tasks, $log_2$-transformed gene expression levels were processed by ComBat (R package _sva_ and [_htGLMNET_](https://github.com/PiotrTymoszuk/htGLMNET)) [@Leek2012] to correct for the inter-cohort variability. 
+Assignment of the TCGA BLCA, IMvigor, and BCAN cancer samples to consensus molecular classes was done with the nearest centroid algorithm fed with ComBat-normalized whole-genome $log_2$ mRNA or Z-score expression levels (R package _consensusMIBC_) [@Kamoun2020]. 
+Specimens without unequivocal assignment ('not-assigned') were excluded from further analyses. 
+Please note that due to insufficient numbers of specimens assigned to the 
+luminal non-specified (LumNS; `r subtypes$assignment %>% map(filter, consensusClass == 'LumNS') %>% map_dbl(nrow) %>% range %>% paste(collapse = ' to ')` samples) and 
+neuroendocrine-like classes (NE-like; `r subtypes$assignment %>% map(filter, consensusClass == 'NE-like') %>% map_dbl(nrow) %>% range %>% paste(collapse = ' to ')` samples), 
+we restricted our analyses to the major classes, i.e. 
+luminal papillary (LumP; `r subtypes$assignment %>% map(filter, consensusClass == 'LumP') %>% map_dbl(nrow) %>% range %>% paste(collapse = ' to ')` samples), 
+luminal unstable (LumU; `r subtypes$assignment %>% map(filter, consensusClass == 'LumU') %>% map_dbl(nrow) %>% range %>% paste(collapse = ' to ')` samples), 
+stroma-rich (`r subtypes$assignment %>% map(filter, consensusClass == 'Stroma-rich') %>% map_dbl(nrow) %>% range %>% paste(collapse = ' to ')` samples), and 
+basal/squamous-like classes (Ba/Sq; `r subtypes$assignment %>% map(filter, consensusClass == 'Ba/Sq') %>% map_dbl(nrow) %>% range %>% paste(collapse = ' to ')` samples). 
+Demographic, clinical, and pathological characteristic of the consensus molecular classes of MIBC is presented in __Supplementary Table S\@ref(tab:tab-sub-clinic)__. 
+
+Gene signatures related to FGFR (n = `r sig$lexicon %>% nrow` features) were retrieved from a local copy of the MSig database, version 7.5.1, by a search with the `'FGF|FGFR'` regular expression. 
+The search results were filtered for Reactome, PID, KEGG, and WP signatures by selection with the `'^(REACTOME|PID|KEGG|WP)'` regular expression. 
+Single sample gene set enrichment analysis (ssGSEA) scores were computed for TCGA BLCA, IMvigor, and BCAN transcriptome specimens with the GSVA algorithm by Hänzelmann et al. [@Hanzelmann2013] re-implemented by open-source package [_gseaTools_](https://github.com/PiotrTymoszuk/gseaTools) (function `calculate()`). 
+
+Predictions of resistance to pan-FGFR inhibitors in the TCGA BLCA, IMvigor, and BCAN transcriptomic cohorts in form of IC50 (drug concentration resulting in 50% growth inhibition, GDSC1, GDSC2, CTRP2) and AUC (area under the dose-response curve, PRISM) were made by RIDGE regularized linear models trained with the drug response data and baseline transcriptome of epithelial cancer cell lines in GDSC1, GDSC2, CTRP2, and PRISM screening experiments [@Yang2013; @Seashore-Ludlow2015; @Corsello2020]. 
+The general idea of modeling drug resistance in bulk cancer transcriptome samples by RIDGE models trained with in vitro drug response data was proposed by Geeleher and colleagues [@Geeleher2014] and used in our recent publication on testicular cancer [@Torzsok2025]. 
+The models were trained with ComBat-processed $log_2$ baseline expression values of gene shared by the cell line and bulk cancer data sets. 
+The IC50 values were $log$-transformed to improve normality. 
+The pre-processing of expression and in vitro drug response data was accomplished by `multi_process()` function from [_htGLMNET_](https://github.com/PiotrTymoszuk/htGLMNET) package. 
+Model tuning, i.e. choice of the shrinkage parameter $\lambda$ based on the minimal mean squared error in 10-fold cross-validation, and training in the cell line data sets was accomplished by function `train()` from [_htGLMNET_](https://github.com/PiotrTymoszuk/htGLMNET) package. 
+The RIDGE models of IC50 and AUC characterized by cross-validated $R^2 \geq$ 0.13 and correlation between the predicted and observed drug response with Pearson's r $\geq$ 0.5 were subsequently used for predictions of the resistance for bulk cancer transcriptome samples. 
+Those criteria were fulfilled for `r drugs$fgfr_drugs %>% length` pan-FGFR inhibitors, i.e. inhibitors targeting at least FGFR1/2/3. 
+Those substances were: `r list(x = drugs$fgfr_drugs %>% exchange(drugs$lexicon), y = drugs$fgfr_drugs %>% exchange(drugs$lexicon, value = 'experiment'), z = drugs$fgfr_drugs %>% exchange(drugs$lexicon, value = 'drug_id')) %>% pmap_chr(function(x, y, z) paste0(x, ' (', y, ', ID: ', z, ')')) %>% collapse_and`. 
+The predictions of IC50 and AUC were made by calling `predict()` method for the model container object generated by `train()` function (package [_htGLMNET_](https://github.com/PiotrTymoszuk/htGLMNET)). 
+
+The following genes coding for FGFR, FGFF, and FGFBP (FGF-binding proteins) were investigated in the current report [@Korc2009; @Turati2022; @Bennett1995; @Gubbiotti2016; @Mundhenke2002; @Midorikawa2003; @Leali2012; @Xie2020; @Hagihara2000; @Pan2021; @Mohammadi2005; @Hu2009a] (__Supplementary Table S\@ref(tab:tab-genes)__): 
+
+* FGF genes: `r globals$ligands %>% map_chr(~paste0('_', .x, '_')) %>% collapse_and`
+
+* FGFR genes: `r globals$receptors %>% map_chr(~paste0('_', .x, '_')) %>% collapse_and`
+
+* FGFBP genes: `r globals$binding_proteins %>% map_chr(~paste0('_', .x, '_')) %>% collapse_and`
+
+Those genes were returned by a systematic search of literature at [PubMed](https://pubmed.ncbi.nlm.nih.gov/) as well as a screening of physical interaction partners of FGFR and FGF proteins at [UniProt](https://www.uniprot.org/), [STRING](https://string-db.org), [BioGRID](https://thebiogrid.org), and [IntAct](https://www.ebi.ac.uk/intact).
+
+JSON files with domain structures of FGFR1 (ID: P11362), FGFR2 (ID: P21802), FGFR3 (ID: P22607), and FGFR4 (ID: P22455) proteins were downloaded from [UniProt](https://www.uniprot.org) and processed with the _jsonlite_ package [@Ooms2023]. 
+
+Mutation status, baseline expression measured by RNA sequencing, and effect scores of CRISP/Cas9 and RNA interference of the FGFR-, FGF-, and FGFBP-coding genes in urothelial cancer cell lines were downloaded from the [DepMap](https://depmap.org/portal/) repository [@DepMap2024]. 
+No information treatment of the cell line donors or pre-treatment of the cell lines was available. 
+The available cell lines were `r map2_chr(depmap$cell_lines$cell_line_name, depmap$cell_lines$sample_id, ~paste0(.x, ' (ID:', .y, ')')) %>% collapse_and`. 
+The mutation status was 0/1 coded, where 1 stood for presence of at least one somatic mutation in a gene. 
+RNA sequencing information was provided as $log_2$ TPM. 
+Resistance of urothelial cancer cell lines to pan-FGFR inhibitors and doxorubicin considered as a positive cytotoxicity control was assessed for urothelial cancer cell lines in the GDSC1/2 (compounds: doxorubicin, `r depmap$gdsc_lexicon %>% filter(!drug_name %in% c('Doxorubicin', 'FGFR_0939'), !duplicated(drug_name)) %>% .$drug_name %>% collapse_and`, source [GDSC data portal](https://www.cancerrxgene.org/)) and PRISM experiments (compounds: doxorubicin, `r depmap$prism_lexicon %>% filter(drug_name != 'doxorubicin', !duplicated(drug_name)) %>% .$drug_name %>% collapse_and`, source: [DepMap](https://depmap.org/portal/)) [@Yu2016; @Yang2013]. 
+The resistance was measured in the GDSC1/2 experiments by IC50; sensitive cell lines were defined by IC50 < 10 µM, which was the highest concentration of the FGFR inhibitors in the assays. 
+The resistance in the PRISM assays was gauged by AUC normalized to the DMSO control; sensitive cell lines were considered for AUC < 1.
+
+For verification of expression of the FGFR-, FGF-, and FGFBP-coding genes at protein level, we resorted to the [Human Protein Atlas (HPA) repository](https://www.proteinatlas.org/), which stores results of immunohistochemical (IHC) staining. 
+Entries of the HPA database were retrieved as XML documents, from which patient information, staining quantification, and URLs to IHC images for the genes of interest was retrieved (R package _xml2_) [@Wickham2023]. 
+Protein expression in the IHC samples was expressed as the IHC score defined as a product of staining (1: negative to 4: high), staining intensity (1: negative to 4: strong), and quantity of positive cells (1: none to 4: >75%). 
+
+## Cell culture
+
+UM-UC-3 cells were obtained from Sigma-Aldrich and cultured in Dulbecco's modified Eagle's medium, low glucose (PAN-Biotek, Aldenbach, Germany). 
+5637 cells were gifted by Prof. Holm and cultured in RPMI 1640 medium (PAN-Biotek). 
+RT112 cells were obtained from the German Collection of Microorganisms and Cell Cultures GmbH (DSMZ) and cultured in RPMI 1640 medium. 
+UM-UC-6 and UM-UC-14 cell lines were gifted by Maxim Noeparast and cultured in Minimum Essential Medium (Gibco, Thermo Fisher Scientific) with the addition of 1% non-essential amino acids (PAN-Biotech). 
+For all cell lines, medium was supplied with 10% fetal calf serum (PAN-Biotech), 1% penicillin/streptomycin (Lonza), and 1% GlutaMAX (Gibco, Thermo Fisher Scientific). 
+Cell cultures were routinely tested for mycoplasma. 
+
+## In vitro erdafitinib treatment and proliferation assay
+
+The UM-UC-3, 5637, RT112, UM-UC-6 and UM-UC-14 cell lines were seeded into 96 well plates with a density of respectively 4000, 8000, 10000, 8000 and 8000 cells per well, and treated with 0, 1, 4, 7 or 10 µM erdafitinib. 
+They were cultured for 96 hours at 37°C and 5% CO2 in an IncucyteS3© live imaging system. 
+During the culture period, images were made of the individual wells, and confluence was measured using the AI-generated Incucyte© Base Analysis Software. 
+For the three FGFR1/2/3/4 wild-type cell lines, UM-UC-3, 5637 and RT112, images were made every 4 hours and the confluence trajectories for concentrations of erdafitinib were plotted against time by the Incucyte© Base Analysis Software.
+
+## Descriptive statistics, statistical inference, and effect size
+
+If not indicated otherwise, descriptive statistics for quantitative variables included median and interquartile range. 
+Descriptive statistic for qualitative variables were counts of observation in the categories and percentages of the complete observation set. 
+Differences of means or medians of qualitative variables were investigated by Mann-Whitney, two-tailed T test, Kruskal-Wallis test, and one-way ANOVA, depending on the number of analysis groups and normality of distribution of the variable. 
+Correlation was assessed by Pearson's and Spearman's correlation test. 
+Effect size of differences in variable levels, distribution, and correlation was assessed with the following statistics [@Cohen2013]: 
+
+* biserial r for differences between two groups, non-parametric tests: small for r < 0.3, medium for 0.3 $\leq$ r < 0.5, large for r $\geq$ 0.5
+
+* Cohen's d for differences between two groups, parametric tests: small for d < 0.5, medium for 0.5 $\leq$ d < 0.8, large for d $\geq$ 0.8
+
+* $\eta^2$ for differences between three or more groups: small for $\eta^2$ < 0.06, moderate for 0.06 $\leq$ $\eta^2$ < 0.14, large for $\eta^2 \geq$ 0.14
+
+* Cramer's V for comparison of category frequencies of a numeric variable: small for V < 0.3, medium for 0.3 $\leq$ V < 0.5, large for V $\geq$ 0.5
+
+* Pearson's r for correlation, parametric tests: small for r < 0.3, medium for 0.3 $\leq$ r < 0.5, large for r $\geq$ 0.5
+
+* Spearman's $\rho$ for correlation, non-parametric tests: small for $\rho$ < 0.3, medium for 0.3 $\leq$ $\rho$ < 0.5, large for $\rho$ $\geq$ 0.5
+
+Hypothesis testing results were adjusted for multiple comparisons separately for each analysis step and investigated cohort with the false discovery rate method (FDR) [@Benjamini1995]. 
+Differences with p < 0.05 were considered statistically significant. 
+Statistical hypothesis testing was done with the development packages [_fastTest_](https://github.com/PiotrTymoszuk/fastTest) and [_ExDA_](https://github.com/PiotrTymoszuk/ExDA) which partly employ statistical tools of base R, _stats_, _rstatix_, and _rcompanion_ [@Mangiafico2022; @Kassambara2021]. 
+
+## Differences in rates of genetic alterations
+
+Differences in rates of genetic alterations between analysis groups were investigated either by $\chi^2$ test with Cramer's V effect size metric (package [_fastTest_](https://github.com/PiotrTymoszuk/fastTest)) or by weighted permutation test (package [_perich_](https://github.com/PiotrTymoszuk/perich)). 
+In the later case, the actual frequency of a genetic alteration was compared with the expected frequency obtained in n = 1000 - 10000 permutations weighted by counts of all genetic alterations in the cancer samples. 
+This testing procedure yielded an effect size statistic called enrichment score (ES) defined as the ratio of the actual to the expected genetic alteration number in an analysis groups. 
+By iterating over the permutations, 95% confidence intervals of ES and p values for the ES = 1 null hypothesis were computed. 
+
+## Differences in gene expression, gene signature scores, and metrics of predicted drug resistance 
+
+Differences in $log_2$-transformed transcript levels of the genes of interest of ssGSEA scores of the FGFR-related gene signatures between the LumP, LumU, stroma-rich, and Ba/Sq consensus molecular classes of MIBC were explored with a two step procedure. 
+In the first step, differences of the expression levels or ssGSEA scores between the analysis groups were assessed by one-way ANOVA with $\eta^2$ effect size statistic. 
+In the second step, differences between a given class and the LumP class were were evaluated by Welch's two-tailed T test with Cohen's d effect size. 
+The significantly differentially regulated genes were defined by pFDR(ANOVA) < 0.05, $\eta^2 \geq$ 0.14, pFDR(T test) < 0.05, and at least 1.25-fold up- or downregulation as compared with the baseline. 
+The significantly differentially regulated gene signatures were defined by pFDR(ANOVA) < 0.05, $\eta^2 \geq$ 0.14, pFDR(T test) < 0.05, and Cohen's d $\geq$ 0.5. 
+A similar testing procedure was applied to the predictions of IC50 and AUC of pan-FGFR inhibitors made for bulk cancer samples. 
+However, due to non-normal distribution of some of the resistance metrics, Kruskal-Wallis with with $\eta^2$ statistic for testing for overall differences between the consensus subsets, and Mann-Whitney post-hoc test with biserial r effect size statistic was used for comparisons versus LumP cancers. 
+Significant differences in the predicted resistance were considered for pFDR(Kruskal-Wallis) < 0.05, $\eta^2 \geq$ 0.14, pFDR(Mann-Whitney) < 0.05, and biserial r $\geq$ 0.3. 
+
+Differences in metrics of predicted resistance to pan-FGFR inhibitors between _FGFR3_ wild-type and _FGFR3_ mutant cancers were assessed by Mann-Whitney test with biserial r effect size statistic. 
+Significant differences in the predicted drug resistance were considered for pFDR < 0.05 and biserial r $\geq$ 0.3. 
+
+In these analyses, functions `f_one_anova()`, `f_t_test()`, `f_kruskal_test()`, and `f_wilcox_test()` from [_fastTest_](https://github.com/PiotrTymoszuk/fastTest) package were used. 
+
+## Gene-co-regulation networks
+
+Co-expression networks of the FGF-, FGFR-, and FGFBP-coding genes were constructed for bulk cancers (TCGA BLCA, IMvigor, and BCAN cohorts) and DepMap cell lines as weighted graphs whose edges were defined by pairwise correlations of the expression levels with Spearman's $\rho \geq$ 0.3 (function `as_iGraph()`, package [_graphExtra_](https://github.com/PiotrTymoszuk/graphExtra) with wrapper tools for _igraph_) [@Csardi2006]. 
+Isolated vertices were removed with `prune_degree()` function. 
+Communities of co-regulated genes in the co-expression network in the DepMap urothelial cancer cell line collective were identified with the Leiden algorithm (loss function: modularity, resolution: $\gamma$ = 0.5, iterations: n = 100, function `cluster_leiden()`, _igraph_ package) [@Csardi2006; @Traag2019]. 
+
+The following vertex importance statistics [@Csardi2006] were computed with `summary()` method called for entire network objects (bulk cancer cohorts) or gene community sub-networks (DepMap cell lines): 
+degree (number of directly connected neighbor nodes), 
+hub score (eigenvector of the affinity matrix, i.e. an overall strength of correlations), and 
+betweenness (number of the shortest paths between all pairs of vertices that pass through the vertex). 
+The networks were visualized with Fruchterman - Reingold algorithm by calling `plot()` method [@Briatte2021]. 
+
+## Machine learning modeling of consensus molecular subsets of urothelial cancers with expression of FGFR-, FGF-, and FGFBP-coding genes as explanatory factors
+
+To check if and how differences in expression of the FGFR-, FGF- and FGFBP-coding genes of interest emulate the consensus molecular classification proposed by Kamoun and colleagues [@Kamoun2020], we resorted to machine learning modeling of LumP, LumU, stroma-rich and Ba/Sq classes in the TCGA BLCA, IMvigor and BCAN cohorts with two independent algorithms, multinomial regularized Elastic Net regression [@Friedman2010; @Zou2005] and Random Forest tree ensemble [@Wright2017; @Breiman2001]. 
+
+The models were constructed for two sets of explanatory factors: 
+
+* the genuine set of MIBC consensus class-defining genes proposed by Kamoun et al. and used also be the nearest centroid classification tool of the _consensusMIBC_ package. The genes were restricted to n = `r length(mibc_globals$variables)` features detected in all investigated transcriptomic cohorts 
+
+* the set of `r length(ml_globals$variables)` FGFR-, FGF- and FGFBP-coding genes detected in all investigated transcriptomic cohorts (`r ml_globals$variables %>% map_chr(~paste0('_', .x, '_')) %>% collapse_and`)
+
+The expression values were fed into the models in form of Z-scores of Combat-processed $log_2$ gene counts (TCGA BLCA, IMvigor) or Z-scores of $log_2$ gene counts (BCAN). 
+Assignment to the LumP, LumU, stroma-rich, and Ba/Sq consensus molecular classes by the nearest centroid classifier of _consensusMIBC_ R package served as the modeling response and the ground truth for evaluation of the model predictions. 
+
+The models were developed in a training subset derived from randomly chosen two-thirds of TCGA BLCA observations (n = `r nrow(ml_globals$data$tcga_train)`). 
+In order to improve recognition of the minority consensus classes, the LumU and Stroma-rich subsets, we amplified their observations by over-sampling with the SMOTE algorithm (function `smote()`, package _performanceEstimation_) [@Torgo2014; @Chawla2002; @Torgo2016]. 
+The Elastic Net model of consensus molecular classes was optimized (tuned) and trained in the SMOTE-amplified training data set with a wrapper around functions `cv.glmnet()` and `glmnet()` from _glmnet_ package [@Friedman2010]. 
+The optimal values of the regularization parameter $\lambda$ was found by minimizing the Elastic Net models' deviance in 200 repeats 10-fold cross-validation of the SMOTE augmented training data set. 
+The Random Forest models of consensus molecular subsets were tuned and trained in the SMOTE-amplified training data set with a wrapper around `ranger()` function from _ranger_ package [@Wright2017]. 
+The optimal set of hyper-parameters that control behavior of the Random Forest models, 
+mtry (number of randomly chosen variables per tree learner), 
+minimal node size (minimal number of observations in the terminal nodes of the tree learner), and 
+splitting rule (rule that defines partitioning of the explanatory variables at the learner's nodes) 
+was found by minimizing the out-of-bag classification error [@Breiman2001]. 
+The final Random Forest models consisted of 500 tree learners. 
+The optimal values of the tunable hyper-parameters are listed in __Supplementary Table S\@ref(tab:tab-tuning)__. 
+
+Performance of the machine learning models was evaluated by comparing the predicted and actual consensus molecular class in the unmodified test subset of cancers in the TCGA BLCA cohort (`r ml_globals$data$tcga_test %>% nrow`), as well as in the IMvigor (n = `r ml_globals$data$imvigor %>% nrow`) and BCAN (n = `r ml_globals$data$bcan %>% nrow`) independent validation cohorts. 
+The consensus classification returned by the _consensusMIBC_ R package nearest centroid tool was assumed the ground truth. 
+The following numeric statistics of model performance were computed: 
+overall accuracy (fraction of cancer samples with correct consensus molecular class prediction), 
+Cohen's $\kappa$ (non-accidental concordance between the predicted and actual class, high $\kappa$ expected for a highly accurate model) [@McHugh2012], 
+Brier score (metric of overall model calibration, low Brier scores expected for a well calibrated model) [@Brier1950; @Goldstein-Greenwood2021], 
+and receiver-operating characteristic measures such as area under the curve (AUC, measure of overall sensitivity and specificity). 
+These evaluation metrics were computed with `multiClassSummary()` function from _caret_ package [@Kuhn2008] and an in-house developed function that calculates Brier scores for the models of interest and a nonsense model predicting the classes at random (__Supplementary Figure S\@ref(fig:fig-ml-eval)A__, __Supplementary Table S\@ref(tab:tab-ml)__) 
+Additionally, accuracy of prediction for single consensus molecular classes was assessed by inspection of the confusion matrices (__Supplementary Figure S\@ref(fig:fig-confusion)__). 
+Calibration of the machine learning models at predictions of particular consensus molecular classes was assessed with squares of differences between the predicted class assignment probabilities and the binarized actual class assignment (1: the class of interest, 0: any other consensus molecular class) or 'Brier squares' between the consensus molecular classes (__Supplementary Figure S\@ref(fig:fig-ml-eval)B__). 
+
+Importance of the explanatory variables, i.e. FGFR-, FGF-, and FGFBP-coding transcripts, and their positive and negative association with predictions of LumP, LumU, stroma-rich, and Ba/Sq classes by the machine learning models were assessed with the SHAP algorithm (Shapley additive explanations) [@Lundberg2017; @Covert2020]. 
+To this end, we re-fitted the Elastic Net and Random Forest models of consensus molecular classes in the unmodified test subset of the TCGA BLCA cohort not used for the model training with the optimal set of the tuning parameters. 
+Matrices of SHAP metrics for the genes and observations were computed for the models with `kernelshap()` function from _kernelshap_ package [@Mayer2023; @Mayer2023a]. 
+As the background for the SHAP procedure, we used randomly selected 30% of observations of the test subset of the TCGA BLCA collective. 
+Mean absolute SHAP value served as a measure of gene importance (__Supplementary Tables S\@ref(tab:tab-shap)__ and __S\@ref(tab:tab-kamoun-shap)__). 
+SHAP metrics for single observations and the mean absolute SHAP values were visualized as violin/swarm and bar plots with tools of _shapviz_ package [@Mayer2023] and in-house developed R functions (__Figure 1D__, __Supplementary Figure S\@ref(fig:fig-rf-shap)__ - __S\@ref(fig:fig-shap-fgfr)__). 
+
+## Data and code availability
+
+Data from publicly available sources were analyzed. 
+The R analysis pipeline is available as a [GitHub repository](https://github.com/PiotrTymoszuk/FGFR-BLCA)
+
+\newpage
+
+# Supplementary Tables
+
+```{r tab-cohorts, tab.cap = "Characteristic of the investigated cohorts. Numeric variables are presented as medians with interquartile ranges. Qualitative variables are shown as counts of the categories and percentages of the categories within the complete observation set."}
+
+flextable::flextable(suppl_tabs$cohorts) %>% 
+  set_widths(c(3, rep(2.8, 6))) %>% 
+  footnote(i = c(2, 7), 
+           j = 1, 
+           value = as_paragraph("Numeric variables: median (first quartile, third quartile) is presented."), 
+           part = "body", 
+           ref_symbols = "a") %>% 
+  footnote(i = c(3:6, 8:17), 
+           j = 1, 
+           value = as_paragraph("Qualitative variables: number of observations (percentage of complete cases) is presented."),
+           part = "body", 
+           ref_symbols = "b") %>% 
+  theme_vanilla
+  
+```
+
+\newpage
+
+```{r tab-sub-clinic, tab.cap = "Characteristic of the major consensus molecular classes of MIBC (luminal papillary [LumP], luminal unstable [LumU], stroma-rich, basal/squamous-like [Ba/Sq]) in the TCGA BLCA, IMvigor, and BCAN cohorts. Numeric variables are presented as medians with interquartile ranges. Qualitative variables are shown as counts of the categories and percentages of the categories within the complete observation set. Statistical significance of differences between the consensus molecular classes were assessed by Kruskal-Wallis and χ² test with, respectively, η² and Cramer's V effect size statistics. P values were corrected for multiple testing with the false discovery rate method (FDR)."}
+
+flextable::flextable(suppl_tabs$sub_clinic) %>% 
+  merge_v(1) %>% 
+  set_widths(c(2.2, 2.7, rep(2.8, 4), 2.3, 2)) %>% 
+  footnote(i = c(2, 25), 
+           j = 2, 
+           value = as_paragraph("Numeric variables: median (first quartile, third quartile) is presented."),
+           part = "body", 
+           ref_symbols = "a") %>% 
+  footnote(i = c(1:nrow(suppl_tabs$sub_clinic))[!c(1:nrow(suppl_tabs$sub_clinic)) %in% c(1, 2, 15, 24, 25)], 
+           j = 2, 
+           value = as_paragraph("Qualitative variables: number of observations (percentage of complete cases) is presented."),
+           part = "body", 
+           ref_symbols = "b") %>% 
+  footnote(i = c(2, 25), 
+           j = 7, 
+           value = as_paragraph("Kruskal-Wallis test with \u03B7\u00B2 effect size statistic."),
+           part = "body", 
+           ref_symbols = "c") %>% 
+   footnote(i = c(2, 25), 
+           j = 8, 
+           value = as_paragraph("Kruskal-Wallis test with \u03B7\u00B2 effect size statistic."),
+           part = "body", 
+           ref_symbols = "c") %>% 
+  footnote(i = c(1:nrow(suppl_tabs$sub_clinic))[!c(1:nrow(suppl_tabs$sub_clinic)) %in% c(1, 2, 15, 24, 25)], 
+           j = 7, 
+           value = as_paragraph("\u03C7\u00B2 test with Cramer's V effect size statistic."),
+           part = "body", 
+           ref_symbols = "d") %>% 
+    footnote(i = c(1:nrow(suppl_tabs$sub_clinic))[!c(1:nrow(suppl_tabs$sub_clinic)) %in% c(1, 2, 15, 24, 25)], 
+           j = 8, 
+           value = as_paragraph("\u03C7\u00B2 test with Cramer's V effect size statistic."),
+           part = "body", 
+           ref_symbols = "d") %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-genes, tab.cap = "FGFR-, FGF-, and FGFBP-coding genes investigated in the current report."}
+
+flextable::flextable(suppl_tabs$genes) %>% 
+  set_widths(c(3, 15)) %>% 
+  colformat_md %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-fgf-genetics, tab.cap = "Frequency of somatic mutations and copy number variants of FGFR-, FGF-, and FGFBP-coding genes. Counts and percentages of samples with alterations for the mutations, amplifications, and deletions found in at least 1% of specimens in the BCAN, GENIE BLCA, IMvigor, MSK IMPACT, and TCGA BLCA are presented."}
+
+flextable::flextable(suppl_tabs$genetic_alterations) %>% 
+  merge_v(1) %>% 
+  merge_v(2) %>% 
+  set_widths(c(2.5, 3, 3.5, 3.5)) %>% 
+  colformat_md %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-sub-genetics, tab.cap = "Frequency of somatic mutations and copy number variants of FGFR1/3 and FGF3/4/19 genes in the luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous like (Ba/Sq) consensus molecular classes of MIBC in the TCGA BLCA, IMvigor, and BCAN cohorts. The frequencies are presented as counts and percentages of samples with alterations within the consensus class. Statistical significance of differences between the consensus classes was determined by weighted permutation test with Cramer's V effect size statistic. P values were corrected for multiple testing with the false discovery rate (FDR) method."}
+
+flextable::flextable(suppl_tabs$sub_genetics) %>% 
+  merge_v(c(1, 2, 5, 6), combine = TRUE) %>% 
+  merge_v(1) %>% 
+  set_widths(c(3.2, 2.5, 3, 3.5, 2.5, 2.5)) %>% 
+  colformat_md %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-expression, tab.cap = "Expression of FGFR-, FGF-, and FGFBP-coding genes and proteins in the MIBC tissue and urothelial cancer cell lines. Expression at mRNA level was quantified in the TCGA BLCA, IMvigor and BCAN cohorts, and in DepMap cell lines by RNA sequencing. The mRNA amounts were provided as log2-transformed gene counts (TCGA BLCA, IMvigor, DepMap) or Z-scores of log2 gene counts (BCAN). Protein expression was measured in the Human Protein Atlas (HPA) by immunohistochemistry (IHC). The protein amounts was metered by the IHC score defined as a product of staining intensity and quantity of positive cells. Median mRNA and protein amounts with interquartile ranges, and numbers of cancer samples are listed. Numbers of all available samples in the cohorts are provided in the table caption. For the IHC data in the HPA cohort, numbers of specimens with evaluable staining results are indicated for each gene."}
+
+flextable::flextable(suppl_tabs$expression) %>% 
+    italic(j = 1, 
+         part = "body") %>% 
+  set_widths(c(2, rep(3.3, 4), 4.5)) %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-sub-dge, tab.cap = "Expression of FGFR-, FGF-, and FGFBP-coding genes in the consensus molecular classes of MIBC (luminal papillary [LumP], luminal unstable [LumU], stroma-rich, basal/squamous-like [Ba/Sq]) in the TCGA BLCA, IMvigor, and BCAN cohorts. Statistical significance of differences between the consensus molecular classes was determined by one-way ANOVA with η² effect size statistic. P values were corrected for multiple testing with the false discovery rate (FDR) method. log2-transformed expression levels are presented as medians with interquartile ranges for the top genes whose expression differentiated between the molecular consensus classes (top 10 largest η² values shared by all cohorts)."}
+
+flextable::flextable(suppl_tabs$sub_dge) %>% 
+  merge_v(1) %>% 
+  italic(j = 2, italic = suppl_tabs$sub_dge$Variable != 'Samples, N') %>% 
+  set_widths(c(1.6, 2, rep(3.3, 4), rep(1.8, 2))) %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-sub-sig, tab.cap = "Single sample gene set enrichment analysis (ssGSEA) scores of FGFR-related gene signatures in the consensus molecular classes of MIBC (luminal papillary [LumP], luminal unstable [LumU], stroma-rich, basal/squamous-like [Ba/Sq]) in the TCGA BLCA, IMvigor, and BCAN cohorts. Statistical significance of differences between the consensus molecular classes was determined by one-way ANOVA with eta-square effect size statistic. P values were corrected for multiple testing with the false discovery rate (FDR) method. ssGSEA scores are presented as medians with interquartile ranges for the top signatures whose scores differentiating between the molecular consensus classes (top 10 largest η² values shared by all cohorts)."}
+
+flextable::flextable(suppl_tabs$sub_sig) %>% 
+  merge_v(1) %>% 
+  set_widths(c(1.6, 5.7, rep(2.7, 4), rep(1.6, 2))) %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-sub-drugs, tab.cap = "Predicted metrics of resistance to pan-FGFR inhibitors in the consensus molecular classes of MIBC (luminal papillary [LumP], luminal unstable [LumU], stroma-rich, basal/squamous-like [Ba/Sq]) in the TCGA BLCA, IMvigor, and BCAN cohorts. The predictions of IC50 (concentration resulting in 50% growth inhibition) and AUC (area under the dose-response curve) were made by RIDGE regularized linear models trained with transcriptome data of epithelial cancer cell lines treated with FGFR inhibitors in GDSC1, GDSC2, CTRP2, and PRISM drug screening experiments. Statistical significance of differences between the consensus molecular classes was determined by one-way ANOVA with η² effect size statistic. P values were corrected for multiple testing with the false discovery rate (FDR) method. Resistance metrics are presented as medians with interquartile ranges."}
+
+flextable::flextable(suppl_tabs$sub_drugs) %>% 
+  merge_v(1) %>% 
+  set_widths(c(1.6, 3.2, 2, rep(2.7, 4), rep(1.6, 2))) %>% 
+  footnote(1, 2, 
+           value = as_paragraph("Substance name, identifier in the screening experiment, and name of the screening experiment."), 
+           part = "header", 
+           ref_symbols = "a") %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-tuning, tab.cap = "Selection of the optimal sets of hyper-parameters for Elastic Net and Random Forest models of the MIBC consensus molecular classes by cross-validation and out-of-bag tuning in the training subset of the TCGA BLCA cohort."}
+
+flextable::flextable(suppl_tabs$tuning) %>% 
+    merge_v(1) %>% 
+  set_widths(c(3, 2.5, 5, 4)) %>% 
+  footnote(1, 1, 
+           value = as_paragraph('Kamoun et al.: 818 genuine MIBC consensus class-defining genes used by the nearest centroid tool by Kamoun et al.; FGFR/FGF/FGFBP: 38 FGFR/FGF/FGFBP-coding genes.'), 
+           part = 'header', 
+           ref_symbols = 'a') %>% 
+  footnote(1, 4, 
+           value = as_paragraph('lambda: shrinkage/regularization parameter; mtry: number of randomly chosen explanatory variables for construction of decision trees in the Random Forest ensemble; min.node.size: minimal number of observations in the terminal/leaf nodes of decision trees; splitrule: algorithm which defines splits at the nodes of decision trees.'),
+           part = 'header', 
+           ref_symbols = 'b') %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-ml, tab.cap = "Performance of Elastic Net and Random Forest models of the luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous-like (Ba/Sq) consensus molecular classes of MIBC. The models were trained in a random subset of two-thirds of observations of the TCGA BLCA cohort with ComBat-processed log2 expression values of the consensus class-defining genes by Kamoun et al. or the FGFR/FGF/FGFBP genes as explanatory variables. Minority consensus molecular classes (LumU and stroma-rich) were oversampled by the SMOTE algorithm to improve their identification by the models. The models were evaluated in the training and test subsets of the TCGA BLCA, IMvigor, and BCAN cohorts; the consensus class assignment predicted by a nearest centroid classifier from consensusMIBC package served as the ground truth. Metrics of model accuracy, calibration, and receiver-operating characteristic are listed."}
+
+flextable::flextable(suppl_tabs$ml) %>% 
+  merge_v(1:2) %>% 
+  set_widths(c(2.6, 2.2, 3.5, rep(2, 6))) %>% 
+  footnote(1, 1, 
+           value = as_paragraph('Kamoun et al.: 818 genuine MIBC consensus class-defining genes used by the nearest centroid tool by Kamoun et al.; FGFR/FGF/FGFBP: 38 FGFR/FGF/FGFBP-coding genes.'), 
+           part = 'header', 
+           ref_symbols = 'a') %>% 
+  footnote(1, 4, 
+           value = as_paragraph('Fraction of observations correctly assigned to molecular consensus classes.'), 
+           part = 'header', 
+           ref_symbols = 'b') %>% 
+  footnote(1, 5, 
+            value = as_paragraph("Cohen's \u03BA: non-random concordance between the actual and predicted molecular class assignment; high values indicate good concordance between the predictions and the outcome."), 
+            part = 'header', 
+            ref_symbols = 'c') %>% 
+  footnote(1, 6, 
+           value = as_paragraph('Measure of model calibration and confidence; low values indicate good model calibration and confidence.'),
+           part = 'header', 
+           ref_symbols = 'd') %>% 
+  footnote(1, 7:9, 
+           value = as_paragraph('Receiver-operating characteristic (ROC). AUC: area under the ROC curve.'), 
+           part = 'header', 
+           ref_symbols = 'f') %>% 
+  theme_vanilla
+
+```
+
+\newpage
+
+```{r tab-shap, tab.cap = "Importance of explanatory variables for the Elastic Net and Random Forest models of MIBC consensus molecular classes estimated by the SHAP algorithm. The models employed the FGFR-, FGF-, and FGFBP-coding genes as explanatory factors. Contribution of the explanatory factors to predictions of consensus molecular classes was assessed by mean absolute values of SHAP metrics (Shapley additive explanations). Top five most influential genes for the predictions of luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous-like (Ba/Sq) classes by the Elastic Net and Random Forest algorithms are listed."}
+
+flextable::flextable(suppl_tabs$shap) %>% 
+  merge_v(1:2) %>% 
+  italic(j = 3) %>% 
+  set_widths(c(2.5, 2.5, 2.5, 3.5, 2.5)) %>% 
+  theme_vanilla
+  
+```
+
+\newpage
+
+```{r tab-kamoun-shap, tab.cap = "Importance of explanatory variables for the Elastic Net and Random Forest models of MIBC consensus molecular classes estimated by the SHAP algorithm. The models employed the genuine MIBC consensus class-defining genes by Kamoun et al. as explanatory factors. Contribution of the explanatory factors to predictions of consensus molecular classes was assessed by mean absolute values of SHAP metrics (Shapley additive explanations). Top five most influential genes for the predictions of luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous-like (Ba/Sq) classes by the Elastic Net and Random Forest algorithms are listed."}
+
+flextable::flextable(suppl_tabs$kamoun_shap) %>% 
+   merge_v(1:2) %>% 
+  italic(j = 3) %>% 
+  set_widths(c(2.5, 2.5, 2.5, 3.5, 2.5)) %>% 
+  theme_vanilla
+
+```
+
+# Supplementary Figures
+
+```{r fig-sub-genet, fig.width = figur::convert(suppl_figs$sub_genet, to = 'in')$w, fig.height = figur::convert(suppl_figs$sub_genet, to = 'in')$h, fig.cap = 'Alterations of FGFR-, FGF-, and FGFBP-coding genes in consensus molecular classes of MIBC.'}
+
+suppl_figs$sub_genet$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-sub-genet). Alterations of FGFR-, FGF-, and FGFBP-coding genes in consensus molecular classes of MIBC.__ 
+
+_Cancer samples from the IMvigor and BCAN data set was assigned to the MIBC consensus molecular subtypes based on ComBat-adjusted whole-genome mRNA levels by the nearest centroid algorithm (R package consensus MIBC). Differences in frequency of somatic mutations and copy number variants of FGFR-, FGF-, and FGFBP-coding genes between the luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous-like (Ba/Sq) consensus molecular classes were assessed by weighted permutation test. P values were corrected for multiple testing with the false discovery rate method. Note that copy number variant information was not available for the IMvigor cohort. Presence/absence of selected genetic alterations in the consensus molecular classes visualized in oncoplots. Alteration names with effect sizes and p values of differences between the consensus classes are indicated in the Y axis. Significant effects are highlighted with bold font. Numbers of cancer samples in the consensus classes are displayed in the plot captions._
+
+\newpage
+
+```{r fig-fgfr3-domains, fig.width = figur::convert(suppl_figs$fgfr3_domains, to = 'in')$w, fig.height = figur::convert(suppl_figs$fgfr3_domains, to = 'in')$h, fig.cap = 'Frequency of somatic mutations in FGFR1/2/3/4 genes split by protein domain'}
+
+suppl_figs$fgfr3_domains$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-fgfr3-domains). Frequency of somatic mutations in *FGFR1/2/3/4* genes split by protein domain__ 
+
+_Mutations in FGFR1, FGFR2, FGFR3, and FGFR4 genes in the GENIE BLCA, MSK IMPACT, TCGA BLCA, and BCAN cohorts were classified by protein domain. Their frequency was expressed as percentage of cancer samples and presented in stack plots. Numbers of analyzed cancer samples are displayed in the plot captions._
+
+\newpage
+
+```{r fig-fgfr3-hot, fig.width = figur::convert(suppl_figs$fgfr3_hot, to = 'in')$w, fig.height = figur::convert(suppl_figs$fgfr3_hot, to = 'in')$h, fig.cap = 'Mutational hot spots of the FGFR3 gene.'}
+
+suppl_figs$fgfr3_hot$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-fgfr3-hot). Mutational hot spots of the *FGFR3* gene.__ 
+
+_Frequency of mutations affecting residues of the FGFR3 protein was expressed as percentage of all cancer samples in the `r globals$cohort_labs[c("genie", "msk", "tcga", "bcan")] %>% collapse_and` cohorts and displayed in dot plots. Each point represents a single protein residue, point color codes for assignment of the residue to the protein domain. Candidate mutation hot spots with mutation rates $\geq$ 1% are highlighted with enlarged symbols and labeled with percentages and protein sequence changes. Cohort names and numbers of analyzed cancer samples are indicated in the plot facets. The protein domain scheme is displayed above the plot._
+
+\newpage
+
+```{r fig-expression, fig.width = figur::convert(suppl_figs$expression, to = 'in')$w, fig.height = figur::convert(suppl_figs$expression, to = 'in')$h, fig.cap = 'Expression of genes coding FGFR, FGF, and FGFBP at mRNA and protein level.'}
+
+suppl_figs$expression$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-expression). Expression of genes coding FGFR, FGF, and FGFBP at mRNA and protein level.__ 
+_Levels of FGFR-, FGF-, and FGFBP-coding mRNA were determined in cancer tissue samples in the TCGA BLCA, IMvigor, and BCAN by RNA sequencing and published as $log_2$ gene counts (TCGA BLCA and IMvigor) or Z-scores of $log_2$ gene counts (BCAN). mRNA expression of the genes of interest in DepMap urothelial cancer cell lines was measured by RNA sequencing and provided as $log_2$ gene counts. Median Z-scores of $log_2$ mRNA expression are shown in a heat map. Each tile represents median expression Z-score of a gene in one cohort. Numbers of cancer samples are indicated in the X axis. White tiles represent genes not detected in each cohort. Protein expression of `r expl_expr$plot_data$hpa %>% filter(complete.cases(.)) %>% .$variable %>% unique %>% length` FGFR-, FGF-, and FGFBP-coding genes in the Human Protein Atlas (HPA) repository was quantified by immunohistochemistry (IHC). The protein expression is shown as IHC scores defined as a product of intensity (1: negative, 4: strong) and quantity of positive cells (1: none to 4: >75%). Distributions of IHC scores are visualized with violin plots. Single IHC specimens are depicted as points. Numbers of evaluable IHC samples are indicated in the Y axis._
+
+\newpage
+
+```{r fig-ihc-receptors, fig.width = figur::convert(suppl_figs$ihc_receptors, to = 'in')$w, fig.height = figur::convert(suppl_figs$ihc_receptors, to = 'in')$h, fig.cap = 'Representative immunohistochemistry staining images for FGFR proteins retrieved from the Human Protein Atlas.'}
+
+suppl_figs$ihc_receptors$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-ihc-receptors). Representative immunohistochemistry staining images for FGFR proteins retrieved from the Human Protein Atlas.__ 
+
+_Images of immunohistochemistry (IHC) staining for FGFR, FGF, and FGFBP in urothelial cancer samples were retrieved from the Human Protein Atlas (HPA). The staining was quantified by the IHC score which was defined as a product of intensity (1: negative, 4: strong) and quantity of positive cells (1: none to 4: >75%). For each protein, representative images of immunohistochemistry (IHC) staining were selected; the left image corresponds to the minimum IHC score, the middle image shows the staining close to the median IHC score, the right image corresponds to the maximal IHC score. The images are labeled with HPA patient identifiers (ID) and IHC scores._
+
+\newpage
+
+```{r fig-ihc-ligands, fig.width = figur::convert(suppl_figs$ihc_ligands, to = 'in')$w, fig.height = figur::convert(suppl_figs$ihc_ligands, to = 'in')$h, fig.cap = 'Representative immunohistochemistry staining images for FGF proteins retrieved from the Human Protein Atlas.'}
+
+suppl_figs$ihc_ligands$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-ihc-ligands). Representative immunohistochemistry staining images for FGF proteins retrieved from the Human Protein Atlas.__ 
+
+_Images of immunohistochemistry (IHC) staining for FGFR, FGF, and FGFBP in urothelial cancer samples were retrieved from the Human Protein Atlas (HPA). The staining was quantified by the IHC score which was defined as a product of intensity (1: negative, 4: strong) and quantity of positive cells (1: none to 4: >75%). For each protein, representative images of immunohistochemistry (IHC) staining were selected; the left image corresponds to the minimum IHC score, the middle image shows the staining close to the median IHC score, the right image corresponds to the maximal IHC score. The images are labeled with HPA patient identifiers (ID) and IHC scores._
+
+\newpage
+
+```{r fig-ihc-fgfbp, fig.width = figur::convert(suppl_figs$ihc_fgfbp, to = 'in')$w, fig.height = figur::convert(suppl_figs$ihc_fgfbp, to = 'in')$h, fig.cap = 'Representative immunohistochemistry staining images for FGFBP proteins retrieved from the Human Protein Atlas.'}
+
+suppl_figs$ihc_fgfbp$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-ihc-fgfbp). Representative immunohistochemistry staining images for FGFBP proteins retrieved from the Human Protein Atlas.__ 
+
+_Images of immunohistochemistry (IHC) staining for FGFR, FGF, and FGFBP in urothelial cancer samples were retrieved from the Human Protein Atlas (HPA). The staining was quantified by the IHC score which was defined as a product of intensity (1: negative, 4: strong) and quantity of positive cells (1: none to 4: >75%). For each protein, representative images of immunohistochemistry (IHC) staining were selected; the left image corresponds to the minimum IHC score, the middle image shows the staining close to the median IHC score, the right image corresponds to the maximal IHC score. The images are labeled with HPA patient identifiers (ID) and IHC scores._
+
+\newpage
+
+```{r fig-bulk-networks, fig.width = figur::convert(suppl_figs$bulk_networks, to = 'in')$w, fig.height = figur::convert(suppl_figs$bulk_networks, to = 'in')$h, fig.cap = 'Co-expression networks of FGFR-, FGF-, and FGFBP-coding genes in the IMvigor and BCAN cohorts.'}
+
+suppl_figs$bulk_networks$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-bulk-networks). Co-expression networks of FGFR-, FGF-, and FGFBP-coding genes in the IMvigor and BCAN cohorts.__ 
+
+_Co-expression networks were constructed in the IMvigor and BCAN cohorts for the FGFR-, FGF-, and FGFBP-coding genes, whose expression levels correlated with Spearman’s $\rho \geq$ 0.3. Isolated vertices of the networks were removed. The networks were visualized using the Fruchterman-Reingold algorithm. Points represent node vertices/genes, point shape codes for classification of the protein product. Point color represent hub scores, which measure the overall correlation strength. Lines represent edges, i.e correlations between expression levels with $\rho \geq$ 0.3. Line widths correspond to $\rho$ values. Note the central position, connectivity, and high hub scores of the genes coding for FGFR1, its ligands FGF2, FGF7 and FGF10, and the binding proteins SDC2, DCN, PTX3 and HSPG2 preserved in all cohorts. This suggests that ligand-dependent signaling via FGFR1 may serve as a substantial signaling pathway in urothelial cancer._
+
+\newpage
+
+```{r fig-cell-networks, fig.width = figur::convert(suppl_figs$cell_networks, to = 'in')$w, fig.height = figur::convert(suppl_figs$cell_networks, to = 'in')$h, fig.cap = 'Co-expression network of FGF-, FGFR-, and FGFBP-coding genes in DepMap urothelial cancer cell lines'}
+
+suppl_figs$cell_networks$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-cell-networks). Co-expression network of FGF-, FGFR-, and FGFBP-coding genes in DepMap urothelial cancer cell lines__ 
+
+_Co-expression network was constructed in the DepMap urothelial cancer cell line collection for the FGFR-, FGF-, and FGFBP-coding genes, whose expression levels correlated with Spearman’s $rho \geq$ 0.3. Isolated vertices of the networks were removed. Gene communities were identified with the Leiden algorithm and named after their FGFR-coding members. Candidate hub genes of the communities were selected by computing hub scores separately for each community (eigenvectors of the affinity matrix, i.e. metrics of the overall correlation strength). The networks were visualized using the Fruchterman-Reingold algorithm. Points represent node vertices/genes, point shape codes for classification of the protein product. Point color codes for the community assignment (A) or hub score (B). Lines represent edges, i.e. correlations between expression levels with $\rho \geq$ 0.3. Line widths correspond to  values. Note the central positions and high scores of the FGFR1, FGFR2, and FGFR3 genes and their assignment to the communities. This suggests exclusivity, i.e that FGFR1 with its ligands (FGF2, FGF5) and accessory molecules (CD44, TNFAIP6, FGFRL1) provide oncogenic signaling in a subset of cell lines, while signaling via FGFR2/FGFR3 and their co-receptors (GPC1/3, SDC1/4, HSPG2, TGFBR3) is exploited by another, non-overlapping cell line subset._
+
+\newpage
+
+```{r fig-sub-fgfr-dge, fig.width = figur::convert(suppl_figs$sub_dge, to = 'in')$w, fig.height = figur::convert(suppl_figs$sub_dge, to = 'in')$h, fig.cap = 'Differential expression of FGF-, FGFR-, and FGFR-coding genes in the consensus molecular classes of MIBC.'}
+
+suppl_figs$sub_dge$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-sub-fgfr-dge). Differential expression of FGF-, FGFR-, and FGFR-coding genes in the consensus molecular classes of MIBC.__ 
+
+_Assignment of cancer samples from the IMvigor and BCAN collectives to the MIBC consensus molecular classes was presented in Supplementary Figure S\@ref(fig:fig-sub-genet). Differences in log2-transformed mRNA levels of FGFR-, FGF-, and FGFBP-coding genes between the luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous-like (Ba/Sq) consensus molecular classes were assessed by one-way ANOVA with  effect size statistic. Differences in $log_2$-transformed gene expression between a class and the LumP class were investigated by two-tailed T test. P values were corrected for multiple testing with the false discovery rate method (FDR). Significantly differentially regulated genes were defined by p(ANOVA) < 0.05, $\eta^2 \geq$ 0.14, pFDR(T test) < 0.05, and at least 1.25-fold up- or downregulation in a class as compared with LumP cancers. Z-scores of  expression levels of significantly differentially regulated genes shared by at least two cohorts are displayed in heat maps. Significant genes are labeled with bold font in the Y axes. Numbers of cancer samples in the consensus classes are indicated in the plot captions. The analysis results are also shown in Supplementary Table S\@ref(tab:tab-sub-dge)._
+
+\newpage
+
+```{r fig-sub-sig, fig.width = figur::convert(suppl_figs$sub_sig, to = 'in')$w, fig.height = figur::convert(suppl_figs$sub_sig, to = 'in')$h, fig.cap = 'Scores of FGFR-related gene signatures in the consensus molecular classes of MIBC.'}
+
+suppl_figs$sub_sig$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-sub-sig). Scores of FGFR-related gene signatures in the consensus molecular classes of MIBC__ 
+
+_Assignment of cancer samples from the IMvigor and BCAN collectives to the MIBC consensus molecular classes was presented in Supplementary Figure S\@ref(fig:fig-sub-genet). Single sample gene set enrichment analysis (ssGSEA) scores of `r length(sub_sig$variables)` FGFR-related MSig database signatures were compared the luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous-like (Ba/Sq) consensus molecular classes by one-way ANOVA with  effect size statistic. Differences in ssGSEA scores between a class and the LumP class were investigated by two-tailed T test with Cohen's d effect size statistic. P values were corrected for multiple testing with the false discovery rate method (FDR). Significantly differentially regulated gene signatures were defined by p(ANOVA) < 0.05, $\eta^2 \geq$ 0.14, pFDR(T test) < 0.05, and Cohen's d $\geq$ 0.5 for regulation in a class as compared with LumP cancers. ssGSEA scores of significantly differentially regulated gene signatures shared by at least two cohorts are displayed in heat maps. Results of one-way ANOVA testing for overall differences between the consensus classes (effect sizes and p values) are indicated in the Y axes. Significant effects are labeled with bold font in the Y axes. Numbers of cancer samples in the consensus classes are indicated in the plot captions. The analysis results with signature names are also presented in Supplementary Table S\@ref(tab:tab-sub-sig)._
+
+\newpage
+
+```{r fig-sub-drugs, fig.width = figur::convert(suppl_figs$sub_drugs, to = 'in')$w, fig.height = figur::convert(suppl_figs$sub_drugs, to = 'in')$h, fig.cap = 'Predicted response to pan-FGFR inhibitors in the consensus molecular classes of MIBC.'}
+
+suppl_figs$sub_drugs$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-sub-drugs). Predicted response to pan-FGFR inhibitors in the consensus molecular classes of MIBC.__ 
+
+_Measures of resistance to pan-FGFR inhibitors (GDSC1, GDSC2, CTRP2: inhibitory concentration resulting in 50% growth inhibition [IC50], PRISM: area under the dose - response curve [AUC]) were predicted for bulk cancers in the TCGA BLCA, IMvigor, and BCAN cohorts by RIDGE linear models trained with anti-cancer drug response data and baseline transcriptomes of epithelial cancer cell lines in the GDSC1, GDSC2, CTRP2, and PRISM in vitro screening experiments._ 
+_The predicted IC50 and AUC values were compared between the luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous-like (Ba/Sq) consensus molecular classes by Kruskal-Wallis test with $\eta^2$ effect size statistic._ 
+_Differences in resistance metrics between a class and the LumP class were investigated by Mann-Whitney test with biserial r effect size statistic. P values were corrected for multiple testing with the false discovery rate method (FDR). Significantly differentially regulated resistance metrics were defined by p(Kruskal-Wallis) < 0.05, $\eta^2 \geq$ 0.14, pFDR(Mann-Whitney) < 0.05, and r $\geq$ 0.3 for differences between a class and LumP cancers._ 
+
+_(A) Z-scores of IC50 and AUC values displayed in heat maps. Results of the Kruskal-Wallis tests for overall differences between the consensus classes (effect sizes and p values) are indicated in the Y axes. Significant effects are labeled with bold font in the Y axes. Numbers of cancer samples in the consensus classes are indicated in the plot captions._
+
+_(B) Predicted AUC values for Erdafitinib shown in violin plots. Red diamonds with whiskers represent medians with interquartile ranges. Single cancer samples are depicted as points. Results of the Kruskal-Wallis tests for overall differences between the consensus classes (effect sizes and p values) are displayed in the plot captions. Numbers of cancer samples in the consensus classes are indicated in the X axes._
+
+\newpage
+
+```{r fig-fgfr-drugs, fig.width = figur::convert(suppl_figs$fgfr_drugs, to = 'in')$w, fig.height = figur::convert(suppl_figs$fgfr_drugs, to = 'in')$h, fig.cap = 'Predicted response to pan-FGFR inhibitors in the urothelial cancers with and without FGFR3 mutations.'}
+
+suppl_figs$fgfr_drugs$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-fgfr-drugs). Predicted response to pan-FGFR inhibitors in the urothelial cancers with and without *FGFR3* mutations.__ 
+
+_Predictions of drugs resistance (IC50: concentration resulting in 50% growth inhibition, AUC: area under the dose-response curve) were obtained for bulk cancer samples in the TCGA BLCA, IMvigor, and BCAN cohorts as presented in Supplementary Figure S\@ref(fig:fig-sub-drugs)._
+_Differences in resistance metrics between cancers with and without mutations of FGFR3 were assessed by Mann-Whitney test with biserial r effect size statistic. P values were adjusted for multiple testing with the false discovery rate method (FDR). Significant differences were considered for pFDR < 0.05 and r $\geq$ 0.3. Z-scores of IC50 and AUC values are displayed in heat maps. Effect sizes and p values are indicated in the Y axes. Significant effects are labeled with bold font in the Y axes. Numbers of wild-type (WT) and mutant cancer samples are indicated in the plot captions._
+
+\newpage
+
+```{r fig-ml-eval, fig.width = figur::convert(suppl_figs$ml_eval, to = 'in')$w, fig.height = figur::convert(suppl_figs$ml_eval, to = 'in')$h, fig.cap = 'Evaluation of predictions of the consensus molecular classes of MIBC made by machine learning trained with the genuine consensus class-defining genes and the FGFR/FGF/FGFBP-coding genes.'}
+
+suppl_figs$ml_eval$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-ml-eval). Evaluation of predictions of the consensus molecular classes of MIBC made by machine learning trained with the genuine consensus class-defining genes and the FGFR/FGF/FGFBP-coding genes.__ 
+
+_Assignment of urothelial cancer samples in the `r globals$cohort_labs[c("tcga", "imvigor", "bcan")] %>% collapse_and` cohorts to the luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous-like (Ba/Sq) MIBC consensus molecular classes was modeled by two independent machine learning algorithms, Elastic Net linear regression and Random Forest tree ensemble, with ComBat-processed $log_2$-transformed expression levels of the `r mibc_globals$variables %>% length` genuine class-defining genes proposed by Kamoun et al. or the `r ml_globals$variables %>% length` genes coding for FGFR, FGF, and FGFBP proteins as the explanatory variables. The models were optimized (tuned) and trained in a synthetic data set derived from randomly chosen two-thirds of observations from the `r globals$cohort_labs["tcga"]` collective with expansion (oversampling) of observations in the LumU and stroma-rich classes by the SMOTE algorithm._ 
+_Performance of the models was evaluated in the non-modified test subset of remaining observations from the `r globals$cohort_labs["tcga"]` data set as well as in the IMvigor and BCAN independent validation collectives; assignment to the classes by the nearest centroid classifier from consensusMIBC R package by Kamoun et al. served as the ground truth._ 
+
+_(A) Numeric statistics of overall non-accidental model accuracy (Cohen's $\kappa$, high values expected for a highly accurate model) and overall calibration (Brier score, low scores expected for a well calibrated model) are presented in a dot plot. Data points are labeled with the cohort names; evaluations in the same cohort are connected with a line. The dashed lines and gray regions visualize $\kappa$ and Brier score values expected for a model that assigns the consensus molecular classes by chance._
+
+_(B) Squared differences between the class assignment probability returned by the models and the actual 0/1-coded class assignment (squared distance to the outcome) were computed as measures for single cancer samples as measures of model's confidence and error at predicting the consensus molecular classes. The squared distances to the outcome are presented in violin plots; single cancer samples are depicted as points. Note a substantial improvement of prediction (lower squared distances to the outcome) of LumU class cancers by the machine learning models that employ the full class-defining predictor set by Kamoun et al as compared with the models using solely the FGFR/FGF/FGFBP-coding genes. This suggests that there are no strong and reproducible FGFR/FGF/FGFBP-related markers of the LumU class._
+
+\newpage
+
+```{r fig-confusion, fig.width = figur::convert(suppl_figs$confusion, to = 'in')$w, fig.height = figur::convert(suppl_figs$confusion, to = 'in')$h, fig.cap = 'Confusion matrices of predictions of the consensus molecular classes of MIBC made by machine learning trained with the genuine consensus class-defining genes and the FGFR/FGF/FGFBP-coding genes.'}
+
+suppl_figs$confusion$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-confusion). Confusion matrices of predictions of the consensus molecular classes of MIBC made by machine learning trained with the genuine consensus class-defining genes and the FGFR/FGF/FGFBP-coding genes.__ 
+
+_Elastic Net and Random Forest (RF) models of the MIBC consensus classes were developed and evaluated in the `r globals$cohort_labs[c("tcga", "imvigor", "bcan")] %>% collapse_and` cohorts as presented in Supplementary Figure S\@ref(fig:fig-ml-eval)._ 
+_Accuracy of the models in particular consensus molecular classes was visualized as heat maps of confusion matrices. Fields at the diagonals are highlighted with bold contours represent correctly classified cancer samples. The heat map tiles are labeled with percentages of all cancer samples and cancer sample counts._
+
+_LumP: luminal papillary; LumU: luminal unstable; Ba/Sq: basal/squamous-like._
+
+\newpage
+
+```{r fig-rf-shap, fig.width = figur::convert(suppl_figs$rf_shap, to = 'in')$w, fig.height = figur::convert(suppl_figs$rf_shap, to = 'in')$h, fig.cap = 'SHAP importance for explanatory variables in the Random Forest model of consensus molecular classes of MIBC with FGFR/FGF/FGFBP-coding genes as explanatory factors.'}
+
+suppl_figs$rf_shap$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-rf-shap). SHAP variable importance in the Random Forest model of consensus molecular classes of MIBC with FGFR/FGF/FGFBP-coding genes as explanatory factors.__ 
+
+_Contributions of the FGFR-, FGF-, and FGFBP-coding genes to prediction of luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal/squamous-like (Ba/Sq) consensus molecular classes of MIBC by the Random Forest machine learning model were estimated with the SHAP algorithm (Shapley additive explanations). SHAP values for highly influential genes and observations are visualized in violin/swarm plots. Each point represents a single observation, point color codes for the minimum/maximum-scaled $log_2$-transformed expression of the gene. The corresponding mean absolute SHAP values as metrics of overall gene importance are presented in bar plots. Colors of the bars code for the sign of association of SHAP values and gene expression (red: positive, blue: negative)._
+
+\newpage
+
+```{r fig-shap-elnet, fig.width = figur::convert(suppl_figs$shap_elnet, to = 'in')$w, fig.height = figur::convert(suppl_figs$shap_elnet, to = 'in')$h, fig.cap = 'Importance of explanatory variables in the Elastic Net model of MIBC molecular consensus classes of urothelial cancers with the full set of class-defining genes by Kamoun et al. assessed by the SHAP algorithm.'}
+
+suppl_figs$shap_elnet$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-shap-elnet). Importance of explanatory variables in the Elastic Net model of MIBC molecular consensus classes of urothelial cancers with the full set of class-defining genes by Kamoun et al. assessed by the SHAP algorithm.__ 
+
+_The Elastic Net model of the MIBC consensus classes with the consensus class-defining genes by Kamoun at al. was developed and evaluated as presented in Supplementary Figure S\@ref(fig:fig-ml-eval)._ 
+_Contributions of the explanatory variables, i.e. single genes, to prediction of the luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal-squamous (Ba/Sq) consensus molecular classes were estimated with the SHAP algorithm (Shapley additive explanations). SHAP values for single highly influential genes (top 10 highest mean absolute SHAP) and observations are visualized in violin/swarm plots. Each point represents a single observation, point color codes for the minimum/maximum-scaled $log_2$-transformed expression of the gene. The corresponding mean absolute SHAP values as metrics of overall gene importance are presented in bar plots. Colors of the bars code for the sign of association of SHAP values and gene expression (red: positive, blue: negative)._
+
+\newpage
+
+```{r fig-shap-ranger, fig.width = figur::convert(suppl_figs$shap_ranger, to = 'in')$w, fig.height = figur::convert(suppl_figs$shap_ranger, to = 'in')$h, fig.cap = 'Importance of explanatory variables in the Random Forest model of MIBC molecular consensus classes of urothelial cancers with the full set of class-defining genes by Kamoun et al. assessed by the SHAP algorithm.'}
+
+suppl_figs$shap_ranger$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-shap-ranger). Importance of explanatory variables in the Random Forest model of MIBC molecular consensus classes of urothelial cancers with the full set of class-defining genes by Kamoun et al. assessed by the SHAP algorithm.__ 
+
+_The Random Forest model of the MIBC consensus classes with the consensus class-defining genes by Kamoun at al. was developed and evaluated as presented in Supplementary Figure S\@ref(fig:fig-ml-eval)._ 
+_Contributions of the explanatory variables, i.e. single genes, to prediction of the luminal papillary (LumP), luminal unstable (LumU), stroma-rich, and basal-squamous (Ba/Sq) consensus molecular classes were estimated with the SHAP algorithm (Shapley additive explanations). SHAP values for single highly influential genes (top 10 highest mean absolute SHAP) and observations are visualized in violin/swarm plots. Each point represents a single observation, point color codes for the minimum/maximum-scaled $log_2$-transformed expression of the gene. The corresponding mean absolute SHAP values as metrics of overall gene importance are presented in bar plots. Colors of the bars code for the sign of association between SHAP values and gene expression (red: positive, blue: negative)._
+
+\newpage
+
+```{r fig-shap-fgfr, fig.width = figur::convert(suppl_figs$shap_fgfr, to = 'in')$w, fig.height = figur::convert(suppl_figs$shap_fgfr, to = 'in')$h, fig.cap = 'Importance of FGFR/FGF/FGFBP-coding genes for predictions of the MIBC consensus classes by machine learning models employing the full set of the class-defining genes by Kamoun et al.'}
+
+suppl_figs$shap_fgfr$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-shap-fgfr). Importance of FGFR/FGF/FGFBP-coding genes for predictions of the MIBC consensus classes by machine learning models employing the full set of the class-defining genes by Kamoun et al.__ 
+
+_Shapley additive explanations (SHAP) as measures of variable importance for predictions of the consensus molecular classes by the Elastic Net and Random Forest models employing the full class-defining predictor set by Kamoun et al.. were computed as presented in Supplementary Figures S\@ref(fig:fig-shap-elnet) and S\@ref(fig:fig-shap-elnet)._ 
+_Among the class-defining genes, `r intersect(ml_globals$variables, mibc_globals$variables) %>% collapse_and` were classified as FGFR/FGF/FGFBP-coding genes._ 
+_Distribution of the mean SHAP values is presented in violin plots. Single explanatory factors are depicted as points; points corresponding to the FGFR/FGF/FGFBP-coding genes among the class-defining genes are highlighted with blue (negative class assignment predictor) and red (positive predictors of class assignment)._
+
+\newpage
+
+```{r fig-pani-response, fig.width = figur::convert(suppl_figs$pani_response, to = 'in')$w, fig.height = figur::convert(suppl_figs$pani_response, to = 'in')$h, fig.cap = 'Sensitivity to pan-FGFR inhibitors of DepMap urothelial cancer cell lines in the GDSC1/2 drug screening experiments.'}
+
+suppl_figs$pani_response$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-pani-response). Sensitivity to pan-FGFR inhibitors of DepMap urothelial cancer cell lines in the GDSC1/2 drug screening experiments.__ 
+
+_Information on resistance of urothelial cancer cell lines to pan-FGFR inhibitors in the GDSC1/2 (n = `r expl_res$sensitive$gdsc %>% select(-sample_id, -FGFR3_mutation) %>% map(~complete.cases(.x)) %>% map_dbl(sum) %>% range %>% paste(collapse = ' to ')` cell lines) drug screening experiments was extracted from the DepMap repository. The resistance values were expressed as IC50 (concentration resulting in 50% growth inhibition). Significant sensitivity was defined as IC50 below 10 µM. IC50 for doxorubicin are presented as a positive cytotoxicity controls. IC50 values for the FGFR inhibitors are depicted in violin plots; points represent single cell lines. Point color codes for the FGFR3 gene mutation status, point shape represents sensitivity/resistance. The sensitivity cutoff is represented by the dashed line._
+
+\newpage
+
+```{r fig-in-vivo, fig.width = figur::convert(suppl_figs$in_vitro, to = 'in')$w, fig.height = figur::convert(suppl_figs$in_vitro, to = 'in')$h, fig.cap = 'Dose response curves of cultured FGFR1-4 wild-type cell lines (UMUC3, 5637 and RT112) after treatment with increasing concentrations of erdafitinib.'}
+
+suppl_figs$in_vitro$plot
+
+```
+
+__Supplementary Figure S\@ref(fig:fig-in-vivo). Dose response curves of cultured *FGFR1-4* wild-type cell lines (UMUC3, 5637 and RT112) after treatment with increasing concentrations of erdafitinib.__ 
+
+_Confluence was measured after 96 hours in cell cultures treated with 0, 1, 4, 7 and 10 µM erdafitinib. Points with whiskers represent means with standard errors from three biological replicates._
+
+\newpage
+
+
+
+\newpage
+
+# References

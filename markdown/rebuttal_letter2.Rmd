@@ -1,0 +1,73 @@
+---
+title: "FGFR1/3 Signaling as Achilles’ Heel of Phenotypic Diversity in Urothelial Carcinoma"
+subtitle: "Rebuttal Letter, second revision"
+author: "Department of Urology, Medical University of Innsbruck"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+
+output: 
+  bookdown::html_document2:
+    css: "style.css"
+    
+bibliography: blca.bib
+
+csl: frontiers_medical.csl
+
+header-includes:
+  \usepackage{longtable}
+  \usepackage{tabu}
+  \usepackage{caption}
+  \usepackage{makecell}
+  \usepackage{pdflscape}
+  \usepackage{array}
+  \usepackage{booktabs}
+  \usepackage{threeparttable}
+  \usepackage{threeparttablex}
+  \usepackage{wrapfig}
+  \usepackage{multirow}
+  \usepackage[normalem]{ulem}
+  \usepackage{colortbl}
+  \usepackage{xcolor}
+  \usepackage{float} \floatplacement{figure}{H} \floatplacement{table}{H}
+
+---
+
+```{r, setup, include = FALSE}
+
+library(Cairo)
+
+opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      dev = "cairo_pdf", 
+                      dpi = 600)
+
+set_flextable_defaults(font.family = "Cambria", 
+                       font.size = 10)
+
+
+```
+
+\newpage
+
+# Reviewer 4
+
+## Issue
+
+The reporting of tables and figures needs to be revised. 
+First off, see the European Urology guidelines for the presentation of statistics https://doi.org/10.1016/j.eururo.2018.12.014 with respect to precision (4.1). 
+Also see the European Urology guidelines for reporting figures and tables https://www.sciencedirect.com/science/article/pii/S030228382030316X?via%3Dihub.
+
+In particular, the supplementary tables should be presented in a word or PDF document, properly formatted. 
+Excel should be restricted to provision of raw data.
+
+Also, specific to the guidelines, the authors should not use subfigures just to get around figure counts. 
+Subfigures should show the same sort of graph (e.g. survival curves for recurrence, cancer specific and overall survival) or related graphs showing the same data in different ways (e.g. a calibration plot and a decision curve). 
+As it is, the word count for the legend for figure 1 is greater than the text of the entire paper. 
+I think the authors either need to write up their paper as an original research paper rather than a brief correspondence or move all but one or two of the figures to supplementary.
+
+## Response
+
+We agree with the reviewer. 
+In the revised manuscript, we reduced the content of Figure 1 to six essential panels and moved the remaining information to Supplementary Material. 
+We also shortened the corresponding legends. 
+Concerning the Supplementary Tables, we cut down the information amount, e.g. by restricting to the largest effects, and inserted all of them into Supplementary Material.

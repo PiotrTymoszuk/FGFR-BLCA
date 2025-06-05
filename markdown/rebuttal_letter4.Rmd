@@ -1,0 +1,71 @@
+---
+title: "FGFR1/3 Signaling as Achilles’ Heel of Phenotypic Diversity in Urothelial Carcinoma"
+subtitle: "Rebuttal Letter, fourth revision"
+author: "Department of Urology, Medical University of Innsbruck"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+
+output: 
+  bookdown::html_document2:
+    css: "style.css"
+    
+bibliography: blca.bib
+
+csl: frontiers_medical.csl
+
+header-includes:
+  \usepackage{longtable}
+  \usepackage{tabu}
+  \usepackage{caption}
+  \usepackage{makecell}
+  \usepackage{pdflscape}
+  \usepackage{array}
+  \usepackage{booktabs}
+  \usepackage{threeparttable}
+  \usepackage{threeparttablex}
+  \usepackage{wrapfig}
+  \usepackage{multirow}
+  \usepackage[normalem]{ulem}
+  \usepackage{colortbl}
+  \usepackage{xcolor}
+  \usepackage{float} \floatplacement{figure}{H} \floatplacement{table}{H}
+
+---
+
+```{r, setup, include = FALSE}
+
+library(Cairo)
+
+opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      dev = "cairo_pdf", 
+                      dpi = 600)
+
+set_flextable_defaults(font.family = "Cambria", 
+                       font.size = 10)
+
+
+```
+
+\newpage
+
+# Editor
+
+Because of an update of licensing policy of the GENIE repository, we included the following statement in Acknowledgments: 
+
+"The authors would like to acknowledge the American Association for Cancer Research and its financial and material support in the development of the AACR Project GENIE registry, as well as members of the consortium for their commitment to data sharing. Interpretations are the responsibility of study authors.”
+
+This statement was required by the GENIE's terms of use.
+
+# Reviewer 4
+
+## Issue
+
+The authors have dealt with all of the problems in the paper other than point 4.2, such as reporting of proportions for both men and women and for patients with and without metastatic disease. 
+
+## Response
+
+Thank you for the careful review of the tables. 
+In the revised versions of __Supplementary Tables S1__ and __S2__ the redundant figures were pruned. 
+In particular, we present only the frequency of male patients instead of both sexes, and frequency of patients with metastatic disease instead of M0 and M1 stages. 
+Additionally, because counts of observations with pN2 and pN3 stages were low, we simplified the pN stage variable and show frequencies of patient with lymph node dissemination (N1 - N3 stages pooled). 

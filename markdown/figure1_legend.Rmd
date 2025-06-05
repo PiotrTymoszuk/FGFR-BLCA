@@ -1,0 +1,120 @@
+---
+title: "FGFR1/3 Signaling as Achilles’ Heel of Phenotypic Diversity in Urothelial Carcinoma"
+subtitle: "Figure 1 Legend"
+author: "Department of Urology, Medical University of Innsbruck"
+date: "`r format(Sys.time(), '%Y-%m-%d')`"
+
+output: 
+  bookdown::html_document2:
+    css: "style.css"
+    
+bibliography: blca.bib
+
+csl: frontiers_medical.csl
+
+header-includes:
+  \usepackage{longtable}
+  \usepackage{tabu}
+  \usepackage{caption}
+  \usepackage{makecell}
+  \usepackage{pdflscape}
+  \usepackage{array}
+  \usepackage{booktabs}
+  \usepackage{threeparttable}
+  \usepackage{threeparttablex}
+  \usepackage{wrapfig}
+  \usepackage{multirow}
+  \usepackage[normalem]{ulem}
+  \usepackage{colortbl}
+  \usepackage{xcolor}
+  \usepackage{float} \floatplacement{figure}{H} \floatplacement{table}{H}
+
+---
+
+```{r, setup, include = FALSE}
+
+library(Cairo)
+
+opts_chunk$set(echo = FALSE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      dev = "cairo_pdf", 
+                      dpi = 600)
+
+set_flextable_defaults(font.family = "Cambria", 
+                       font.size = 10)
+
+
+```
+
+\newpage
+
+```{r fig-figure-1a, fig.width = figur::convert(fig$figure_1a, to = 'in')$w, fig.height = figur::convert(fig$figure_1a, to = 'in')$h, fig.cap = 'Alterations of FGFR/FGF/FGFBP-coding genes in consensus molecular classes of MIBC.'}
+
+fig$figure_1a$plot
+
+```
+
+__Figure 1A. Alterations of FGFR/FGF/FGFBP-coding genes in consensus molecular classes of MIBC.__ 
+
+_Differences in frequency of somatic mutations and copy number variants of FGFR/FGF/FGFBP-coding genes between the LumP (luminal papillary), LumU (luminal unstable), stroma-rich, and basal/squamous-like (Ba/Sq) consensus molecular classes of MIBC in the TCGA, BCAN and IMvigor cohorts were assessed by false discovery rate (FDR) corrected weighted permutation test. Presence/absence of selected genetic alterations (mut: mutation, amp: amplification, del: deletion) in the TCGA BLCA cohort was visualized in a oncoplot. Significant effects are highlighted with bold font. Numbers of cancer samples are displayed in the plot caption._
+
+\newpage
+
+```{r fig-figure-1b, fig.width = figur::convert(fig$figure_1b, to = 'in')$w, fig.height = figur::convert(fig$figure_1b, to = 'in')$h, fig.cap = 'Co-expression networks of FGFR/FGF/FGFBP-coding genes.'}
+
+fig$figure_1b$plot
+
+```
+
+__Figure 1B. Co-expression networks of FGFR/FGF/FGFBP-coding genes.__ 
+
+_Co-expression networks were constructed for the FGFR/FGF/FGFBP-coding genes, whose expression levels correlated with Spearman’s $\rho \geq$ 0.3 and visualized for the TCGA BLCA cohort with the Fruchterman-Reingold algorithm. Points represent genes, point shape codes for the protein product type. Point color represent hub scores. Lines represent edges, i.e correlations with $\rho \geq$ 0.3. Line widths correspond to $\rho$ values._
+
+\newpage
+
+```{r fig-figure-1c, fig.width = figur::convert(fig$figure_1c, to = 'in')$w, fig.height = figur::convert(fig$figure_1c, to = 'in')$h, fig.cap = 'Differential expression of FGFR/FGF/FGFR-coding genes in consensus molecular classes of MIBC.'}
+
+fig$figure_1c$plot
+
+```
+
+__Figure 1C. Differential expression of FGFR/FGF/FGFR-coding genes in consensus molecular classes of MIBC.__ 
+
+_Differences in $log_2$ mRNA levels of FGFR/FGF/FGFBP-coding genes between the LumP, LumU, stroma-rich and Ba/Sq consensus molecular classes were assessed by FDR-corrected one-way ANOVA with $\eta^2$ effect size statistic and two-tailed post-hoc T test. Differentially regulated genes were defined by p(ANOVA) < 0.05, $\eta^2 \geq$ 0.14, pFDR(T test) < 0.05, and at least 1.25-fold regulation in a class as compared with LumP cancers. Z-scores of $log_2$ expression levels of differentially regulated genes shared by at least two cohorts are displayed in a heat map for TCGA BLCA cancers. Significant effects are labeled with bold font. Numbers of samples are indicated in the plot caption._
+
+\newpage
+
+```{r fig-figure-1d, fig.width = figur::convert(fig$figure_1d, to = 'in')$w, fig.height = figur::convert(fig$figure_1d, to = 'in')$h, fig.cap = 'SHAP variable importance in the Elastic Net model of consensus molecular classes of MIBC with FGFR/FGF/FGFBP-coding genes as explanatory factors.'}
+
+fig$figure_1d$plot
+
+```
+
+__Figure 1D. SHAP variable importance in the Elastic Net model of consensus molecular classes of MIBC with FGFR/FGF/FGFBP-coding genes as explanatory factors.__ 
+
+_Contributions of the FGFR-, FGF-, and FGFBP-coding genes to prediction of LumP, LumU, stroma-rich, and Ba/Sq consensus molecular classes of MIBC by the Elastic Net model were estimated with the SHAP algorithm (Shapley additive explanations). SHAP values for highly influential genes and observations are visualized in violin/swarm plots. Each point represents a single observation, point color codes for the minimum/maximum-scaled $log_2$-transformed gene expression. Mean absolute SHAP values as metrics of overall gene importance are presented in bar plots. Bar colors code for association of SHAP values and gene expression (red: positive, blue: negative)._
+
+\newpage
+
+```{r fig-resistance, fig.width = figur::convert(fig$figure_1e, to = 'in')$w, fig.height = figur::convert(fig$figure_1e, to = 'in')$h, fig.cap = 'Sensitivity to pan-FGFR inhibitors of DepMap cancer urothelial cell lines.'}
+
+fig$figure_1e$plot
+
+```
+
+__Figure 1E. Sensitivity to pan-FGFR inhibitors of DepMap urothelial cancer cell lines.__ 
+
+_Resistance values in the PRISM (n = `r expl_res$sensitive$prism %>% select(-sample_id, -FGFR3_mutation) %>% map(~complete.cases(.x)) %>% map_dbl(sum) %>% range %>% paste(collapse = ' to ')`) drug screening experiment were expressed as AUC (area under the dose-response curve). Significant sensitivity for was defined as AUC < 1, which indicates stronger growth inhibition than the DMSO control. Doxorubicin is presented as a positive cytotoxicity control. AUC values are depicted in violin plots; points represent single cell lines. Point color codes for FGFR3 mutation, point shape represents resistance/sensitivity. The sensitivity cutoff is represented by the dashed line._
+
+\newpage
+
+```{r fig-figure-1f, fig.width = figur::convert(fig$figure_1f, to = 'in')$w, fig.height = figur::convert(fig$figure_1f, to = 'in')$h, fig.cap = 'Confluence of cultured FGFR1-4 wild-type (UM-UC-3, 5637 and RT112) and FGFR3 mutated (UM-UC-14 and UM-UC-6) UC cell lines after treatment with different concentrations of erdafitinib.'}
+
+fig$figure_1f$plot
+
+```
+
+__Figure \@ref(fig:fig-figure-1f). Sensitivity of *FGFR3* wild-type and *FGFR3* mutant urothelial cancer cell lines to erdafitinib.__ 
+
+_Confluence of cultures of FGFR1/2/3/4 wild-type (WT; 5637, RT-112, UM-UC-3) and FGFR3 mutant cell lines (UM-UC-6, UM-UC-14) at 96 hours following treatment with 0 (control), 1, 4, 7, and 10 µM erdafitinib. Points represent measurements obtained in three independent biological replicates; data points obtained in the same replicate are connected with lines._
