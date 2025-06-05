@@ -17,10 +17,17 @@
   insert_msg('Analysis variables and data')
 
   ## variables: removal of the ones analyzed by other scripts
+  ## new labels for gender, pN stage, and pM stage
 
   sub_clinic$lexicon <- globals$clinic_lexicon %>%
     filter(!variable %in% c('tmb_per_mb', 'bi_reponse', 'death',
                             'tissue', 'invasiveness')) %>%
+    mutate(label = ifelse(variable == "sex",
+                          "Male gender", label),
+           label = ifelse(variable == "pm_stage",
+                          "Distant metastasis", label),
+           label = ifelse(variable == "pn_stage",
+                          "Lymph node metastasis", label)) %>%
     mutate(test_type = ifelse(format == 'numeric',
                               'kruskal_etasq', 'cramer_v'),
            plot_type = ifelse(format == 'numeric',
@@ -31,12 +38,21 @@
            ax_label = ifelse(is.na(unit),
                              '% of subset', unit))
 
-  ## analysis data
+  ## analysis data, gender, pN stage, and pM stage are simplified
 
   sub_clinic$data <-
     list(tcga = tcga, imvigor = imvigor, bcan = bcan) %>%
     map(~.x$clinic) %>%
-    map(select, sample_id, any_of(sub_clinic$lexicon$variable))
+    map(select, sample_id, any_of(sub_clinic$lexicon$variable)) %>%
+    map(safely_mutate,
+        sex = ifelse(sex == "male", "yes", "no"),
+        sex = factor(sex, c("no", "yes"))) %>%
+    map(safely_mutate,
+        pn_stage = ifelse(pn_stage == "N0", "no", "yes"),
+        pn_stage = factor(pn_stage, c("no", "yes"))) %>%
+    map(safely_mutate,
+        pm_stage = ifelse(pm_stage == "M0", "no", "yes"),
+        pm_stage = factor(pm_stage, c("no", "yes")))
 
   sub_clinic$data <-
     map2(subtypes$assignment[names(sub_clinic$data)],

@@ -25,19 +25,13 @@
                                         reference_docx = 'ms_template.docx'),
          output_dir = './report')
 
-  ## Rebuttal Letters for the first, second, and third revision
+  ## Rebuttal Letters for the first, second, third, and fourth revision
 
-  render('./report/markdown/rebuttal_letter.Rmd',
-         output_format = word_document2(number_sections = FALSE,
-                                        reference_docx = 'ms_template.docx'),
-         output_dir = './report')
-
-  render('./report/markdown/rebuttal_letter2.Rmd',
-         output_format = word_document2(number_sections = FALSE,
-                                        reference_docx = 'ms_template.docx'),
-         output_dir = './report')
-
-  render('./report/markdown/rebuttal_letter3.Rmd',
+  c('./report/markdown/rebuttal_letter.Rmd',
+    './report/markdown/rebuttal_letter2.Rmd',
+    './report/markdown/rebuttal_letter3.Rmd',
+    './report/markdown/rebuttal_letter4.Rmd') %>%
+    walk(render,
          output_format = word_document2(number_sections = FALSE,
                                         reference_docx = 'ms_template.docx'),
          output_dir = './report')

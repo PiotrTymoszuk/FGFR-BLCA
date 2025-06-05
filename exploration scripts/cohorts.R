@@ -22,8 +22,16 @@
                            'bladder', 'non-bladder'),
            tissue = factor(tissue, c('bladder', 'non-bladder')))
 
+  ## variable lexicon: simplified variable labels for gender, pM and pN stage
+
   expl_cohorts$lexicon <- globals$clinic_lexicon %>%
     filter(!variable %in% c("tissue", "invasiveness")) %>%
+    mutate(label = ifelse(variable == "sex",
+                          "Male gender", label),
+           label = ifelse(variable == "pm_stage",
+                          "Distant metastasis", label),
+           label = ifelse(variable == "pn_stage",
+                          "Lymph node metastasis", label)) %>%
     mutate(unit = ifelse(variable == 'tmb_per_mb',
                          'mutations/MB or fraction of genome',
                          unit),
@@ -64,7 +72,9 @@
   expl_cohorts$data <- expl_cohorts$data %>%
     map(map_dfc, function(x) if(is.character(x)) factor(x) else x)
 
-  ## a common analysis data frame
+  ## a common analysis data frame:
+  ## re-coding the mortality index as factor,
+  ## simplifying the gender, pN and pM variables
 
   expl_cohorts$data <- expl_cohorts$data %>%
     map2_dfr(., names(.),
@@ -73,7 +83,15 @@
            cohort = factor(cohort, unname(globals$cohort_labs)),
            death = as.character(death),
            death = car::recode(death, "'0' = 'no'; '1' = 'yes'"),
-           death = factor(death, c('no', 'yes'))) %>%
+           death = factor(death, c('no', 'yes')),
+           sex = ifelse(sex == "male", "yes", "no"),
+           sex = factor(sex, c("no", "yes")),
+           pn_stage = ifelse(pn_stage == "N0", "no", "yes"),
+           pn_stage = factor(pn_stage, c("no", "yes")),
+           pm_stage = ifelse(pm_stage == "M0", "no", "yes"),
+           pm_stage = factor(pm_stage, c("no", "yes")))
+
+  expl_cohorts$data <- expl_cohorts$data %>%
     map_dfc(function(x) if(is.factor(x)) droplevels(x) else x) %>%
     map_dfc(unname)
 

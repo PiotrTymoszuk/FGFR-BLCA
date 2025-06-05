@@ -27,7 +27,7 @@
 
   ## we don't show hypothesis testing, according to the EAU guidelines
   ## it is quite obvious that the cohorts are pretty different
-  ## due to the srudy designs
+  ## due to the study designs
 
   suppl_tabs$cohorts <- expl_cohorts$result_tbl %>%
     select(-`FDR p value`, -`Effect size`) %>%
